@@ -35,5 +35,6 @@ First public release of the Trail CLI (MVP A + MVP B).
 
 - Runtime dependencies: `zod`, `commander`, `@modelcontextprotocol/sdk` (MCP bundled in the CLI build).
 - Requires **Node.js ≥ 18**.
+- The npm package exposes the `trail` binary via **`trail.js`** at the package root (it imports the built `dist/` bundle) so `npm publish` accepts the `bin` field reliably under npm 11+.
 
 [0.1.0]: https://github.com/joeydekruis/trail/releases/tag/v0.1.0

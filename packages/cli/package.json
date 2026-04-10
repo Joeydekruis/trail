@@ -5,17 +5,19 @@
   "type": "module",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "trail.js"
   ],
   "publishConfig": {
     "access": "public"
   },
   "bin": {
-    "trail": "./dist/index.js"
+    "trail": "./trail.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
+    "prepublishOnly": "npm run build",
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
@@ -44,7 +46,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/joeydekruis/trail.git",
+    "url": "git+https://github.com/joeydekruis/trail.git",
     "directory": "packages/cli"
   }
 }
