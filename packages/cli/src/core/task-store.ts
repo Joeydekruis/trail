@@ -103,3 +103,31 @@ export function loadAllTasks(tasksDir: string): Task[] {
   const files = listTaskFiles(tasksDir);
   return files.map((name) => readTaskFile(path.join(tasksDir, name)));
 }
+
+/**
+ * Resolves the task file for `id`: prefers `${id}.json` when it exists and its `id` matches;
+ * otherwise scans `*.json` for a task whose `id` field equals `id`.
+ */
+export function findTaskFileById(
+  tasksDir: string,
+  id: string,
+): { filePath: string; task: Task } | null {
+  if (!fs.existsSync(tasksDir)) {
+    return null;
+  }
+  const direct = path.join(tasksDir, `${id}.json`);
+  if (fs.existsSync(direct)) {
+    const task = readTaskFile(direct);
+    if (task.id === id) {
+      return { filePath: direct, task };
+    }
+  }
+  for (const name of listTaskFiles(tasksDir)) {
+    const filePath = path.join(tasksDir, name);
+    const task = readTaskFile(filePath);
+    if (task.id === id) {
+      return { filePath, task };
+    }
+  }
+  return null;
+}

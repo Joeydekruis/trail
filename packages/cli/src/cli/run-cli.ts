@@ -7,12 +7,15 @@ import { ZodError } from "zod";
 
 import { formatTrailError, type TrailError, type TrailErrorCode } from "../core/errors.js";
 import { isTaskStoreValidationError } from "../core/task-store.js";
+import { runDone } from "./commands/done.js";
 import { runInit } from "./commands/init.js";
 import { runList } from "./commands/list.js";
 import { runNext } from "./commands/next.js";
 import { runShow } from "./commands/show.js";
 import { runStatus } from "./commands/status.js";
 import { runSync } from "./commands/sync.js";
+import { runUpdate, UPDATE_STATUS_CHOICES } from "./commands/update.js";
+import { runValidate } from "./commands/validate.js";
 
 function readCliVersion(): string {
   /** `package.json` lives next to `src/` and `dist/`; entry is `src/index.ts` / `dist/index.js`. */
@@ -142,6 +145,54 @@ export async function runCli(argv: string[]): Promise<void> {
     .option("--json", "Print full task JSON or null")
     .action(async (opts: { json?: boolean }) => {
       await runNext(opts);
+    });
+
+  program
+    .command("update")
+    .description("Update a task (local file; pushes to GitHub when linked and online)")
+    .argument("<id>", "Task id")
+    .addOption(new Option("--status <status>", "New status").choices(UPDATE_STATUS_CHOICES))
+    .addOption(
+      new Option("--priority <p>", "Priority").choices(["p0", "p1", "p2", "p3"] as const),
+    )
+    .option("--title <text>", "New title")
+    .action(
+      async (
+        id: string,
+        opts: {
+          status?: (typeof UPDATE_STATUS_CHOICES)[number];
+          priority?: "p0" | "p1" | "p2" | "p3";
+          title?: string;
+        },
+      ) => {
+        await runUpdate({
+          id,
+          status: opts.status,
+          priority: opts.priority,
+          title: opts.title,
+        });
+      },
+    );
+
+  program
+    .command("done")
+    .description("Mark a task done, optionally comment and close the GitHub issue")
+    .argument("<id>", "Task id")
+    .argument("<message...>", "Comment body for the linked issue (and suggested commit hint)")
+    .action(async (id: string, messageParts: string[]) => {
+      const message = messageParts.join(" ").trim();
+      if (message === "") {
+        throw new Error("Message is required");
+      }
+      await runDone({ id, message });
+    });
+
+  program
+    .command("validate")
+    .description("Compile snapshot and print validation warnings (exit 1 on dependency cycles)")
+    .action(async () => {
+      const code = await runValidate();
+      process.exitCode = code;
     });
 
   await program.parseAsync(argv);

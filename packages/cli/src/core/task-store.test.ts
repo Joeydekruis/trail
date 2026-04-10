@@ -5,6 +5,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  findTaskFileById,
   isTaskStoreValidationError,
   loadAllTasks,
   readTaskFile,
@@ -99,6 +100,45 @@ describe("task-store", () => {
     } catch (e) {
       expect(isTaskStoreValidationError(e)).toBe(true);
     }
+  });
+});
+
+describe("findTaskFileById", () => {
+  it("returns the file when ${id}.json exists and id matches", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "trail-task-store-"));
+    fs.writeFileSync(
+      path.join(dir, "047.json"),
+      `${JSON.stringify(minimalValidTask)}\n`,
+      "utf8",
+    );
+    const r = findTaskFileById(dir, "047");
+    expect(r).not.toBeNull();
+    expect(r!.task.id).toBe("047");
+    expect(r!.filePath).toBe(path.join(dir, "047.json"));
+  });
+
+  it("finds by task id when filename does not match id", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "trail-task-store-"));
+    const taskWrongName = { ...minimalValidTask, id: "999" };
+    fs.writeFileSync(
+      path.join(dir, "047.json"),
+      `${JSON.stringify(taskWrongName)}\n`,
+      "utf8",
+    );
+    const r = findTaskFileById(dir, "999");
+    expect(r).not.toBeNull();
+    expect(r!.filePath).toBe(path.join(dir, "047.json"));
+    expect(r!.task.id).toBe("999");
+  });
+
+  it("returns null when no task matches", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "trail-task-store-"));
+    fs.writeFileSync(
+      path.join(dir, "047.json"),
+      `${JSON.stringify(minimalValidTask)}\n`,
+      "utf8",
+    );
+    expect(findTaskFileById(dir, "missing")).toBeNull();
   });
 });
 

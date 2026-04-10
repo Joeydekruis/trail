@@ -5,7 +5,9 @@ import type { Task } from "../schemas/task.js";
 import { SnapshotSchema, type Snapshot } from "../schemas/snapshot.js";
 
 const UNKNOWN_DEPENDENCY = "UNKNOWN_DEPENDENCY";
-const DEPENDENCY_CYCLE = "DEPENDENCY_CYCLE";
+
+/** Warning code when `depends_on` forms a directed cycle. */
+export const DEPENDENCY_CYCLE = "DEPENDENCY_CYCLE";
 
 /**
  * Finds directed cycles in the dependency graph: edge `u → v` when task `u` lists `v` in `depends_on`.
