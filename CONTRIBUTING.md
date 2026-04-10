@@ -42,8 +42,9 @@ See `AGENTS.md` for the full project structure and patterns. For specifications 
 
 ## Publishing `@trail-pm/cli` (maintainers)
 
-1. Update **`CHANGELOG.md`** and bump **`packages/cli/package.json`** version (and `package-lock.json` workspace entry if needed). Run `npm test && npm run typecheck && npm run build` at the repo root.
-2. Commit and push to `main`, then tag: `git tag -a vX.Y.Z -m "vX.Y.Z"` and `git push origin vX.Y.Z`.
-3. In GitHub: **Releases → Create a new release** from that tag and **publish** the release. The [release workflow](.github/workflows/release.yml) runs `npm publish` from **`packages/cli`** with **`NPM_TOKEN`** (classic token with publish rights to the `@trail-pm` scope, or a granular token for this package).
+1. **Bump the version** in **`packages/cli/package.json`** (and the **`packages/cli`** entry in **`package-lock.json`**) to a **new** semver — npm **rejects** republishing an existing version (`E403` / “cannot publish over the previously published versions”). Update **`CHANGELOG.md`** for the release.
+2. Run `npm test && npm run typecheck && npm run build` at the repo root.
+3. Commit and push to `main`, then tag: `git tag -a vX.Y.Z -m "vX.Y.Z"` and `git push origin vX.Y.Z`.
+4. In GitHub: **Releases → Create a new release** from that tag and **publish** the release. The [release workflow](.github/workflows/release.yml) runs `npm publish` from **`packages/cli`** with **`NPM_TOKEN`** (classic token with publish rights to the `@trail-pm` scope, or a granular token for this package).
 
 To publish manually instead: `cd packages/cli && npm publish --access public` (`prepublishOnly` runs the build). Log in with `npm login` or set `NPM_TOKEN` for CI-style auth.

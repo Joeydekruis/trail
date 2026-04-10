@@ -5,6 +5,19 @@ All notable changes to **`@trail-pm/cli`** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] — 2026-04-11
+
+### Changed
+
+- Documentation: clarify that a **local** `npm install` requires **`npx trail`** (or `./node_modules/.bin/trail`); **`trail`** on `PATH` only after **`npm install -g`**. README, npm package README, and default **`AGENTS.md`** template updated.
+- CI: **`actions/checkout@v6`** and **`actions/setup-node@v6`** for Node 24–compatible action runtimes.
+
+### Notes
+
+- npm does **not** allow republishing the same version number. Every publish needs a **new** `version` in `packages/cli/package.json` before tagging and releasing.
+
+[0.1.1]: https://github.com/joeydekruis/trail/releases/tag/v0.1.1
+
 ## [0.1.0] — 2026-04-10
 
 First public release of the Trail CLI (MVP A + MVP B).
