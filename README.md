@@ -1,75 +1,52 @@
-# TRAIL
+# Trail
 
-> **T**ask & **R**epository **AI** **L**ayer  
-An AI-native project management layer built directly on top of GitHub.
-
----
-
-## ✨ Overview
-
-TRAIL is a lightweight, high-performance AI project management system where:
-
-- **GitHub is the source of truth**
-- **Your repository is the database**
-- **AI enhances—not replaces—your workflow**
-
-Unlike traditional tools, TRAIL does not introduce a separate system to sync, host, or maintain.  
-It works *with* GitHub Issues, Projects, and your codebase to create an intelligent execution layer.
+> **T**ask & **R**epository **AI** **L**ayer
+> A GitHub-native AI project management CLI.
 
 ---
 
-## 🧠 Why TRAIL?
+## What is Trail?
 
-Most PM tools:
-- create silos
-- require syncing
-- break in multi-branch workflows
-- are not built for AI-assisted development
+Trail syncs with GitHub Issues, stores enriched task data as JSON files in your repo, and gives you a CLI + optional local UI to manage everything.
 
-TRAIL is designed for modern dev workflows:
+- **GitHub Issues is the source of truth** — no separate database, no backend
+- **AI-first** — tasks are structured for Cursor, Claude, and other AI agents
+- **Minimal** — two runtime dependencies, no Dolt, no Docker
+- **Fast** — local JSON files, instant reads, compiled snapshots
 
-- ⚡ **Fast** — no external backend required
-- 🔗 **GitHub-native** — everything lives in your repo + issues
-- 🌿 **Branch-aware** — works naturally with Git workflows
-- 🤖 **AI-optimized** — structured for tools like Cursor, Claude, etc.
-- 🧩 **Composable** — no lock-in, just files + conventions
+## Status
 
----
+**In development.** See the [design spec](docs/superpowers/specs/2026-04-10-trail-design.md) for the full vision.
 
-## 🏗️ Core Principles
+## Development
 
-### 1. GitHub is the source of truth
-Issues, Projects, PRs, and metadata live in GitHub.
+```bash
+# Install dependencies
+npm install
 
-### 2. The repo is the intelligence layer
-Structured task data, dependencies, and AI context live in the repo.
+# Run tests
+npm test
 
-### 3. No hidden state
-Everything is:
-- versioned
-- inspectable
-- editable
+# Type check
+npm run typecheck
 
-### 4. AI is a first-class citizen
-Tasks are structured for:
-- context assembly
-- execution planning
-- code generation workflows
+# Build
+npm run build
+```
 
----
+## Project structure
 
-## 📦 Features (Planned)
+```
+packages/cli/     — CLI + core library (sync engine, schemas, compiler)
+packages/ui/      — Local roadmap UI (opt-in, coming later)
+docs/adr/         — Architectural decisions
+docs/superpowers/ — Design specs and implementation plans
+```
 
-- [ ] GitHub Issues ↔ Local task sync
-- [ ] Dependency graph (tasks blocking tasks)
-- [ ] AI task context generation
-- [ ] Roadmap visualization (local UI + static HTML)
-- [ ] Branch-aware task execution
-- [ ] CLI for sync, planning, and generation
-- [ ] PRD → task breakdown (AI-assisted)
-- [ ] Smart “next task” suggestions
-- [ ] Conflict & merge risk insights
+## Contributing
 
----
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## 🗂️ Project Structure
+## License
+
+MIT
