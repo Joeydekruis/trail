@@ -40,12 +40,51 @@ Documentation index (specs, ADRs, plans): **[docs/README.md](docs/README.md)**.
 
 ## Installation
 
-**From npm:**
+**Package name:** `@trail-pm/cli`. **Binary name:** `trail`.
+
+### Important: local `npm install` does **not** put `trail` on your PATH
+
+If you run **`npm install @trail-pm/cli`** (or `-D`) in a project, npm adds the binary to **`node_modules/.bin/trail`**. That directory is **not** on your shell `PATH` by default, so typing **`trail`** in the terminal fails with **`command not found`**.
+
+Use one of these:
+
+| Situation | What to run |
+| --- | --- |
+| **Local install** (recommended) | **`npx trail …`** — `npx` finds `node_modules/.bin/trail` |
+| **Global install** | `npm install -g @trail-pm/cli` — then **`trail …`** works as a normal command |
+| **No install** | **`npx @trail-pm/cli …`** (full package name each time) |
+
+You can also run the file directly: **`./node_modules/.bin/trail init`**.
+
+Bare `npx @trail-pm/cli --help` works for a one-off, but it still does not add **`trail`** to your PATH for later commands.
+
+Installing the CLI **does not create `package.json`** by itself — only **`npm install …`** in your app repo does. The **`.trail/`** folder is **not** created by installing; it appears when you run **`npx trail init`** (or `npx @trail-pm/cli init`) **inside a git repository**.
+
+### Recommended: install in your app repo
+
+From your project directory (creates/updates **`package.json`** and **`node_modules/.bin/trail`**):
 
 ```bash
-npm install -g @trail-pm/cli
-trail --help
+npm install @trail-pm/cli
+# or, as a dev dependency:
+npm install -D @trail-pm/cli
 ```
+
+Then use:
+
+```bash
+npx trail --help
+npx trail init --preset solo
+```
+
+Always use **`npx trail`** after a local install (not bare **`trail`**, unless you used **`-g`**).
+
+### Other options
+
+| Approach | How you invoke it |
+| --- | --- |
+| **Global** | `npm install -g @trail-pm/cli` → then **`trail …`** on your PATH |
+| **One-off, no install** | **`npx @trail-pm/cli …`** — repeat the full package name for **each** command |
 
 **From a clone of this repository** (contributors or bleeding edge):
 
@@ -54,11 +93,8 @@ git clone https://github.com/joeydekruis/trail.git
 cd trail
 npm install
 npm run build
-# Use the built binary (or add packages/cli to PATH)
-node packages/cli/dist/index.js --help
+node packages/cli/trail.js --help
 ```
-
-The published package name is **`@trail-pm/cli`**; the executable is **`trail`**.
 
 ---
 
@@ -81,19 +117,28 @@ export GITHUB_TOKEN=ghp_...
 
 ## Quick start
 
+After a **local** `npm install`, use **`npx trail`** (or **`npm exec trail --`**). After **`npm install -g`**, you can use **`trail`** directly.
+
 Initialize Trail in the **current git repository** (owner/repo are taken from `origin` when you omit `--owner` / `--repo`):
 
 ```bash
-trail init --preset solo
+# Local install (typical):
+npx trail init --preset solo
+
+# Global install only:
+# trail init --preset solo
+
+# No install:
+npx @trail-pm/cli init --preset solo
 ```
 
 By default, `init` creates **`AGENTS.md`** at the repo root with a short agent workflow (only if the file does not already exist). Use **`--skip-agents-md`** to skip that.
 
 ```bash
 export GITHUB_TOKEN=...
-trail sync
-trail list
-trail next
+npx trail sync
+npx trail list
+npx trail next
 ```
 
 ---
@@ -112,6 +157,8 @@ See [§15 in the design spec](docs/superpowers/specs/2026-04-10-trail-design.md#
 ---
 
 ## Command reference
+
+Subcommands below are written as **`trail …`**. With a **local** npm install, run **`npx trail …`** (or use **`trail …`** only after **`npm install -g`**).
 
 ### Project setup
 
@@ -189,7 +236,7 @@ Registered tools (names stable for automation):
 }
 ```
 
-If `trail` is not on your `PATH`, use `node` with the built `dist/index.js` and pass `mcp` as the only argument, or use `npx` with `@trail-pm/cli` once published.
+If `trail` is not on your `PATH`, point **`command`** at `npx` and **`args`** at `["@trail-pm/cli", "mcp"]` (no global install), or use `node` / `trail.js` from a local clone.
 
 ---
 
