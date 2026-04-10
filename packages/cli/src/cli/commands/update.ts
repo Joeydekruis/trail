@@ -4,9 +4,9 @@ import { resolveGitHubToken } from "../../core/auth.js";
 import type { TrailError } from "../../core/errors.js";
 import { GitHubClient } from "../../core/github-client.js";
 import { taskToIssueUpdate } from "../../core/github-mapper.js";
-import { compileSnapshot, writeSnapshot } from "../../core/compile-snapshot.js";
+import { rebuildSnapshot } from "../../core/rebuild-snapshot.js";
 import { findTrailRoot, trailPaths } from "../../core/paths.js";
-import { findTaskFileById, loadAllTasks, writeTaskFile } from "../../core/task-store.js";
+import { findTaskFileById, writeTaskFile } from "../../core/task-store.js";
 import { TrailConfigSchema } from "../../schemas/config.js";
 import type { Task, TaskStatus } from "../../schemas/task.js";
 
@@ -100,9 +100,7 @@ export async function runUpdate(options: UpdateOptions): Promise<void> {
     writeTaskFile(resolved.filePath, synced);
   }
 
-  const tasks = loadAllTasks(paths.tasksDir);
-  const snapshot = compileSnapshot(tasks, now);
-  writeSnapshot(paths.snapshotPath, snapshot);
+  rebuildSnapshot(paths, now);
 }
 
 export { STATUSES as UPDATE_STATUS_CHOICES };

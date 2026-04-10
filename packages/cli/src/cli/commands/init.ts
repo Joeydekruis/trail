@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { TrailConfigSchema } from "../../schemas/config.js";
 import type { TrailError } from "../../core/errors.js";
+import { USER_AGENTS_MD } from "../templates/user-agents.md.js";
 
 const GITIGNORE_LINES = ["snapshot.json", "export/", "*.tmp"];
 
@@ -72,6 +73,8 @@ export type InitOptions = {
   preset: "solo" | "collaborative" | "offline";
   owner?: string;
   repo?: string;
+  /** When true, do not write `AGENTS.md` at the repository root. */
+  skipAgentsMd?: boolean;
 };
 
 export function runInit(options: InitOptions): void {
@@ -138,6 +141,16 @@ export function runInit(options: InitOptions): void {
 
   const gitignorePath = path.join(trailDir, ".gitignore");
   fs.writeFileSync(gitignorePath, `${GITIGNORE_LINES.join("\n")}\n`, "utf-8");
+
+  if (options.skipAgentsMd !== true) {
+    const agentsPath = path.join(root, "AGENTS.md");
+    if (!fs.existsSync(agentsPath)) {
+      fs.writeFileSync(agentsPath, USER_AGENTS_MD, "utf-8");
+      console.log(`Wrote ${agentsPath}`);
+    } else {
+      console.log(`Skipped AGENTS.md (file already exists)`);
+    }
+  }
 
   console.log(`Initialized Trail project at ${root}`);
 }

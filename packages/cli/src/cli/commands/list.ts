@@ -13,6 +13,25 @@ export type ListOptions = {
   json?: boolean;
 };
 
+/** Shared filter/sort/limit logic for CLI list and MCP. */
+export function selectTasksForList(tasks: Task[], options: ListOptions): Task[] {
+  const all = options.all === true;
+  const limit = options.limit ?? DEFAULT_LIMIT;
+  const statusFilter = options.status as TaskStatus | undefined;
+  const labelFilter = options.label;
+
+  let rows = tasks.filter((t) => all || !HIDDEN_BY_DEFAULT.has(t.status));
+  if (statusFilter !== undefined) {
+    rows = rows.filter((t) => t.status === statusFilter);
+  }
+  if (labelFilter !== undefined) {
+    rows = rows.filter((t) => t.labels.includes(labelFilter));
+  }
+
+  rows.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+  return rows.slice(0, limit);
+}
+
 function slimTask(t: Task) {
   return {
     id: t.id,
@@ -36,21 +55,7 @@ function formatTable(tasks: Task[]): void {
 
 export async function runList(options: ListOptions): Promise<void> {
   const { tasks } = await loadTrailReadContext(process.cwd());
-  const all = options.all === true;
-  const limit = options.limit ?? DEFAULT_LIMIT;
-  const statusFilter = options.status as TaskStatus | undefined;
-  const labelFilter = options.label;
-
-  let rows = tasks.filter((t) => all || !HIDDEN_BY_DEFAULT.has(t.status));
-  if (statusFilter !== undefined) {
-    rows = rows.filter((t) => t.status === statusFilter);
-  }
-  if (labelFilter !== undefined) {
-    rows = rows.filter((t) => t.labels.includes(labelFilter));
-  }
-
-  rows.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
-  rows = rows.slice(0, limit);
+  const rows = selectTasksForList(tasks, options);
 
   if (options.json) {
     printJson(rows.map(slimTask));

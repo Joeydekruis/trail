@@ -96,4 +96,19 @@ export class GitHubClient {
     const response = await this.request("POST", path, { body });
     return this.parseJson<{ id: number }>(response);
   }
+
+  /** Create a new issue. Returns the created issue (same shape as list/get). */
+  async createIssue(
+    owner: string,
+    repo: string,
+    input: { title: string; body?: string; labels?: string[] },
+  ): Promise<GitHubIssue> {
+    const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues`;
+    const response = await this.request("POST", path, {
+      title: input.title,
+      body: input.body ?? "",
+      labels: input.labels ?? [],
+    });
+    return this.parseJson<GitHubIssue>(response);
+  }
 }

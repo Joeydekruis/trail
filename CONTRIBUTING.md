@@ -38,4 +38,12 @@
 
 ## Project layout
 
-See `AGENTS.md` for the full project structure and patterns.
+See `AGENTS.md` for the full project structure and patterns. For specifications and ADRs, see `docs/README.md`.
+
+## Publishing `@trail-pm/cli` (maintainers)
+
+1. Update **`CHANGELOG.md`** and bump **`packages/cli/package.json`** version (and `package-lock.json` workspace entry if needed). Run `npm test && npm run typecheck && npm run build` at the repo root.
+2. Commit and push to `main`, then tag: `git tag -a vX.Y.Z -m "vX.Y.Z"` and `git push origin vX.Y.Z`.
+3. In GitHub: **Releases → Create a new release** from that tag and **publish** the release. The [release workflow](.github/workflows/release.yml) runs `npm publish --workspace=packages/cli --access public` using the **`NPM_TOKEN`** repository secret (classic token with publish rights to the `@trail-pm` scope, or a granular token for this package).
+
+To publish manually instead: `cd packages/cli && npm run build && npm publish --access public` while logged in to npm (`npm login`) or with `NPM_TOKEN` set.

@@ -18,7 +18,7 @@ No database. No backend. No heavy dependencies. Files, git, and the GitHub API.
 2. **The repo is the intelligence layer** — structured task data, dependencies, and AI context live in `.trail/`
 3. **No hidden state** — everything is versioned, inspectable, editable
 4. **AI is a first-class citizen** — tasks are structured for context assembly and execution planning
-5. **Minimal dependencies** — four runtime deps (two dev-only), no Dolt, no external database
+5. **Minimal dependencies** — three runtime packages (`zod`, `commander`, `@modelcontextprotocol/sdk`), plus dev-only build and test tooling; no Dolt, no external database
 
 ### What Trail is not
 
@@ -626,10 +626,11 @@ Uses browser `visibilitychange` API for backoff. No background daemon.
 |---|---|---|
 | `zod` | Schema validation | No |
 | `commander` | CLI argument parsing | No |
+| `@modelcontextprotocol/sdk` | MCP stdio server for editor/agent integrations | No |
 | `tsup` | Build/bundle | Yes |
 | `vitest` | Testing | Yes |
 
-Four total. Two ship to users.
+**Three** packages ship to users (`zod`, `commander`, `@modelcontextprotocol/sdk`). Build and test dependencies are dev-only.
 
 ---
 
@@ -642,7 +643,8 @@ Four total. Two ship to users.
 | `AGENTS.md` | All AI agents | How to work in this repo |
 | `CLAUDE.md` | Claude Code | Points to AGENTS.md + Claude-specific flags |
 | `CONTRIBUTING.md` | Humans | Fork, branch, PR process |
-| `README.md` | Everyone | What Trail is, commands, quick-start |
+| `README.md` | Everyone | What Trail is, installation, full command reference, MCP |
+| `docs/README.md` | Everyone | Index of specs, ADRs, and implementation plans |
 | `.cursor/rules/` | Cursor | 5 focused rule files (no plugin dependencies) |
 | `.claude/` | Claude Code | Settings + custom commands |
 | `docs/adr/` | Everyone | Architectural decisions |

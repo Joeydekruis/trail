@@ -7,6 +7,8 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   target: "node18",
+  /** Bundle MCP SDK into the CLI binary (stdio server). */
+  noExternal: ["@modelcontextprotocol/sdk"],
   banner: {
     js: "#!/usr/bin/env node",
   },

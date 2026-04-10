@@ -7,10 +7,15 @@ import { ZodError } from "zod";
 
 import { formatTrailError, type TrailError, type TrailErrorCode } from "../core/errors.js";
 import { isTaskStoreValidationError } from "../core/task-store.js";
+import { runCreate } from "./commands/create.js";
+import { runContext } from "./commands/context.js";
+import { runDepAdd, runDepRemove } from "./commands/dep.js";
 import { runDone } from "./commands/done.js";
+import { runGraph } from "./commands/graph.js";
 import { runInit } from "./commands/init.js";
 import { runList } from "./commands/list.js";
 import { runNext } from "./commands/next.js";
+import { runPromote } from "./commands/promote.js";
 import { runShow } from "./commands/show.js";
 import { runStatus } from "./commands/status.js";
 import { runSync } from "./commands/sync.js";
@@ -75,13 +80,22 @@ export async function runCli(argv: string[]): Promise<void> {
     )
     .option("--owner <name>", "GitHub repository owner (with --repo)")
     .option("--repo <name>", "GitHub repository name (with --owner)")
-    .action((opts: { preset: "solo" | "collaborative" | "offline"; owner?: string; repo?: string }) => {
-      runInit({
-        preset: opts.preset,
-        owner: opts.owner,
-        repo: opts.repo,
-      });
-    });
+    .option("--skip-agents-md", "Do not write AGENTS.md at the repository root")
+    .action(
+      (opts: {
+        preset: "solo" | "collaborative" | "offline";
+        owner?: string;
+        repo?: string;
+        skipAgentsMd?: boolean;
+      }) => {
+        runInit({
+          preset: opts.preset,
+          owner: opts.owner,
+          repo: opts.repo,
+          skipAgentsMd: opts.skipAgentsMd === true,
+        });
+      },
+    );
 
   program
     .command("sync")
@@ -193,6 +207,81 @@ export async function runCli(argv: string[]): Promise<void> {
     .action(async () => {
       const code = await runValidate();
       process.exitCode = code;
+    });
+
+  program
+    .command("create")
+    .description("Create a local draft task (not linked to GitHub until promoted)")
+    .requiredOption("--title <text>", "Task title")
+    .option("--description <text>", "Description body")
+    .addOption(
+      new Option("--type <name>", "Task type").choices(["feature", "bug", "chore", "epic"] as const),
+    )
+    .addOption(new Option("--priority <p>", "Priority").choices(["p0", "p1", "p2", "p3"] as const))
+    .action(
+      (opts: {
+        title: string;
+        description?: string;
+        type?: "feature" | "bug" | "chore" | "epic";
+        priority?: "p0" | "p1" | "p2" | "p3";
+      }) => {
+        runCreate({
+          title: opts.title,
+          description: opts.description,
+          type: opts.type,
+          priority: opts.priority,
+        });
+      },
+    );
+
+  program
+    .command("promote")
+    .description("Promote a draft task to a GitHub issue and rename the task file")
+    .argument("<id>", "Draft task id")
+    .action(async (id: string) => {
+      await runPromote({ id });
+    });
+
+  const dep = program.command("dep").description("Add or remove task dependencies");
+  dep
+    .command("add")
+    .description("Record that task A depends on task B (updates blocks/depends_on)")
+    .argument("<taskId>", "Task id")
+    .argument("<dependsOnId>", "Id of the task that must be satisfied first")
+    .action((taskId: string, dependsOnId: string) => {
+      runDepAdd(taskId, dependsOnId);
+    });
+  dep
+    .command("remove")
+    .description("Remove a dependency edge between two tasks")
+    .argument("<taskId>", "Task id")
+    .argument("<dependsOnId>", "Other task id")
+    .action((taskId: string, dependsOnId: string) => {
+      runDepRemove(taskId, dependsOnId);
+    });
+
+  program
+    .command("graph")
+    .description("Print task dependency edges")
+    .option("--json", "Print JSON array of { from, to } edges")
+    .action((opts: { json?: boolean }) => {
+      runGraph(opts);
+    });
+
+  program
+    .command("context")
+    .description("Print a compact JSON context packet for an LLM session")
+    .argument("<id>", "Task id")
+    .action((id: string) => {
+      runContext({ id });
+    });
+
+  program
+    .command("mcp")
+    .description("Run the Trail MCP server (stdio; for editor and agent integrations)")
+    .action(async () => {
+      const { runMcpServer } = await import("../mcp/run-mcp-server.js");
+      await runMcpServer();
     });
 
   await program.parseAsync(argv);
