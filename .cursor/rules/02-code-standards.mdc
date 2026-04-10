@@ -1,0 +1,26 @@
+# Code standards
+
+## TypeScript
+
+- Strict mode. No `any` — use `unknown` and narrow.
+- Zod schemas are the single source of truth for all data shapes.
+- Typed errors. Never throw bare strings.
+- Prefer `const` over `let`. Never use `var`.
+
+## Architecture
+
+- Core library in `packages/cli/src/core/` exports pure functions.
+- CLI commands in `packages/cli/src/cli/commands/` are thin wrappers that call core functions.
+- GitHub API calls go through `src/core/github-client.ts` only.
+- All file I/O happens in core modules, never in CLI command handlers.
+
+## Error handling
+
+- Every function that can fail returns a typed error or throws a typed error.
+- Never swallow errors silently.
+- User-facing errors must include what went wrong and how to fix it.
+
+## Dependencies
+
+- Do not add new dependencies without justification.
+- Runtime deps must be zero-dependency themselves (zod, commander).

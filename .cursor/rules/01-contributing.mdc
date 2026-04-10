@@ -1,0 +1,17 @@
+# Contributing rules
+
+## Branches
+
+Branch from main. Name format: `feat/<issue>-<slug>`, `fix/<issue>-<slug>`, `chore/<slug>`.
+
+## Commits
+
+- Imperative mood: "Add feature" not "Added feature"
+- One logical change per commit
+- Reference GitHub Issues: `feat(sync): add pull logic (#12)`
+
+## Pull requests
+
+- Reference the GitHub Issue
+- CI must pass (typecheck + tests)
+- No direct commits to main after MVP bootstrap

@@ -1,0 +1,23 @@
+# Testing
+
+## Framework
+
+Vitest. Co-located test files: `foo.ts` → `foo.test.ts`.
+
+## What to test
+
+- Every public function gets at least one happy-path and one error-path test.
+- Every Zod schema gets validation tests (valid input, invalid input).
+- Sync engine gets integration tests with mocked GitHub API responses.
+
+## How to run
+
+- `npm test` — run all tests once
+- `npm run test:watch` — watch mode
+- `npx vitest run packages/cli/src/path/file.test.ts` — run one file
+
+## Rules
+
+- Tests must be deterministic. No time-dependent assertions.
+- No network calls in unit tests. Mock external APIs.
+- Test the behavior, not the implementation.

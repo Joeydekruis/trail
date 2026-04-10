@@ -1,0 +1,33 @@
+# Architecture
+
+## Package boundaries
+
+| Package | Responsibility | Dependencies |
+|---|---|---|
+| `packages/cli` | CLI commands + core library | zod, commander |
+| `packages/ui` | React roadmap UI (future) | react, vite |
+
+The CLI package has this internal structure:
+
+```
+src/
+├── cli/           # CLI entry point and command definitions (thin wrappers)
+│   ├── index.ts
+│   └── commands/
+├── core/          # Business logic (sync engine, GitHub client, compiler, task store)
+├── schemas/       # Zod schemas (single source of truth for all data shapes)
+└── index.ts       # Package entry point
+```
+
+## Data flow
+
+```
+GitHub Issues ←→ sync engine ←→ .trail/tasks/*.json → compiler → snapshot.json → UI
+```
+
+## Key rules
+
+- Schemas define the contract. Core implements the logic. CLI wires it together.
+- Core functions are pure where possible. Side effects (file I/O, network) are explicit.
+- The GitHub client is the only module that makes network requests.
+- The task store is the only module that reads/writes `.trail/tasks/` files.

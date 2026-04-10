@@ -1,0 +1,21 @@
+# Trail project context
+
+Trail is a GitHub-native AI project management CLI. TypeScript + Node.js.
+
+## Key decisions (see docs/adr/ for full details)
+
+- GitHub Issues is the remote source of truth (no GitHub Projects)
+- Local task files are JSON, validated with Zod
+- Two-package monorepo: `packages/cli` (CLI + core) and `packages/ui` (opt-in)
+- Sync engine has an ownership model: GitHub owns some fields, local owns others
+- Minimal dependencies: zod, commander (runtime); tsup, vitest (dev)
+
+## Spec
+
+The full design spec is at `docs/superpowers/specs/2026-04-10-trail-design.md`. Read it before making architectural decisions.
+
+## Quick commands
+
+- `npm test` — run all tests
+- `npm run typecheck` — check types
+- `npm run build` — build CLI
