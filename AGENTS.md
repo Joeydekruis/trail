@@ -7,6 +7,8 @@ TypeScript, Node.js, npm workspaces monorepo.
 
 Spec: `docs/superpowers/specs/2026-04-10-trail-design.md`
 
+CLI command overview: [README.md](README.md#mvp-a-commands).
+
 ## Project structure
 
 ```
