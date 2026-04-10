@@ -421,16 +421,136 @@ Both work from the same npm package via the `bin` field in `package.json`.
 
 ### Release process
 
-GitHub Actions triggered by git tags:
+Releases are triggered by **GitHub Releases**, not raw git tags. This gives us a changelog, release notes, and downloadable artifacts in one place.
 
-1. Update version in `package.json`
-2. `git tag v1.0.0`
-3. `git push --tags`
-4. GitHub Actions: test → build (tsup) → publish to npm
+**Release workflow:**
+
+1. A maintainer creates a **GitHub Release** via the GitHub UI or `gh release create`
+2. The release tag follows semver: `v1.0.0`, `v1.1.0`, `v0.3.0-beta.1`
+3. Release notes are written in the GitHub Release body (changelog for this version)
+4. Creating the release triggers a **GitHub Actions workflow** that:
+   - Runs the full test suite
+   - Type-checks the codebase
+   - Builds with tsup
+   - Publishes to npm (`npm publish`)
+   - Attaches build artifacts to the GitHub Release
+5. If any step fails, the publish is aborted and the release is marked as failed
+
+**GitHub Actions workflow (`.github/workflows/release.yml`):**
+
+```
+trigger:  release created (published)
+    ↓
+checkout code at release tag
+    ↓
+npm ci (install deps)
+    ↓
+npm run typecheck
+    ↓
+npm test
+    ↓
+npm run build (tsup)
+    ↓
+npm publish (to npm registry)
+    ↓
+attach built artifacts to GitHub Release
+```
+
+**npm authentication:** Uses an `NPM_TOKEN` stored as a GitHub Actions secret. Only the CI pipeline publishes — no human runs `npm publish` manually.
+
+**Versioning convention:**
+- `v0.x.x` — pre-1.0 development (breaking changes allowed in minor bumps)
+- `v1.0.0` — first stable release
+- Patch (`v1.0.1`) — bug fixes
+- Minor (`v1.1.0`) — new features, backwards-compatible
+- Major (`v2.0.0`) — breaking changes
+
+**Changelog:** Each GitHub Release contains a human-written summary of what changed. For detailed history, contributors and users can browse the release list on GitHub. No separate `CHANGELOG.md` file — GitHub Releases is the single source of truth for release notes.
 
 ---
 
-## 9. Branch workflow
+## 9. Development workflow (this repo)
+
+### Branch strategy
+
+**`main` is protected.** No direct commits to main except during initial MVP bootstrap.
+
+| Phase | Direct commits to main? | Rationale |
+|---|---|---|
+| MVP bootstrap (initial scaffolding) | Yes | Getting the skeleton up fast, no reviewers yet |
+| Post-MVP (once the project has structure) | No — PR required | All changes go through pull requests |
+
+### Contribution flow
+
+```
+1. Pick a GitHub Issue (or create one)
+2. Create a branch: feat/<issue-number>-<slug>, fix/<issue-number>-<slug>, chore/<slug>
+3. Implement on the branch
+4. Open a Pull Request targeting main
+5. PR description references the GitHub Issue (e.g. "Closes #12")
+6. CI runs: typecheck + test + lint
+7. Review + approve
+8. Merge (squash or merge commit — decided per-PR)
+9. GitHub Issue auto-closes via the PR reference
+```
+
+### Branch naming
+
+| Type | Format | Example |
+|---|---|---|
+| Feature | `feat/<issue>-<slug>` | `feat/12-sync-engine` |
+| Bug fix | `fix/<issue>-<slug>` | `fix/35-conflict-resolution` |
+| Chore | `chore/<slug>` | `chore/update-deps` |
+| Docs | `docs/<slug>` | `docs/readme-commands` |
+
+### Pull request requirements
+
+- References a GitHub Issue in the description
+- CI passes (typecheck, tests, lint)
+- At minimum one approval (once multiple contributors exist)
+- No secrets, no generated artifacts, no large binaries
+
+### CI pipeline (`.github/workflows/ci.yml`)
+
+Runs on every push and PR:
+
+```
+trigger: push to any branch, PR to main
+    ↓
+npm ci
+    ↓
+npm run typecheck (tsc --noEmit)
+    ↓
+npm test (vitest)
+    ↓
+npm run lint (if configured)
+    ↓
+report: pass / fail
+```
+
+### How development connects to releases
+
+```
+Issue #12 created
+    ↓
+Branch: feat/12-sync-engine
+    ↓
+PR opened → CI passes → reviewed → merged to main
+    ↓
+Issue #12 auto-closed
+    ↓
+... more PRs merged ...
+    ↓
+Maintainer creates GitHub Release v0.1.0
+    ↓
+Release workflow: test → build → publish to npm
+    ↓
+Users can now `npx trail@0.1.0 init`
+```
+
+---
+
+## 10. Branch workflow (user repos)
 
 ### Key facts
 
@@ -448,7 +568,7 @@ GitHub Actions triggered by git tags:
 
 ---
 
-## 10. UI design
+## 11. UI design
 
 ### Installation
 
@@ -488,7 +608,7 @@ Uses browser `visibilitychange` API for backoff. No background daemon.
 
 ---
 
-## 11. Security and privacy
+## 12. Security and privacy
 
 ### Hard rules
 
@@ -513,7 +633,7 @@ Four total. Two ship to users.
 
 ---
 
-## 12. Contributor experience
+## 13. Contributor experience
 
 ### Key files
 
@@ -550,7 +670,7 @@ Four total. Two ship to users.
 
 ---
 
-## 13. MVP milestones
+## 14. MVP milestones
 
 ### MVP A — The sync loop
 
@@ -594,7 +714,7 @@ Four total. Two ship to users.
 
 ---
 
-## 14. Config schema
+## 15. Config schema
 
 `.trail/config.json`:
 
