@@ -8,6 +8,10 @@ import { ZodError } from "zod";
 import { formatTrailError, type TrailError, type TrailErrorCode } from "../core/errors.js";
 import { isTaskStoreValidationError } from "../core/task-store.js";
 import { runInit } from "./commands/init.js";
+import { runList } from "./commands/list.js";
+import { runNext } from "./commands/next.js";
+import { runShow } from "./commands/show.js";
+import { runStatus } from "./commands/status.js";
 import { runSync } from "./commands/sync.js";
 
 function readCliVersion(): string {
@@ -83,6 +87,61 @@ export async function runCli(argv: string[]): Promise<void> {
     .option("--push", "Only push to GitHub")
     .action(async (opts: { pull?: boolean; push?: boolean }) => {
       await runSync({ pull: opts.pull, push: opts.push });
+    });
+
+  program
+    .command("list")
+    .description("List tasks (excludes done/cancelled unless --all)")
+    .option("--all", "Include done and cancelled tasks")
+    .addOption(
+      new Option("--limit <n>", "Max tasks to show")
+        .default(25)
+        .argParser((v) => {
+          const n = parseInt(v, 10);
+          if (Number.isNaN(n) || n < 0) {
+            throw new Error("--limit must be a non-negative integer");
+          }
+          return n;
+        }),
+    )
+    .option("--status <status>", "Filter by status")
+    .option("--label <label>", "Filter by label (must appear in task.labels)")
+    .option("--json", "Print JSON array of slim task objects")
+    .action(
+      async (opts: {
+        all?: boolean;
+        limit: number;
+        status?: string;
+        label?: string;
+        json?: boolean;
+      }) => {
+        await runList(opts);
+      },
+    );
+
+  program
+    .command("show")
+    .description("Show one task by id")
+    .argument("<id>", "Task id")
+    .option("--json", "Print full task JSON")
+    .action(async (id: string, opts: { json?: boolean }) => {
+      await runShow({ id, json: opts.json });
+    });
+
+  program
+    .command("status")
+    .description("Task counts by status and last sync time")
+    .option("--json", "Print JSON")
+    .action(async (opts: { json?: boolean }) => {
+      await runStatus(opts);
+    });
+
+  program
+    .command("next")
+    .description("Pick the next actionable task by priority and id")
+    .option("--json", "Print full task JSON or null")
+    .action(async (opts: { json?: boolean }) => {
+      await runNext(opts);
     });
 
   await program.parseAsync(argv);
