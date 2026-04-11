@@ -9,8 +9,8 @@
     "test": "npm run test --workspace=packages/cli",
     "typecheck": "npm run typecheck --workspace=packages/cli",
     "lint": "npm run lint --workspace=packages/cli",
-    "ui:dev": "npm run dev:all --workspace=packages/ui",
-    "ui:server": "npm run server --workspace=packages/ui"
+    "ui:dev": "npm --prefix packages/ui run dev:all",
+    "ui:server": "npm --prefix packages/ui run server"
   },
   "engines": {
     "node": ">=22.0.0"
