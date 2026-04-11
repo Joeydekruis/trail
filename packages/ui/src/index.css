@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+@layer base {
+  .field-select {
+    @apply w-full rounded-md border border-[#1e2d3d] bg-[#0a0f1a] px-2 py-1.5 text-sm text-[#e2e8f0] focus:border-blue-500 focus:outline-none;
+  }
+
+  .field-input {
+    @apply w-full rounded-md border border-[#1e2d3d] bg-[#0a0f1a] px-2 py-1.5 text-sm text-[#e2e8f0] placeholder-[#8b9cb6]/50 focus:border-blue-500 focus:outline-none;
+  }
+}
