@@ -8,8 +8,12 @@ import {
   TYPE_LABELS,
   ESTIMATE_LABELS,
 } from "@/lib/constants";
-import type { TaskPriority, TaskStatus, TaskType } from "@/types/task";
-import type { TaskEstimate } from "@/types/task";
+import type {
+  TaskEstimate,
+  TaskPriority,
+  TaskStatus,
+  TaskType,
+} from "@/types/task";
 
 const fieldInputClass =
   "field-input w-full rounded-md border border-[#1e2d3d] bg-[#0a0f1a] px-2 py-1.5 text-sm text-[#e2e8f0] focus:border-blue-500 focus:outline-none";
@@ -96,13 +100,14 @@ export function TaskForm({ open, onOpenChange }: TaskFormProps) {
             }
           }}
         >
-          <Dialog.Title className="sr-only">New Task</Dialog.Title>
           <Dialog.Description className="sr-only">
             Create a new task by filling in the form below.
           </Dialog.Description>
 
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-[#e2e8f0]">New Task</h2>
+            <Dialog.Title className="text-lg font-semibold text-[#e2e8f0]">
+              New Task
+            </Dialog.Title>
             <Dialog.Close
               type="button"
               className="text-[#8b9cb6] hover:text-[#e2e8f0]"
