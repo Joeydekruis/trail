@@ -1,6 +1,6 @@
 {
   "name": "@trail-pm/cli",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "description": "GitHub-native AI project management CLI",
   "type": "module",
   "files": [

@@ -1,6 +1,6 @@
 {
   "name": "@trail-pm/ui",
-  "version": "0.1.1",
+  "version": "0.1.9",
   "description": "Trail local roadmap UI (React + Hono API)",
   "type": "module",
   "files": [
