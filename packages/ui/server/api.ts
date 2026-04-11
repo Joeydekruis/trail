@@ -3,16 +3,17 @@ import path from "node:path";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
-import { trailPaths, type TrailPaths } from "../../cli/src/core/paths.js";
 import {
+  trailPaths,
+  type TrailPaths,
   loadAllTasks,
   findTaskFileById,
   writeTaskFile,
-} from "../../cli/src/core/task-store.js";
-import { rebuildSnapshot } from "../../cli/src/core/rebuild-snapshot.js";
-import { generateDraftId } from "../../cli/src/core/draft-id.js";
-import { TaskSchema, type Task } from "../../cli/src/schemas/task.js";
-import { TrailConfigSchema } from "../../cli/src/schemas/config.js";
+  rebuildSnapshot,
+  generateDraftId,
+  TaskSchema,
+  TrailConfigSchema,
+} from "@trail-pm/cli/lib";
 
 export function createApi(root: string): Hono {
   const app = new Hono();
