@@ -29,9 +29,9 @@ function AppContent() {
       onNewTask={() => setShowCreateModal(true)}
       onSelectTask={(id) => setSelectedTaskId(id)}
     >
-      {(view) => (
+      {(view, filteredTasks) => (
         <div className="text-[#8b9cb6] text-sm">
-          View: {view} — {tasks.length} tasks loaded
+          View: {view} — {filteredTasks.length} of {tasks.length} tasks
         </div>
       )}
     </AppLayout>
