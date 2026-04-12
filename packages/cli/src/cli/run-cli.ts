@@ -13,6 +13,7 @@ import { runDepAdd, runDepRemove } from "./commands/dep.js";
 import { runDone } from "./commands/done.js";
 import { runGraph } from "./commands/graph.js";
 import { runInit } from "./commands/init.js";
+import { promptPresetWhenInteractive } from "./prompt-preset.js";
 import { runList } from "./commands/list.js";
 import { runNext } from "./commands/next.js";
 import { runPromote } from "./commands/promote.js";
@@ -74,22 +75,31 @@ export async function runCli(argv: string[]): Promise<void> {
     .command("init")
     .description("Initialize a Trail project in the current git repository")
     .addOption(
-      new Option("--preset <name>", "Sync preset")
-        .choices(["solo", "collaborative", "offline"] as const)
-        .default("solo"),
+      new Option(
+        "--preset <name>",
+        "Sync preset: solo | collaborative | offline (omit to choose in the terminal)",
+      ).choices(["solo", "collaborative", "offline"] as const),
     )
     .option("--owner <name>", "GitHub repository owner (with --repo)")
     .option("--repo <name>", "GitHub repository name (with --owner)")
     .option("--skip-agents-md", "Do not write AGENTS.md at the repository root")
     .action(
-      (opts: {
-        preset: "solo" | "collaborative" | "offline";
+      async (opts: {
+        preset?: "solo" | "collaborative" | "offline";
         owner?: string;
         repo?: string;
         skipAgentsMd?: boolean;
       }) => {
+        let preset: "solo" | "collaborative" | "offline";
+        if (opts.preset !== undefined) {
+          preset = opts.preset;
+        } else if (process.stdin.isTTY) {
+          preset = await promptPresetWhenInteractive();
+        } else {
+          preset = "solo";
+        }
         runInit({
-          preset: opts.preset,
+          preset,
           owner: opts.owner,
           repo: opts.repo,
           skipAgentsMd: opts.skipAgentsMd === true,

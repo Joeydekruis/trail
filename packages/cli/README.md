@@ -4,28 +4,21 @@
 
 ## Install
 
-**Recommended:** add it to your app repo, then invoke with **`npx trail`** (local install does **not** put `trail` on your shell `PATH`):
+**Recommended:** dev dependency in your app repo, then **`npx trail`**:
 
 ```bash
-npm install @trail-pm/cli
-# or: npm install -D @trail-pm/cli
+npm install -D @trail-pm/cli
 npx trail --help
-npx trail init --preset solo
+npx trail init
 ```
 
-**Global (optional):** `npm install -g @trail-pm/cli` → then **`trail`** works as a normal command.
+**Alternative:** `npm install -g @trail-pm/cli` so the `trail` binary is on your `PATH`.
 
-**Without installing:** use **`npx @trail-pm/cli <command>`** each time.
-
-Installing the package does **not** create `.trail/`; run **`npx trail init`** inside a git repo. Full guide:
-
-**https://github.com/joeydekruis/trail#installation**
+Full instructions: **https://github.com/joeydekruis/trail#installation**
 
 ## Usage
 
-```bash
-npx trail init --preset solo
-```
+Run **`npx trail init`** in a git repo; the CLI will ask for a sync preset unless you pass **`--preset`**.
 
 ## License
 

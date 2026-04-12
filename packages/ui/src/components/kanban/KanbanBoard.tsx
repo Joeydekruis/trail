@@ -65,15 +65,24 @@ export function KanbanBoard({ tasks, onTaskClick, showCancelled }: KanbanBoardPr
     setActiveId(String(event.active.id));
   }
 
+  function resolveDropStatus(overId: string | undefined): TaskStatus | null {
+    if (!overId) return null;
+    if (columns.includes(overId as TaskStatus)) {
+      return overId as TaskStatus;
+    }
+    const hit = tasks.find((t) => t.id === overId);
+    return hit ? hit.status : null;
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     setActiveId(null);
     const { active, over } = event;
     if (!over) return;
 
     const taskId = String(active.id);
-    const newStatus = String(over.id) as TaskStatus;
+    const newStatus = resolveDropStatus(String(over.id));
     const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.status === newStatus) return;
+    if (!task || newStatus === null || task.status === newStatus) return;
 
     if (columns.includes(newStatus)) {
       updateTask.mutate({ id: taskId, data: { status: newStatus } });

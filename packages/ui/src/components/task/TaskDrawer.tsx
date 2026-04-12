@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   X,
   ExternalLink,
@@ -6,12 +7,15 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { TypeBadge, PriorityBadge, StatusBadge } from "@/components/shared/Badge";
 import { ProgressBar } from "@/components/shared/ProgressBar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { MarkdownBody } from "@/components/shared/MarkdownBody";
 import { useUpdateTask, useDeleteTask } from "@/api/hooks";
+import { api } from "@/api/client";
 import {
   STATUS_LABELS,
   PRIORITY_LABELS,
@@ -33,6 +37,47 @@ interface TaskDrawerProps {
   onNavigateTask: (taskId: string) => void;
 }
 
+function DocPeekPanel({ path, onClose }: { path: string; onClose: () => void }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["repo-file", path],
+    queryFn: () => api.getRepoFile(path),
+  });
+
+  return (
+    <aside className="flex w-[min(380px,90vw)] flex-shrink-0 flex-col border-l border-[#1e2d3d] bg-[#0d1420]">
+      <div className="flex items-center justify-between gap-2 border-b border-[#1e2d3d] px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <FileText className="h-4 w-4 shrink-0 text-[#8b9cb6]" />
+          <span className="truncate font-mono text-xs text-[#8b9cb6]" title={path}>
+            {path}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 text-[#8b9cb6] hover:text-[#e2e8f0]"
+          aria-label="Close documentation panel"
+        >
+          <X size={18} />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        {isLoading && (
+          <p className="text-sm text-[#8b9cb6]">Loading…</p>
+        )}
+        {isError && (
+          <p className="text-sm text-red-400/90">
+            Could not read this path from the repository.
+          </p>
+        )}
+        {data?.content !== undefined && (
+          <MarkdownBody markdown={data.content} />
+        )}
+      </div>
+    </aside>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -43,6 +88,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
+  const [docPreviewPath, setDocPreviewPath] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editStatus, setEditStatus] = useState<TaskStatus>(task.status);
   const [editPriority, setEditPriority] = useState<TaskPriority | "">(task.priority ?? "");
@@ -61,6 +107,7 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
   const deleteTask = useDeleteTask();
 
   useEffect(() => {
+    setDocPreviewPath(null);
     setEditTitle(task.title);
     setEditStatus(task.status);
     setEditPriority(task.priority ?? "");
@@ -130,8 +177,12 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
         onClick={onClose}
       />
 
-      {/* Drawer panel */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 flex w-[420px] flex-col border-l border-[#1e2d3d] bg-[#111827]">
+      {/* Drawer stack: optional doc panel (left) + task panel */}
+      <div className="fixed right-0 top-0 bottom-0 z-50 flex flex-row">
+        {docPreviewPath ? (
+          <DocPeekPanel path={docPreviewPath} onClose={() => setDocPreviewPath(null)} />
+        ) : null}
+        <div className="flex w-[min(420px,100vw)] flex-col border-l border-[#1e2d3d] bg-[#111827]">
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Header */}
@@ -289,11 +340,9 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
 
           {/* Description */}
           {task.description && (
-            <div className="space-y-1">
+            <div className="space-y-2">
               <span className="text-xs font-medium text-[#8b9cb6]">Description</span>
-              <p className="text-sm text-[#c9d1d9] whitespace-pre-wrap">
-                {task.description}
-              </p>
+              <MarkdownBody markdown={task.description} />
             </div>
           )}
 
@@ -426,9 +475,17 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
           {task.refs.length > 0 && (
             <div className="space-y-1">
               <span className="text-xs font-medium text-[#8b9cb6]">Refs</span>
-              <ul className="space-y-0.5">
+              <ul className="space-y-1">
                 {task.refs.map((ref, i) => (
-                  <li key={i} className="text-xs font-mono text-[#c9d1d9]">{ref.path}</li>
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => setDocPreviewPath(ref.path)}
+                      className="text-left text-xs font-mono text-blue-400 hover:underline"
+                    >
+                      {ref.path}
+                    </button>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -464,6 +521,7 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
           >
             Update
           </button>
+        </div>
         </div>
       </div>
 

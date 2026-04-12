@@ -16,6 +16,10 @@ interface AppLayoutProps {
   repoUrl: string | null;
   onNewTask: () => void;
   onSelectTask: (taskId: string) => void;
+  onSync: () => void;
+  syncPending: boolean;
+  syncDisabled: boolean;
+  lastSyncedAt: string | null;
   children: (view: View, filteredTasks: Task[]) => React.ReactNode;
 }
 
@@ -24,6 +28,10 @@ export function AppLayout({
   repoUrl,
   onNewTask,
   onSelectTask,
+  onSync,
+  syncPending,
+  syncDisabled,
+  lastSyncedAt,
   children,
 }: AppLayoutProps) {
   const [activeView, setActiveView] = useState<View>("kanban");
@@ -53,9 +61,14 @@ export function AppLayout({
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar
+          tasks={tasks}
           onNewTask={onNewTask}
           repoUrl={repoUrl}
           onSearchSelect={onSelectTask}
+          onSync={onSync}
+          syncPending={syncPending}
+          syncDisabled={syncDisabled}
+          lastSyncedAt={lastSyncedAt}
         />
 
         <main className="flex-1 overflow-auto p-4">

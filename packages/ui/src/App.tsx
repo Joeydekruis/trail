@@ -6,7 +6,7 @@ import { ListView } from "@/components/list/ListView";
 import { TaskDrawer } from "@/components/task/TaskDrawer";
 import { TaskForm } from "@/components/task/TaskForm";
 import { ToastProvider } from "@/components/shared/Toast";
-import { useTasks, useConfig } from "@/api/hooks";
+import { useTasks, useConfig, useSync } from "@/api/hooks";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,8 +18,12 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { data: tasks = [] } = useTasks();
-  const { data: config } = useConfig();
+  const { data: configPayload } = useConfig();
+  const config = configPayload?.config;
+  const lastFullSyncAt = configPayload?.last_full_sync_at ?? null;
+  const pollMs = Math.max(5, config?.sync.ui_poll_interval_seconds ?? 30) * 1000;
+  const { data: tasks = [] } = useTasks(pollMs);
+  const syncMutation = useSync();
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -28,6 +32,8 @@ function AppContent() {
   const repoUrl = config
     ? `https://github.com/${config.github.owner}/${config.github.repo}`
     : null;
+
+  const syncDisabled = config?.sync.preset === "offline";
 
   const selectedTask = selectedTaskId
     ? tasks.find((t) => t.id === selectedTaskId) ?? null
@@ -40,6 +46,10 @@ function AppContent() {
         repoUrl={repoUrl}
         onNewTask={() => setShowCreateModal(true)}
         onSelectTask={setSelectedTaskId}
+        onSync={() => syncMutation.mutate()}
+        syncPending={syncMutation.isPending}
+        syncDisabled={syncDisabled}
+        lastSyncedAt={lastFullSyncAt}
       >
         {(view, filteredTasks) => (
           <div className="flex flex-col gap-3">

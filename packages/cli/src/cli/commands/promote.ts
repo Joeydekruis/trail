@@ -4,10 +4,10 @@ import path from "node:path";
 import { resolveGitHubToken } from "../../core/auth.js";
 import type { TrailError } from "../../core/errors.js";
 import { GitHubClient } from "../../core/github-client.js";
-import { issueToTask } from "../../core/github-mapper.js";
+import { linkDraftToNewGitHubIssue } from "../../core/link-draft-issue.js";
 import { findTrailRoot, trailPaths } from "../../core/paths.js";
 import { rebuildSnapshot } from "../../core/rebuild-snapshot.js";
-import { findTaskFileById, writeTaskFile } from "../../core/task-store.js";
+import { findTaskFileById } from "../../core/task-store.js";
 import { TrailConfigSchema } from "../../schemas/config.js";
 export async function runPromote(options: { id: string }): Promise<void> {
   const root = findTrailRoot(process.cwd());
@@ -51,19 +51,19 @@ export async function runPromote(options: { id: string }): Promise<void> {
   const client = new GitHubClient(tokenResult.token);
   const { owner, repo } = config.github;
 
-  const issue = await client.createIssue(owner, repo, {
-    title: draft.title,
-    body: draft.description || "",
-    labels: draft.labels,
+  const promoted = await linkDraftToNewGitHubIssue({
+    client,
+    owner,
+    repo,
+    draft,
+    draftFilePath: resolved.filePath,
+    tasksDir: paths.tasksDir,
+    now,
   });
 
-  const promoted = issueToTask(issue, draft, now);
-  fs.unlinkSync(resolved.filePath);
-  const newPath = path.join(paths.tasksDir, `${issue.number}.json`);
-  writeTaskFile(newPath, promoted);
   rebuildSnapshot(paths, now);
 
-  console.log(`Promoted ${draft.id} → GitHub issue #${issue.number}`);
-  console.log(`  File: ${newPath}`);
-  console.log(`  URL: ${issue.html_url}`);
+  console.log(`Promoted ${draft.id} → GitHub issue #${promoted.github?.issue_number}`);
+  console.log(`  File: ${path.join(paths.tasksDir, `${promoted.github?.issue_number}.json`)}`);
+  console.log(`  URL: ${promoted.github?.url}`);
 }

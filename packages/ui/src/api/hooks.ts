@@ -1,14 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 
-export function useTasks() {
+export function useTasks(pollIntervalMs: number) {
   return useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
       const res = await api.getTasks();
       return res.tasks;
     },
-    refetchInterval: 30_000,
+    refetchInterval: pollIntervalMs > 0 ? pollIntervalMs : false,
   });
 }
 
@@ -58,10 +58,18 @@ export function useDeleteTask() {
 export function useConfig() {
   return useQuery({
     queryKey: ["config"],
-    queryFn: async () => {
-      const res = await api.getConfig();
-      return res.config;
-    },
+    queryFn: () => api.getConfig(),
     staleTime: 60_000,
+  });
+}
+
+export function useSync() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.sync(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["config"] });
+    },
   });
 }

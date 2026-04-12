@@ -42,5 +42,16 @@ export const api = {
   deleteTask: (id: string) =>
     request<{ deleted: boolean }>(`/tasks/${id}`, { method: "DELETE" }),
   getConfig: () =>
-    request<{ config: import("@/types/task").TrailConfig }>("/config"),
+    request<{
+      config: import("@/types/task").TrailConfig;
+      last_full_sync_at: string | null;
+    }>("/config"),
+  sync: () =>
+    request<{ ok: boolean; last_full_sync_at: string }>("/sync", {
+      method: "POST",
+    }),
+  getRepoFile: (filePath: string) =>
+    request<{ path: string; content: string }>(
+      `/repo-file?path=${encodeURIComponent(filePath)}`,
+    ),
 };

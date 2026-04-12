@@ -167,6 +167,52 @@ describe("sync", () => {
     });
   });
 
+  it("pushSync respects onlyTaskIds and skips other linked tasks", async () => {
+    const updateIssue = vi.fn().mockResolvedValue(issue(2));
+    const client = mockClient({ updateIssue });
+
+    const linked: Task = {
+      id: "2",
+      title: "Push me",
+      description: "Desc",
+      status: "todo",
+      type: "feature",
+      labels: ["a"],
+      depends_on: [],
+      blocks: [],
+      refs: [],
+      github: {
+        issue_number: 2,
+        synced_at: "2026-04-10T10:00:00.000Z",
+        url: "https://github.com/o/r/issues/2",
+      },
+      created_at: "2026-04-01T10:00:00.000Z",
+      updated_at: "2026-04-01T10:00:00.000Z",
+    };
+
+    const other: Task = {
+      ...linked,
+      id: "9",
+      title: "Skip",
+      github: {
+        issue_number: 9,
+        synced_at: "2026-04-10T10:00:00.000Z",
+        url: "https://github.com/o/r/issues/9",
+      },
+    };
+
+    await pushSync({
+      client,
+      owner: "o",
+      repo: "r",
+      tasks: [linked, other],
+      onlyTaskIds: new Set(["2"]),
+    });
+
+    expect(updateIssue).toHaveBeenCalledTimes(1);
+    expect(updateIssue).toHaveBeenCalledWith("o", "r", 2, expect.any(Object));
+  });
+
   it("syncFull pulls and writes snapshot without calling updateIssue", async () => {
     const listIssues = vi.fn().mockResolvedValue([issue(5)]);
     const updateIssue = vi.fn();

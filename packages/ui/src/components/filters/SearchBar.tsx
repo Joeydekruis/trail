@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
-import { useTasks } from "@/api/hooks";
 import { StatusBadge, TypeBadge } from "@/components/shared/Badge";
 import type { Task } from "@/types/task";
 
 interface SearchBarProps {
+  tasks: Task[];
   onSelect: (taskId: string) => void;
 }
 
@@ -23,8 +23,7 @@ function taskMatchesQuery(task: Task, q: string): boolean {
   return false;
 }
 
-export function SearchBar({ onSelect }: SearchBarProps) {
-  const { data: tasks = [] } = useTasks();
+export function SearchBar({ tasks, onSelect }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [open, setOpen] = useState(false);

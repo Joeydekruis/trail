@@ -13,13 +13,54 @@ import {
   generateDraftId,
   TaskSchema,
   TrailConfigSchema,
+  type Task,
+  resolveGitHubToken,
+  GitHubClient,
+  taskToIssueUpdate,
+  fullSync,
+  writeLastFullSyncAt,
+  linkDraftToNewGitHubIssue,
 } from "@trail-pm/cli/lib";
+
+function isPathInsideRepo(repoRoot: string, absolutePath: string): boolean {
+  const root = path.resolve(repoRoot);
+  const candidate = path.resolve(absolutePath);
+  const rel = path.relative(root, candidate);
+  return rel !== "" && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel);
+}
+
+function resolveSafeRepoPath(repoRoot: string, rel: string): string | null {
+  const trimmed = rel.trim().replace(/^\/+/, "");
+  if (trimmed === "" || trimmed.includes("\0")) {
+    return null;
+  }
+  const normalized = path.normalize(trimmed);
+  if (normalized.startsWith(`..${path.sep}`) || normalized === "..") {
+    return null;
+  }
+  const full = path.resolve(repoRoot, normalized);
+  if (!isPathInsideRepo(repoRoot, full)) {
+    return null;
+  }
+  return full;
+}
+
+function isLinkedTask(
+  task: Task,
+): task is Task & { github: NonNullable<Task["github"]> } {
+  return task.github != null && typeof task.github === "object";
+}
 
 export function createApi(root: string): Hono {
   const app = new Hono();
   const paths: TrailPaths = trailPaths(root);
 
   app.use("/api/*", cors());
+
+  function readConfig() {
+    const raw = fs.readFileSync(paths.configPath, "utf8");
+    return TrailConfigSchema.parse(JSON.parse(raw));
+  }
 
   // ── GET /api/tasks ────────────────────────────────────────────────
   app.get("/api/tasks", (c) => {
@@ -39,7 +80,8 @@ export function createApi(root: string): Hono {
   // ── POST /api/tasks ───────────────────────────────────────────────
   app.post("/api/tasks", async (c) => {
     const body = await c.req.json();
-    const now = new Date().toISOString();
+    const now = new Date();
+    const nowIso = now.toISOString();
     const id = generateDraftId();
 
     const raw: Record<string, unknown> = {
@@ -51,8 +93,8 @@ export function createApi(root: string): Hono {
       depends_on: body.depends_on ?? [],
       blocks: body.blocks ?? [],
       refs: body.refs ?? [],
-      created_at: now,
-      updated_at: now,
+      created_at: nowIso,
+      updated_at: nowIso,
     };
 
     if (body.description !== undefined) raw.description = body.description;
@@ -69,10 +111,39 @@ export function createApi(root: string): Hono {
       );
     }
 
-    const filePath = path.join(paths.tasksDir, `${id}.json`);
-    writeTaskFile(filePath, parsed.data);
-    rebuildSnapshot(paths);
+    const draftPath = path.join(paths.tasksDir, `${id}.json`);
+    writeTaskFile(draftPath, parsed.data);
 
+    const config = readConfig();
+    if (config.sync.preset === "collaborative") {
+      const tokenResult = resolveGitHubToken();
+      if (!tokenResult.ok) {
+        rebuildSnapshot(paths);
+        return c.json(
+          {
+            task: parsed.data,
+            warning:
+              "Task saved locally only: set GITHUB_TOKEN or run `gh auth login` to create the GitHub issue in collaborative mode.",
+          },
+          201,
+        );
+      }
+      const client = new GitHubClient(tokenResult.token);
+      const { owner, repo } = config.github;
+      const promoted = await linkDraftToNewGitHubIssue({
+        client,
+        owner,
+        repo,
+        draft: parsed.data,
+        draftFilePath: draftPath,
+        tasksDir: paths.tasksDir,
+        now,
+      });
+      rebuildSnapshot(paths, now);
+      return c.json({ task: promoted }, 201);
+    }
+
+    rebuildSnapshot(paths);
     return c.json({ task: parsed.data }, 201);
   });
 
@@ -100,10 +171,36 @@ export function createApi(root: string): Hono {
       );
     }
 
-    writeTaskFile(result.filePath, parsed.data);
-    rebuildSnapshot(paths);
+    let task = parsed.data;
+    writeTaskFile(result.filePath, task);
 
-    return c.json({ task: parsed.data });
+    const config = readConfig();
+    if (config.sync.preset === "collaborative" && isLinkedTask(task)) {
+      const tokenResult = resolveGitHubToken();
+      if (tokenResult.ok) {
+        const client = new GitHubClient(tokenResult.token);
+        const { owner, repo } = config.github;
+        await client.updateIssue(
+          owner,
+          repo,
+          task.github.issue_number,
+          taskToIssueUpdate(task) as Record<string, unknown>,
+        );
+        const synced = {
+          ...task,
+          github: {
+            ...task.github,
+            synced_at: new Date().toISOString(),
+          },
+        };
+        const revalidated = TaskSchema.parse(synced);
+        task = revalidated;
+        writeTaskFile(result.filePath, task);
+      }
+    }
+
+    rebuildSnapshot(paths);
+    return c.json({ task });
   });
 
   // ── DELETE /api/tasks/:id ─────────────────────────────────────────
@@ -130,9 +227,60 @@ export function createApi(root: string): Hono {
           500,
         );
       }
-      return c.json({ config: parsed.data });
+      const last = parsed.data.last_full_sync_at ?? null;
+      return c.json({
+        config: parsed.data,
+        last_full_sync_at: last,
+      });
     } catch {
       return c.json({ error: "Config not found" }, 404);
+    }
+  });
+
+  // ── POST /api/sync ─────────────────────────────────────────────────
+  app.post("/api/sync", async (c) => {
+    const config = readConfig();
+    if (config.sync.preset === "offline") {
+      return c.json({ error: "Cannot sync in offline mode" }, 400);
+    }
+    const tokenResult = resolveGitHubToken();
+    if (!tokenResult.ok) {
+      return c.json(
+        {
+          error: "GitHub authentication required",
+          hint: "hint" in tokenResult.error ? tokenResult.error.hint : undefined,
+        },
+        401,
+      );
+    }
+    const client = new GitHubClient(tokenResult.token);
+    const { owner, repo } = config.github;
+    const now = new Date();
+    await fullSync({
+      client,
+      owner,
+      repo,
+      tasksDir: paths.tasksDir,
+      snapshotPath: paths.snapshotPath,
+      now,
+    });
+    const iso = new Date().toISOString();
+    writeLastFullSyncAt(paths, iso);
+    return c.json({ ok: true, last_full_sync_at: iso });
+  });
+
+  // ── GET /api/repo-file ─────────────────────────────────────────────
+  app.get("/api/repo-file", (c) => {
+    const rel = c.req.query("path") ?? "";
+    const abs = resolveSafeRepoPath(root, rel);
+    if (!abs || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) {
+      return c.json({ error: "Not found" }, 404);
+    }
+    try {
+      const content = fs.readFileSync(abs, "utf8");
+      return c.json({ path: rel, content });
+    } catch {
+      return c.json({ error: "Failed to read file" }, 500);
     }
   });
 

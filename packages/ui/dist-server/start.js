@@ -19,12 +19,46 @@ import {
   rebuildSnapshot,
   generateDraftId,
   TaskSchema,
-  TrailConfigSchema
+  TrailConfigSchema,
+  resolveGitHubToken,
+  GitHubClient,
+  taskToIssueUpdate,
+  fullSync,
+  writeLastFullSyncAt,
+  linkDraftToNewGitHubIssue
 } from "@trail-pm/cli/lib";
+function isPathInsideRepo(repoRoot, absolutePath) {
+  const root2 = path.resolve(repoRoot);
+  const candidate = path.resolve(absolutePath);
+  const rel = path.relative(root2, candidate);
+  return rel !== "" && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel);
+}
+function resolveSafeRepoPath(repoRoot, rel) {
+  const trimmed = rel.trim().replace(/^\/+/, "");
+  if (trimmed === "" || trimmed.includes("\0")) {
+    return null;
+  }
+  const normalized = path.normalize(trimmed);
+  if (normalized.startsWith(`..${path.sep}`) || normalized === "..") {
+    return null;
+  }
+  const full = path.resolve(repoRoot, normalized);
+  if (!isPathInsideRepo(repoRoot, full)) {
+    return null;
+  }
+  return full;
+}
+function isLinkedTask(task) {
+  return task.github != null && typeof task.github === "object";
+}
 function createApi(root2) {
   const app2 = new Hono();
   const paths = trailPaths(root2);
   app2.use("/api/*", cors());
+  function readConfig() {
+    const raw = fs.readFileSync(paths.configPath, "utf8");
+    return TrailConfigSchema.parse(JSON.parse(raw));
+  }
   app2.get("/api/tasks", (c) => {
     const tasks = loadAllTasks(paths.tasksDir);
     return c.json({ tasks });
@@ -38,7 +72,8 @@ function createApi(root2) {
   });
   app2.post("/api/tasks", async (c) => {
     const body = await c.req.json();
-    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const now = /* @__PURE__ */ new Date();
+    const nowIso = now.toISOString();
     const id = generateDraftId();
     const raw = {
       id,
@@ -49,8 +84,8 @@ function createApi(root2) {
       depends_on: body.depends_on ?? [],
       blocks: body.blocks ?? [],
       refs: body.refs ?? [],
-      created_at: now,
-      updated_at: now
+      created_at: nowIso,
+      updated_at: nowIso
     };
     if (body.description !== void 0) raw.description = body.description;
     if (body.priority !== void 0) raw.priority = body.priority;
@@ -64,8 +99,35 @@ function createApi(root2) {
         400
       );
     }
-    const filePath = path.join(paths.tasksDir, `${id}.json`);
-    writeTaskFile(filePath, parsed.data);
+    const draftPath = path.join(paths.tasksDir, `${id}.json`);
+    writeTaskFile(draftPath, parsed.data);
+    const config = readConfig();
+    if (config.sync.preset === "collaborative") {
+      const tokenResult = resolveGitHubToken();
+      if (!tokenResult.ok) {
+        rebuildSnapshot(paths);
+        return c.json(
+          {
+            task: parsed.data,
+            warning: "Task saved locally only: set GITHUB_TOKEN or run `gh auth login` to create the GitHub issue in collaborative mode."
+          },
+          201
+        );
+      }
+      const client = new GitHubClient(tokenResult.token);
+      const { owner, repo } = config.github;
+      const promoted = await linkDraftToNewGitHubIssue({
+        client,
+        owner,
+        repo,
+        draft: parsed.data,
+        draftFilePath: draftPath,
+        tasksDir: paths.tasksDir,
+        now
+      });
+      rebuildSnapshot(paths, now);
+      return c.json({ task: promoted }, 201);
+    }
     rebuildSnapshot(paths);
     return c.json({ task: parsed.data }, 201);
   });
@@ -89,9 +151,34 @@ function createApi(root2) {
         400
       );
     }
-    writeTaskFile(result.filePath, parsed.data);
+    let task = parsed.data;
+    writeTaskFile(result.filePath, task);
+    const config = readConfig();
+    if (config.sync.preset === "collaborative" && isLinkedTask(task)) {
+      const tokenResult = resolveGitHubToken();
+      if (tokenResult.ok) {
+        const client = new GitHubClient(tokenResult.token);
+        const { owner, repo } = config.github;
+        await client.updateIssue(
+          owner,
+          repo,
+          task.github.issue_number,
+          taskToIssueUpdate(task)
+        );
+        const synced = {
+          ...task,
+          github: {
+            ...task.github,
+            synced_at: (/* @__PURE__ */ new Date()).toISOString()
+          }
+        };
+        const revalidated = TaskSchema.parse(synced);
+        task = revalidated;
+        writeTaskFile(result.filePath, task);
+      }
+    }
     rebuildSnapshot(paths);
-    return c.json({ task: parsed.data });
+    return c.json({ task });
   });
   app2.delete("/api/tasks/:id", (c) => {
     const result = findTaskFileById(paths.tasksDir, c.req.param("id"));
@@ -112,9 +199,56 @@ function createApi(root2) {
           500
         );
       }
-      return c.json({ config: parsed.data });
+      const last = parsed.data.last_full_sync_at ?? null;
+      return c.json({
+        config: parsed.data,
+        last_full_sync_at: last
+      });
     } catch {
       return c.json({ error: "Config not found" }, 404);
+    }
+  });
+  app2.post("/api/sync", async (c) => {
+    const config = readConfig();
+    if (config.sync.preset === "offline") {
+      return c.json({ error: "Cannot sync in offline mode" }, 400);
+    }
+    const tokenResult = resolveGitHubToken();
+    if (!tokenResult.ok) {
+      return c.json(
+        {
+          error: "GitHub authentication required",
+          hint: "hint" in tokenResult.error ? tokenResult.error.hint : void 0
+        },
+        401
+      );
+    }
+    const client = new GitHubClient(tokenResult.token);
+    const { owner, repo } = config.github;
+    const now = /* @__PURE__ */ new Date();
+    await fullSync({
+      client,
+      owner,
+      repo,
+      tasksDir: paths.tasksDir,
+      snapshotPath: paths.snapshotPath,
+      now
+    });
+    const iso = (/* @__PURE__ */ new Date()).toISOString();
+    writeLastFullSyncAt(paths, iso);
+    return c.json({ ok: true, last_full_sync_at: iso });
+  });
+  app2.get("/api/repo-file", (c) => {
+    const rel = c.req.query("path") ?? "";
+    const abs = resolveSafeRepoPath(root2, rel);
+    if (!abs || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) {
+      return c.json({ error: "Not found" }, 404);
+    }
+    try {
+      const content = fs.readFileSync(abs, "utf8");
+      return c.json({ path: rel, content });
+    } catch {
+      return c.json({ error: "Failed to read file" }, 500);
     }
   });
   return app2;

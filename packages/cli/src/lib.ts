@@ -10,4 +10,10 @@ export {
 export { rebuildSnapshot } from "./core/rebuild-snapshot.js";
 export { generateDraftId } from "./core/draft-id.js";
 export { TaskSchema, type Task } from "./schemas/task.js";
-export { TrailConfigSchema } from "./schemas/config.js";
+export { TrailConfigSchema, type TrailConfig } from "./schemas/config.js";
+export { resolveGitHubToken } from "./core/auth.js";
+export { GitHubClient } from "./core/github-client.js";
+export { issueToTask, taskToIssueUpdate } from "./core/github-mapper.js";
+export { fullSync, pullSync, type SyncProgress } from "./core/sync.js";
+export { writeLastFullSyncAt } from "./core/config-update.js";
+export { linkDraftToNewGitHubIssue } from "./core/link-draft-issue.js";
