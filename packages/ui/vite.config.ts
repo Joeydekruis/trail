@@ -12,9 +12,10 @@ export default defineConfig({
   },
   server: {
     port: 4701,
+    strictPort: true,
     proxy: {
       "/api": {
-        target: "http://localhost:4700",
+        target: `http://localhost:${process.env.TRAIL_API_PORT ?? "4700"}`,
         changeOrigin: true,
       },
     },

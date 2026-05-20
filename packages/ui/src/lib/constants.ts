@@ -1,4 +1,23 @@
-import type { TaskStatus, TaskPriority, TaskType } from "@/types/task";
+import type {
+  TaskStatus,
+  TaskPriority,
+  TaskType,
+  TaskEstimate,
+  SyncPreset,
+} from "@/types/task";
+
+export const SYNC_PRESET_LABELS: Record<SyncPreset, string> = {
+  collaborative: "Collaborative",
+  solo: "Solo",
+  offline: "Offline",
+};
+
+export const SYNC_PRESET_DESCRIPTIONS: Record<SyncPreset, string> = {
+  collaborative:
+    "Sync with GitHub on CLI commands and when creating or editing tasks in the UI.",
+  solo: "Sync only when you run trail sync or use the UI sync button.",
+  offline: "Local tasks only — no GitHub sync.",
+};
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   draft: "Draft",
@@ -17,11 +36,13 @@ export const STATUS_ORDER: TaskStatus[] = [
   "done",
 ];
 
+export const PRIORITY_ORDER: TaskPriority[] = ["p0", "p1", "p2", "p3"];
+
 export const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  p0: "P0",
-  p1: "P1",
-  p2: "P2",
-  p3: "P3",
+  p0: "Highest",
+  p1: "High",
+  p2: "Medium",
+  p3: "Low",
 };
 
 export const PRIORITY_COLORS: Record<TaskPriority, string> = {
@@ -45,12 +66,14 @@ export const TYPE_COLORS: Record<TaskType, string> = {
   epic: "bg-purple-500",
 };
 
-export const ESTIMATE_LABELS: Record<string, string> = {
-  xs: "XS",
-  sm: "SM",
-  md: "MD",
-  lg: "LG",
-  xl: "XL",
+export const ESTIMATE_ORDER: TaskEstimate[] = ["xs", "sm", "md", "lg", "xl"];
+
+export const ESTIMATE_LABELS: Record<TaskEstimate, string> = {
+  xs: "Extra Small",
+  sm: "Small",
+  md: "Medium",
+  lg: "Large",
+  xl: "Extra Large",
 };
 
 export const STATUS_COLORS: Record<TaskStatus, string> = {

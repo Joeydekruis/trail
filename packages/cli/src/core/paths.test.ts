@@ -35,6 +35,7 @@ describe("trailPaths", () => {
     expect(p.root).toBe(root);
     expect(p.trailDir).toBe(path.join(root, ".trail"));
     expect(p.tasksDir).toBe(path.join(root, ".trail", "tasks"));
+    expect(p.docsDir).toBe(path.join(root, ".trail", "docs"));
     expect(p.configPath).toBe(path.join(root, ".trail", "config.json"));
     expect(p.snapshotPath).toBe(path.join(root, ".trail", "snapshot.json"));
     expect(p.gitignorePath).toBe(path.join(root, ".trail", ".gitignore"));

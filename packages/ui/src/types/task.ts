@@ -55,12 +55,20 @@ export interface Task {
   updated_at: string;
 }
 
+export type SyncPreset = "collaborative" | "solo" | "offline";
+
 export interface TrailConfig {
   github: { owner: string; repo: string };
   sync: {
-    preset: "collaborative" | "solo" | "offline";
+    preset: SyncPreset;
     auto_sync_on_command: boolean;
     ui_poll_interval_seconds: number;
     ui_idle_backoff: boolean;
   };
+  last_full_sync_at?: string;
 }
+
+export type TrailConfigPayload = {
+  config: TrailConfig;
+  last_full_sync_at: string | null;
+};

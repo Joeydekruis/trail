@@ -82,4 +82,24 @@ describe("GitHubClient", () => {
     expect(out.number).toBe(42);
     expect(out.html_url).toBe("https://github.com/acme/widgets/issues/42");
   });
+
+  it("listIssueComments requests the issue comments endpoint", async () => {
+    const fetchMock = vi.mocked(globalThis.fetch);
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const client = new GitHubClient("ghp_test_token");
+    await client.listIssueComments("acme", "widgets", 4);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit | undefined];
+    expect(url).toBe(
+      "https://api.github.com/repos/acme/widgets/issues/4/comments?per_page=100&page=1",
+    );
+    expect(init?.method).toBe("GET");
+  });
 });

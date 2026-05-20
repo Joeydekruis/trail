@@ -145,3 +145,7 @@ dist/
 .trail/snapshot.json
 .trail/export/
 .trail/*.tmp
+
+
+template/**/* 
+template/**/.*

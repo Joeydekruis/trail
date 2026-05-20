@@ -1,0 +1,25 @@
+{
+  "id": "5",
+  "title": "Test: Trail meta block",
+  "description": "This is the **human description** shown in the Trail UI and at the top of the GitHub issue.\n\nIt should stay separate from the hidden metadata block below the divider on GitHub.",
+  "status": "todo",
+  "priority": "p2",
+  "type": "feature",
+  "labels": [],
+  "depends_on": [],
+  "blocks": [],
+  "estimate": "md",
+  "github": {
+    "issue_number": 5,
+    "synced_at": "2026-05-20T10:27:31.253Z",
+    "url": "https://github.com/Joeydekruis/trail/issues/5"
+  },
+  "refs": [
+    {
+      "type": "doc",
+      "path": "template/docs/project/roadmap.md"
+    }
+  ],
+  "created_at": "2026-05-20T10:27:11.238Z",
+  "updated_at": "2026-05-20T10:27:31.253Z"
+}

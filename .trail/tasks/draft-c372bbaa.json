@@ -1,0 +1,15 @@
+{
+  "id": "draft-c372bbaa",
+  "title": "This is a test",
+  "description": "Test :)",
+  "status": "draft",
+  "priority": "p1",
+  "type": "feature",
+  "labels": [],
+  "depends_on": [],
+  "blocks": [],
+  "estimate": "md",
+  "refs": [],
+  "created_at": "2026-05-20T08:23:15.746Z",
+  "updated_at": "2026-05-20T08:23:15.746Z"
+}

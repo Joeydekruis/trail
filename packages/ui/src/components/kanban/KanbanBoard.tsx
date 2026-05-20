@@ -33,6 +33,9 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ tasks, onTaskClick, showCancelled }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [pendingStatusById, setPendingStatusById] = useState<
+    Map<string, TaskStatus>
+  >(() => new Map());
   const updateTask = useUpdateTask();
 
   const sensors = useSensors(
@@ -50,7 +53,8 @@ export function KanbanBoard({ tasks, onTaskClick, showCancelled }: KanbanBoardPr
     tasksByStatus.set(col, []);
   }
   for (const task of tasks) {
-    const bucket = tasksByStatus.get(task.status);
+    const status = pendingStatusById.get(task.id) ?? task.status;
+    const bucket = tasksByStatus.get(status);
     if (bucket) {
       bucket.push(task);
     }
@@ -74,18 +78,39 @@ export function KanbanBoard({ tasks, onTaskClick, showCancelled }: KanbanBoardPr
     return hit ? hit.status : null;
   }
 
+  function clearPending(taskId: string) {
+    setPendingStatusById((prev) => {
+      if (!prev.has(taskId)) return prev;
+      const next = new Map(prev);
+      next.delete(taskId);
+      return next;
+    });
+  }
+
   function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null);
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      setActiveId(null);
+      return;
+    }
 
     const taskId = String(active.id);
     const newStatus = resolveDropStatus(String(over.id));
     const task = tasks.find((t) => t.id === taskId);
-    if (!task || newStatus === null || task.status === newStatus) return;
+    if (!task || newStatus === null || task.status === newStatus) {
+      setActiveId(null);
+      return;
+    }
 
     if (columns.includes(newStatus)) {
-      updateTask.mutate({ id: taskId, data: { status: newStatus } });
+      setPendingStatusById((prev) => new Map(prev).set(taskId, newStatus));
+      setActiveId(null);
+      updateTask.mutate(
+        { id: taskId, data: { status: newStatus } },
+        { onSettled: () => clearPending(taskId) },
+      );
+    } else {
+      setActiveId(null);
     }
   }
 
@@ -103,6 +128,7 @@ export function KanbanBoard({ tasks, onTaskClick, showCancelled }: KanbanBoardPr
             status={status}
             tasks={tasksByStatus.get(status) ?? []}
             onTaskClick={onTaskClick}
+            dragSourceId={activeId}
           />
         ))}
       </div>

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import type { GitHubClient } from "./github-client.js";
+import { composeIssueBody, metaFromTask } from "./issue-body.js";
 import { issueToTask } from "./github-mapper.js";
 import { writeTaskFile } from "./task-store.js";
 import type { Task } from "../schemas/task.js";
@@ -21,10 +22,12 @@ export async function linkDraftToNewGitHubIssue(options: {
 }): Promise<Task> {
   const { client, owner, repo, draft, draftFilePath, tasksDir, now } = options;
 
+  const assignee = draft.assignee?.trim();
   const issue = await client.createIssue(owner, repo, {
     title: draft.title,
-    body: draft.description ?? "",
+    body: composeIssueBody(draft.description ?? "", metaFromTask(draft)),
     labels: draft.labels,
+    assignees: assignee ? [assignee] : [],
   });
 
   const promoted = issueToTask(issue, draft, now);

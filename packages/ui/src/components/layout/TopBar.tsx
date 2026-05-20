@@ -1,5 +1,7 @@
 import { Plus, ExternalLink, RefreshCw } from "lucide-react";
 import { SearchBar } from "@/components/filters/SearchBar";
+import { ModeToggle } from "@/components/theme/ModeToggle";
+import { Button } from "@/components/ui/button";
 import type { Task } from "@/types/task";
 
 interface TopBarProps {
@@ -34,47 +36,43 @@ export function TopBar({
   lastSyncedAt,
 }: TopBarProps) {
   return (
-    <header className="flex h-12 shrink-0 items-center border-b border-[#1e2d3d] bg-[#0a0f1a] px-4">
-      <div className="min-w-0 flex-1 text-xs text-[#8b9cb6] truncate">
+    <header className="flex h-12 shrink-0 items-center border-b border-border bg-background px-4">
+      <div className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
         {formatSynced(lastSyncedAt)}
       </div>
 
       <div className="flex items-center gap-3">
         <SearchBar tasks={tasks} onSelect={onSearchSelect} />
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={onSync}
           disabled={syncDisabled || syncPending}
           title="Pull and push tasks with GitHub"
-          className="flex items-center gap-1.5 rounded-md border border-[#1e2d3d] px-3 py-1.5 text-sm text-[#e2e8f0] transition-colors hover:bg-[#1a2332] disabled:pointer-events-none disabled:opacity-40"
         >
           <RefreshCw size={14} className={syncPending ? "animate-spin" : ""} />
           Sync
-        </button>
+        </Button>
 
-        <button
-          type="button"
-          onClick={onNewTask}
-          className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-        >
+        <Button type="button" size="sm" onClick={onNewTask}>
           <Plus size={16} />
           New Task
-        </button>
+        </Button>
 
         {repoUrl && (
-          <a
-            href={repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-md border border-[#1e2d3d] px-3 py-1.5 text-sm text-[#8b9cb6] transition-colors hover:bg-[#1a2332] hover:text-[#e2e8f0]"
-          >
-            <ExternalLink size={14} />
-            View Repo
-          </a>
+          <Button variant="outline" size="sm" asChild>
+            <a href={repoUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={14} />
+              View Repo
+            </a>
+          </Button>
         )}
 
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1e2d3d] text-xs text-[#8b9cb6]">
+        <ModeToggle />
+
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground">
           U
         </div>
       </div>

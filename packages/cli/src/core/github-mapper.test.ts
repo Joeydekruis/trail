@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { GitHubIssue } from "./github-types.js";
+import { composeIssueBody } from "./issue-body.js";
 import { issueToTask, taskToIssueUpdate } from "./github-mapper.js";
 import type { Task } from "../schemas/task.js";
 
@@ -42,11 +43,26 @@ describe("github-mapper", () => {
     expect(task.status).toBe("done");
   });
 
-  it("preserves in_progress when the issue is open", () => {
-    const existing: Task = issueToTask(minimalIssue, null, now);
-    const withProgress: Task = { ...existing, status: "in_progress" };
-    const task = issueToTask(minimalIssue, withProgress, now);
+  it("reads in_progress from trail meta block in the issue body", () => {
+    const withMeta: GitHubIssue = {
+      ...minimalIssue,
+      body: composeIssueBody("Map issues to tasks.", {
+        status: "in_progress",
+        type: "feature",
+      }),
+    };
+    const task = issueToTask(withMeta, null, now);
     expect(task.status).toBe("in_progress");
+    expect(task.description).toBe("Map issues to tasks.");
+  });
+
+  it("taskToIssueUpdate embeds trail meta in the issue body", () => {
+    const base = issueToTask(minimalIssue, null, now);
+    const task: Task = { ...base, priority: "p2", estimate: "sm" };
+    const update = taskToIssueUpdate(task);
+    expect(update.body).toContain("trail:v1");
+    expect(update.body).toContain("Map issues to tasks.");
+    expect(update.body).toContain('"priority": "p2"');
   });
 
   it("taskToIssueUpdate adds priority label when priority is p1", () => {
@@ -55,5 +71,17 @@ describe("github-mapper", () => {
     const update = taskToIssueUpdate(task);
     expect(update.labels).toContain("priority:p1");
     expect(update.labels).toContain("enhancement");
+  });
+
+  it("taskToIssueUpdate sets assignees from task assignee", () => {
+    const base = issueToTask(minimalIssue, null, now);
+    const task: Task = { ...base, assignee: "bob" };
+    expect(taskToIssueUpdate(task).assignees).toEqual(["bob"]);
+  });
+
+  it("taskToIssueUpdate clears assignees when assignee is empty", () => {
+    const base = issueToTask(minimalIssue, null, now);
+    const task: Task = { ...base, assignee: undefined };
+    expect(taskToIssueUpdate(task).assignees).toEqual([]);
   });
 });

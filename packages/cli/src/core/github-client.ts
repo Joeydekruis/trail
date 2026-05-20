@@ -1,4 +1,8 @@
-import type { GitHubIssue } from "./github-types.js";
+import type {
+  GitHubAssignee,
+  GitHubIssue,
+  GitHubIssueComment,
+} from "./github-types.js";
 
 const USER_AGENT = "trail-cli/0.0.1";
 
@@ -86,29 +90,67 @@ export class GitHubClient {
     return this.parseJson<GitHubIssue>(response);
   }
 
+  async listIssueComments(
+    owner: string,
+    repo: string,
+    issueNumber: number,
+    params: { per_page?: number; page?: number } = {},
+  ): Promise<GitHubIssueComment[]> {
+    const search = new URLSearchParams({
+      per_page: String(params.per_page ?? 100),
+      page: String(params.page ?? 1),
+    });
+    const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}/comments?${search}`;
+    const response = await this.request("GET", path);
+    return this.parseJson<GitHubIssueComment[]>(response);
+  }
+
   async createIssueComment(
     owner: string,
     repo: string,
     issueNumber: number,
     body: string,
-  ): Promise<{ id: number }> {
+  ): Promise<GitHubIssueComment> {
     const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}/comments`;
     const response = await this.request("POST", path, { body });
-    return this.parseJson<{ id: number }>(response);
+    return this.parseJson<GitHubIssueComment>(response);
+  }
+
+  async listAssignees(
+    owner: string,
+    repo: string,
+    params: { per_page?: number; page?: number } = {},
+  ): Promise<GitHubAssignee[]> {
+    const search = new URLSearchParams({
+      per_page: String(params.per_page ?? 100),
+      page: String(params.page ?? 1),
+    });
+    const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/assignees?${search}`;
+    const response = await this.request("GET", path);
+    return this.parseJson<GitHubAssignee[]>(response);
   }
 
   /** Create a new issue. Returns the created issue (same shape as list/get). */
   async createIssue(
     owner: string,
     repo: string,
-    input: { title: string; body?: string; labels?: string[] },
+    input: {
+      title: string;
+      body?: string;
+      labels?: string[];
+      assignees?: string[];
+    },
   ): Promise<GitHubIssue> {
     const path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues`;
-    const response = await this.request("POST", path, {
+    const payload: Record<string, unknown> = {
       title: input.title,
       body: input.body ?? "",
       labels: input.labels ?? [],
-    });
+    };
+    if (input.assignees !== undefined) {
+      payload.assignees = input.assignees;
+    }
+    const response = await this.request("POST", path, payload);
     return this.parseJson<GitHubIssue>(response);
   }
 }

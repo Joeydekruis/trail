@@ -1,12 +1,34 @@
 import { useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 import { useCreateTask } from "@/api/hooks";
+import { FormField } from "@/components/shared/FormField";
+import { OptionalSelect } from "@/components/shared/OptionalSelect";
+import { useToast } from "@/components/shared/Toast";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { AssigneeSelect } from "@/components/task/AssigneeSelect";
 import {
   STATUS_LABELS,
   PRIORITY_LABELS,
+  PRIORITY_ORDER,
   TYPE_LABELS,
   ESTIMATE_LABELS,
+  ESTIMATE_ORDER,
 } from "@/lib/constants";
 import type {
   TaskEstimate,
@@ -15,12 +37,6 @@ import type {
   TaskType,
 } from "@/types/task";
 
-const fieldInputClass =
-  "field-input w-full rounded-md border border-[#1e2d3d] bg-[#0a0f1a] px-2 py-1.5 text-sm text-[#e2e8f0] focus:border-blue-500 focus:outline-none";
-
-const fieldSelectClass =
-  "field-select w-full rounded-md border border-[#1e2d3d] bg-[#0a0f1a] px-2 py-1.5 text-sm text-[#e2e8f0] focus:border-blue-500 focus:outline-none";
-
 const CREATE_STATUSES: TaskStatus[] = ["draft", "todo"];
 
 type EstimateChoice = "none" | TaskEstimate;
@@ -28,10 +44,12 @@ type EstimateChoice = "none" | TaskEstimate;
 export interface TaskFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreated?: (taskId: string) => void;
 }
 
-export function TaskForm({ open, onOpenChange }: TaskFormProps) {
+export function TaskForm({ open, onOpenChange, onCreated }: TaskFormProps) {
   const createTask = useCreateTask();
+  const { toast } = useToast();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -74,230 +92,176 @@ export function TaskForm({ open, onOpenChange }: TaskFormProps) {
     if (!title.trim()) return;
     const data = buildPayload();
     createTask.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (res) => {
+        if (res.warning) {
+          toast("warning", res.warning);
+        } else if (res.task.github) {
+          toast("success", `Created GitHub issue #${res.task.github.issue_number}`);
+        } else if (res.task.status === "draft") {
+          toast("success", "Draft saved locally");
+        }
         reset();
         onOpenChange(false);
+        onCreated?.(res.task.id);
+      },
+      onError: () => {
+        toast("error", "Could not create task");
       },
     });
   }
 
   return (
-    <Dialog.Root
+    <Dialog
       open={open}
       onOpenChange={(next) => {
         if (!next) reset();
         onOpenChange(next);
       }}
     >
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 z-50" />
-        <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#1e2d3d] bg-[#111827] p-6 shadow-lg"
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-              e.preventDefault();
-              submit();
-            }
+      <DialogContent
+        className="max-w-lg"
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+            e.preventDefault();
+            submit();
+          }
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>New Task</DialogTitle>
+          <DialogDescription className="sr-only">
+            Create a new task by filling in the form below.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
           }}
         >
-          <Dialog.Description className="sr-only">
-            Create a new task by filling in the form below.
-          </Dialog.Description>
+          <FormField label="Title" htmlFor="task-title">
+            <Input
+              id="task-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+              required
+            />
+          </FormField>
 
-          <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="text-lg font-semibold text-[#e2e8f0]">
-              New Task
-            </Dialog.Title>
-            <Dialog.Close
-              type="button"
-              className="text-[#8b9cb6] hover:text-[#e2e8f0]"
-              aria-label="Close"
-            >
-              <X size={18} />
-            </Dialog.Close>
+          <FormField label="Description" htmlFor="task-description">
+            <Textarea
+              id="task-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Markdown supported…"
+            />
+          </FormField>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Type" htmlFor="task-type">
+              <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
+                <SelectTrigger id="task-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(TYPE_LABELS) as TaskType[]).map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {TYPE_LABELS[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+
+            <FormField label="Priority" htmlFor="task-priority">
+              <Select
+                value={priority}
+                onValueChange={(v) => setPriority(v as TaskPriority)}
+              >
+                <SelectTrigger id="task-priority" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_ORDER.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {PRIORITY_LABELS[p]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+
+            <FormField label="Status" htmlFor="task-status">
+              <Select
+                value={status}
+                onValueChange={(v) => setStatus(v as TaskStatus)}
+              >
+                <SelectTrigger id="task-status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CREATE_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {STATUS_LABELS[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+
+            <FormField label="Estimate" htmlFor="task-estimate">
+              <OptionalSelect
+                value={estimate === "none" ? "" : estimate}
+                onValueChange={(v) =>
+                  setEstimate((v || "none") as EstimateChoice)
+                }
+                placeholder="None"
+              >
+                {ESTIMATE_ORDER.map((est) => (
+                  <SelectItem key={est} value={est}>
+                    {ESTIMATE_LABELS[est]}
+                  </SelectItem>
+                ))}
+              </OptionalSelect>
+            </FormField>
           </div>
 
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-          >
-            <div>
-              <label
-                htmlFor="task-title"
-                className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-              >
-                Title
-              </label>
-              <input
-                id="task-title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className={fieldInputClass}
-                autoFocus
-                required
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Assignee" htmlFor="task-assignee">
+              <AssigneeSelect
+                value={assignee}
+                onValueChange={setAssignee}
+                extraOptions={assignee.trim() ? [assignee.trim()] : []}
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label
-                htmlFor="task-description"
-                className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-              >
-                Description
-              </label>
-              <textarea
-                id="task-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                placeholder="Markdown supported…"
-                className={fieldInputClass}
+            <FormField label="Milestone" htmlFor="task-milestone">
+              <Input
+                id="task-milestone"
+                value={milestone}
+                onChange={(e) => setMilestone(e.target.value)}
               />
-            </div>
+            </FormField>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="task-type"
-                  className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-                >
-                  Type
-                </label>
-                <select
-                  id="task-type"
-                  value={type}
-                  onChange={(e) => setType(e.target.value as TaskType)}
-                  className={fieldSelectClass}
-                >
-                  {(Object.keys(TYPE_LABELS) as TaskType[]).map((t) => (
-                    <option key={t} value={t}>
-                      {TYPE_LABELS[t]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="task-priority"
-                  className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-                >
-                  Priority
-                </label>
-                <select
-                  id="task-priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                  className={fieldSelectClass}
-                >
-                  {(Object.keys(PRIORITY_LABELS) as TaskPriority[]).map((p) => (
-                    <option key={p} value={p}>
-                      {PRIORITY_LABELS[p]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="task-status"
-                  className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-                >
-                  Status
-                </label>
-                <select
-                  id="task-status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                  className={fieldSelectClass}
-                >
-                  {CREATE_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABELS[s]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="task-estimate"
-                  className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-                >
-                  Estimate
-                </label>
-                <select
-                  id="task-estimate"
-                  value={estimate}
-                  onChange={(e) =>
-                    setEstimate(e.target.value as EstimateChoice)
-                  }
-                  className={fieldSelectClass}
-                >
-                  <option value="none">None</option>
-                  {(Object.keys(ESTIMATE_LABELS) as TaskEstimate[]).map(
-                    (est) => (
-                      <option key={est} value={est}>
-                        {ESTIMATE_LABELS[est]}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="task-assignee"
-                  className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-                >
-                  Assignee
-                </label>
-                <input
-                  id="task-assignee"
-                  type="text"
-                  value={assignee}
-                  onChange={(e) => setAssignee(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="task-milestone"
-                  className="mb-1 block text-xs font-medium text-[#8b9cb6]"
-                >
-                  Milestone
-                </label>
-                <input
-                  id="task-milestone"
-                  type="text"
-                  value={milestone}
-                  onChange={(e) => setMilestone(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Dialog.Close
-                type="button"
-                className="rounded-md border border-[#1e2d3d] bg-transparent px-4 py-2 text-sm text-[#e2e8f0] hover:bg-[#1a2332]"
-              >
-                Cancel
-              </Dialog.Close>
-              <button
-                type="submit"
-                disabled={!title.trim() || createTask.isPending}
-                className="rounded-md bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600 disabled:pointer-events-none disabled:opacity-50"
-              >
-                Create Task
-              </button>
-            </div>
-          </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          <DialogFooter className="gap-3 sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!title.trim() || createTask.isPending}>
+              Create Task
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -159,12 +159,20 @@ describe("sync", () => {
     });
 
     expect(updateIssue).toHaveBeenCalledTimes(1);
-    expect(updateIssue).toHaveBeenCalledWith("o", "r", 2, {
-      title: "Push me",
-      body: "Desc",
-      state: "open",
-      labels: ["a"],
-    });
+    expect(updateIssue).toHaveBeenCalledWith(
+      "o",
+      "r",
+      2,
+      expect.objectContaining({
+        title: "Push me",
+        state: "open",
+        labels: ["a"],
+        assignees: [],
+      }),
+    );
+    const patch = updateIssue.mock.calls[0]?.[3] as { body: string };
+    expect(patch.body).toContain("Desc");
+    expect(patch.body).toContain("trail:v1");
   });
 
   it("pushSync respects onlyTaskIds and skips other linked tasks", async () => {

@@ -11,8 +11,9 @@ When syncing between GitHub Issues and local task files, both sides may change t
 
 Every field has exactly one owner (GitHub, Local, or Shared):
 
-- **GitHub-owned** (title, description, labels, assignee, milestone): GitHub always wins.
-- **Local-owned** (priority, dependencies, AI context, refs, branch, estimate): Local always wins.
+- **GitHub-owned** (title, description prose, labels, assignee, milestone): GitHub always wins.
+- **GitHub-stored via body meta block** (`<!-- trail:v1 -->` JSON: type, priority, estimate, status, dependencies, AI context, refs, branch, dates): GitHub body wins on pull; Trail writes the block on push.
+- **Local-only** (draft tasks before promotion): Never synced until linked.
 - **Shared** (status, due_date): Last-write-wins by timestamp. Ambiguous conflicts (within 5s) are flagged for manual resolution.
 
 ## Consequences

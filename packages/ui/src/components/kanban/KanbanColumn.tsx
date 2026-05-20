@@ -10,9 +10,15 @@ interface KanbanColumnProps {
   status: TaskStatus;
   tasks: Task[];
   onTaskClick: (taskId: string) => void;
+  dragSourceId: string | null;
 }
 
-export function KanbanColumn({ status, tasks, onTaskClick }: KanbanColumnProps) {
+export function KanbanColumn({
+  status,
+  tasks,
+  onTaskClick,
+  dragSourceId,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   const taskIds = tasks.map((t) => t.id);
@@ -21,15 +27,15 @@ export function KanbanColumn({ status, tasks, onTaskClick }: KanbanColumnProps) 
     <div
       ref={setNodeRef}
       className={cn(
-        "flex w-72 flex-shrink-0 flex-col rounded-lg border border-[#1e2d3d] bg-[#0d1420]",
+        "flex w-72 flex-shrink-0 flex-col rounded-lg border border-border bg-secondary",
         isOver && "border-blue-500/50 bg-blue-500/5",
       )}
     >
-      <div className="flex items-center justify-between border-b border-[#1e2d3d] px-3 py-2">
-        <span className="text-sm font-medium text-white">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="text-sm font-medium text-foreground">
           {STATUS_LABELS[status]}
         </span>
-        <span className="rounded-full bg-[#1e2d3d] px-2 py-0.5 text-xs text-[#8b9cb6]">
+        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
           {tasks.length}
         </span>
       </div>
@@ -41,6 +47,7 @@ export function KanbanColumn({ status, tasks, onTaskClick }: KanbanColumnProps) 
               key={task.id}
               task={task}
               onClick={() => onTaskClick(task.id)}
+              isDragSource={dragSourceId === task.id}
             />
           ))}
         </SortableContext>

@@ -6,7 +6,8 @@ import {
   type ReactNode,
 } from "react";
 import { X, AlertCircle, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type ToastType = "success" | "error" | "warning";
 
@@ -65,20 +66,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "flex items-center gap-2 rounded-lg border bg-[#111827] px-4 py-3 text-sm text-[#e2e8f0] shadow-lg shadow-black/50",
+              "flex items-center gap-2 rounded-lg border bg-card px-4 py-3 text-sm text-foreground shadow-lg shadow-black/50",
               borderColors[t.type],
             )}
           >
             {icons[t.type]}
             <span>{t.message}</span>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-xs"
               onClick={() => removeToast(t.id)}
-              className="ml-2 text-[#8b9cb6] hover:text-[#e2e8f0]"
+              className="ml-2 text-muted-foreground"
               aria-label="Dismiss notification"
             >
               <X size={14} />
-            </button>
+            </Button>
           </div>
         ))}
       </div>

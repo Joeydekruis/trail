@@ -1,0 +1,26 @@
+{
+  "id": "4",
+  "title": "Test 4",
+  "description": "# Heading 1\n\nThis is a **bold** part in a sentence.\n\n`This is some code part`\n\n> This is a quote\n\n- An unordered list\n- Second bullet point\n\n- [ ] This is a tasklist\n- [ ] With task 2\n- [ ] Task 3\n\nThis is a normal text sentence",
+  "status": "in_progress",
+  "priority": "p0",
+  "type": "feature",
+  "assignee": "Joeydekruis",
+  "labels": [],
+  "depends_on": [],
+  "blocks": [],
+  "estimate": "md",
+  "github": {
+    "issue_number": 4,
+    "synced_at": "2026-05-20T10:55:26.255Z",
+    "url": "https://github.com/Joeydekruis/trail/issues/4"
+  },
+  "refs": [
+    {
+      "type": "doc",
+      "path": "untitled.md"
+    }
+  ],
+  "created_at": "2026-05-20T09:31:32.677Z",
+  "updated_at": "2026-05-20T10:55:26.207Z"
+}

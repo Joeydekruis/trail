@@ -3,7 +3,11 @@ import fs from "node:fs";
 import { resolveGitHubToken } from "../../core/auth.js";
 import type { TrailError } from "../../core/errors.js";
 import { GitHubClient } from "../../core/github-client.js";
-import { taskToIssueUpdate } from "../../core/github-mapper.js";
+import {
+  canSyncWithGitHub,
+  isLinkedTask,
+  pushLinkedTaskToGitHub,
+} from "../../core/push-linked-task.js";
 import { rebuildSnapshot } from "../../core/rebuild-snapshot.js";
 import { findTrailRoot, trailPaths } from "../../core/paths.js";
 import { findTaskFileById, writeTaskFile } from "../../core/task-store.js";
@@ -25,12 +29,6 @@ export type UpdateOptions = {
   priority?: "p0" | "p1" | "p2" | "p3";
   title?: string;
 };
-
-function isLinkedTask(
-  task: Task,
-): task is Task & { github: NonNullable<Task["github"]> } {
-  return task.github != null && typeof task.github === "object";
-}
 
 export async function runUpdate(options: UpdateOptions): Promise<void> {
   const hasField =
@@ -79,25 +77,22 @@ export async function runUpdate(options: UpdateOptions): Promise<void> {
 
   writeTaskFile(resolved.filePath, next);
 
-  const offline = config.sync.preset === "offline";
   const tokenResult = resolveGitHubToken();
-  if (!offline && tokenResult.ok && isLinkedTask(next)) {
+  if (
+    canSyncWithGitHub(config.sync.preset) &&
+    tokenResult.ok &&
+    isLinkedTask(next)
+  ) {
     const client = new GitHubClient(tokenResult.token);
     const { owner, repo } = config.github;
-    await client.updateIssue(
+    await pushLinkedTaskToGitHub({
+      client,
       owner,
       repo,
-      next.github.issue_number,
-      taskToIssueUpdate(next) as Record<string, unknown>,
-    );
-    const synced: Task = {
-      ...next,
-      github: {
-        ...next.github,
-        synced_at: now.toISOString(),
-      },
-    };
-    writeTaskFile(resolved.filePath, synced);
+      task: next,
+      filePath: resolved.filePath,
+      now,
+    });
   }
 
   rebuildSnapshot(paths, now);

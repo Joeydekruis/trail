@@ -1,11 +1,131 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+}
+
+/* Light theme */
+:root {
+  --radius: 0.5rem;
+  --background: #f1f5f9;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f8fafc;
+  --secondary-foreground: #0f172a;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #2563eb;
+  --surface: #f8fafc;
+  --surface-foreground: #0f172a;
+}
+
+/* Dark theme — matches original Trail dashboard palette */
+.dark {
+  --background: #0a0f1a;
+  --foreground: #e2e8f0;
+  --card: #111827;
+  --card-foreground: #e2e8f0;
+  --popover: #111827;
+  --popover-foreground: #e2e8f0;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #0d1420;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1e2d3d;
+  --muted-foreground: #8b9cb6;
+  --accent: #1a2332;
+  --accent-foreground: #e2e8f0;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e2d3d;
+  --input: #1e2d3d;
+  --ring: #3b82f6;
+  --surface: #0d1420;
+  --surface-foreground: #e2e8f0;
+}
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
   .field-select {
-    @apply w-full rounded-md border border-[#1e2d3d] bg-[#0a0f1a] px-2 py-1.5 text-sm text-[#e2e8f0] focus:border-blue-500 focus:outline-none;
+    @apply w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring;
   }
 
   .field-input {
-    @apply w-full rounded-md border border-[#1e2d3d] bg-[#0a0f1a] px-2 py-1.5 text-sm text-[#e2e8f0] placeholder-[#8b9cb6]/50 focus:border-blue-500 focus:outline-none;
+    @apply w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring;
+  }
+
+  .tiptap-editor h1 {
+    @apply mb-2 text-2xl font-semibold;
+  }
+  .tiptap-editor h2 {
+    @apply mb-2 text-xl font-semibold;
+  }
+  .tiptap-editor h3 {
+    @apply mb-2 text-lg font-semibold;
+  }
+  .tiptap-editor p {
+    @apply mb-2;
+  }
+  .tiptap-editor ul {
+    @apply mb-2 list-disc pl-5;
+  }
+  .tiptap-editor ol {
+    @apply mb-2 list-decimal pl-5;
+  }
+  .tiptap-editor blockquote {
+    @apply mb-2 border-l-2 border-border pl-3 text-muted-foreground;
+  }
+  .tiptap-editor code {
+    @apply rounded bg-muted px-1 py-0.5 font-mono text-xs;
+  }
+  .tiptap-editor p.is-editor-empty:first-child::before {
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
+    content: attr(data-placeholder);
   }
 }

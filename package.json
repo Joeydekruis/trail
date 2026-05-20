@@ -5,12 +5,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/cli && npm run build --workspace=packages/ui",
+    "build": "npm run build --workspace=@trail-pm/cli && npm run build --workspace=@trail-pm/ui",
     "test": "npm run test --workspace=packages/cli",
     "typecheck": "npm run typecheck --workspace=packages/cli",
     "lint": "npm run lint --workspace=packages/cli",
-    "ui:dev": "npm --prefix packages/ui run dev:all",
-    "ui:server": "npm --prefix packages/ui run server"
+    "ui:prepare": "npm run build --workspace=@trail-pm/cli && npm run build --workspace=@trail-pm/ui",
+    "ui:dev": "npm run build --workspace=@trail-pm/cli && npm --prefix packages/ui run dev:all",
+    "ui:server": "npm --prefix packages/ui run server",
+    "trail-ui": "npm run ui:prepare && npm --prefix packages/ui exec trail-ui"
   },
   "engines": {
     "node": ">=22.0.0"

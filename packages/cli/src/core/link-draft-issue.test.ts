@@ -65,11 +65,18 @@ describe("linkDraftToNewGitHubIssue", () => {
       now,
     });
 
-    expect(createIssue).toHaveBeenCalledWith("o", "r", {
-      title: "Hello",
-      body: "World",
-      labels: ["trail"],
-    });
+    expect(createIssue).toHaveBeenCalledWith(
+      "o",
+      "r",
+      expect.objectContaining({
+        title: "Hello",
+        labels: ["trail"],
+        assignees: [],
+      }),
+    );
+    const body = createIssue.mock.calls[0]?.[2]?.body as string;
+    expect(body).toContain("World");
+    expect(body).toContain("trail:v1");
     expect(fs.existsSync(draftPath)).toBe(false);
     const out = readTaskFile(path.join(dir, "42.json"));
     expect(out.id).toBe("42");

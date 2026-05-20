@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { ArrowUpDown, Link } from "lucide-react";
 
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { TypeBadge, PriorityBadge, StatusBadge, Badge } from "@/components/shared/Badge";
 import { ProgressBar } from "@/components/shared/ProgressBar";
 import { relativeTime, acceptanceCriteriaProgress } from "@/lib/utils";
@@ -99,12 +100,13 @@ function SortHeader({
   className?: string;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center justify-start gap-1 px-2 py-2 text-left text-xs font-medium uppercase tracking-wide",
-        active ? "text-blue-400" : "text-[#8b9cb6]",
+        "flex h-auto w-full items-center justify-start gap-1 rounded-none px-2 py-2 text-left text-xs font-medium uppercase tracking-wide",
+        active ? "text-blue-500 dark:text-blue-400" : "text-muted-foreground",
         className,
       )}
     >
@@ -117,7 +119,7 @@ function SortHeader({
         )}
         aria-hidden
       />
-    </button>
+    </Button>
   );
 }
 
@@ -142,14 +144,14 @@ export function ListView({ tasks, onTaskClick, showCancelled }: ListViewProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#1e2d3d]">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border">
       <div
         className={cn(
-          "sticky top-0 z-10 grid shrink-0 gap-0 border-b border-[#1e2d3d] bg-[#0d1420]",
+          "sticky top-0 z-10 grid shrink-0 gap-0 border-b border-border bg-secondary",
           GRID_COLS,
         )}
       >
-        <div className="flex items-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-[#8b9cb6]">
+        <div className="flex items-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Type
         </div>
         <SortHeader
@@ -177,13 +179,13 @@ export function ListView({ tasks, onTaskClick, showCancelled }: ListViewProps) {
           sortDir={sortDir}
           onClick={() => handleSortClick("assignee")}
         />
-        <div className="flex items-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-[#8b9cb6]">
+        <div className="flex items-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Progress
         </div>
-        <div className="flex items-center justify-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-[#8b9cb6]">
+        <div className="flex items-center justify-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Dep
         </div>
-        <div className="flex items-center justify-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-[#8b9cb6]">
+        <div className="flex items-center justify-center px-2 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Est
         </div>
         <SortHeader
@@ -214,11 +216,12 @@ function ListRow({
   const depCount = task.depends_on.length;
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={() => onTaskClick(task.id)}
       className={cn(
-        "grid w-full gap-0 border-b border-[#1e2d3d] text-left transition-colors hover:bg-[#1a2332]",
+        "grid h-auto w-full gap-0 rounded-none border-b border-border py-0 text-left font-normal hover:bg-accent",
         GRID_COLS,
       )}
     >
@@ -233,10 +236,10 @@ function ListRow({
         )}
       </div>
       <div className="flex min-w-0 items-center px-2 py-2">
-        <span className="truncate text-sm text-white">
+        <span className="truncate text-sm text-foreground">
           {task.title}
           {task.github != null && (
-            <span className="text-[#8b9cb6]">
+            <span className="text-muted-foreground">
               {" "}
               #{task.github.issue_number}
             </span>
@@ -246,22 +249,22 @@ function ListRow({
       <div className="flex items-center px-2 py-2">
         <StatusBadge status={task.status} />
       </div>
-      <div className="flex min-w-0 items-center px-2 py-2 text-sm text-[#8b9cb6]">
+      <div className="flex min-w-0 items-center px-2 py-2 text-sm text-muted-foreground">
         <span className="truncate">{task.assignee ?? "—"}</span>
       </div>
       <div className="flex min-w-0 items-center px-2 py-2">
         {progress ? (
           <div className="flex w-full min-w-0 items-center gap-2">
             <ProgressBar percent={progress.percent} className="min-w-0 flex-1" />
-            <span className="shrink-0 text-xs text-[#8b9cb6]">
+            <span className="shrink-0 text-xs text-muted-foreground">
               {progress.percent}%
             </span>
           </div>
         ) : (
-          <span className="text-sm text-[#8b9cb6]">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         )}
       </div>
-      <div className="flex items-center justify-center px-2 py-2 text-sm text-[#8b9cb6]">
+      <div className="flex items-center justify-center px-2 py-2 text-sm text-muted-foreground">
         {depCount > 0 ? (
           <span className="flex items-center gap-1">
             <Link className="h-4 w-4 shrink-0" aria-hidden />
@@ -275,12 +278,12 @@ function ListRow({
         {task.estimate ? (
           <Badge className="bg-gray-600">{ESTIMATE_LABELS[task.estimate]}</Badge>
         ) : (
-          <span className="text-sm text-[#8b9cb6]">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         )}
       </div>
-      <div className="flex items-center px-2 py-2 text-sm text-[#8b9cb6]">
+      <div className="flex items-center px-2 py-2 text-sm text-muted-foreground">
         {relativeTime(task.updated_at)}
       </div>
-    </button>
+    </Button>
   );
 }

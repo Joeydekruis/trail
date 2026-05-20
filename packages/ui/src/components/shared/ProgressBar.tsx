@@ -12,7 +12,7 @@ export function ProgressBar({ percent, className, showLabel = false }: ProgressB
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <div className="h-1.5 flex-1 rounded-full bg-[#1e2d3d]">
+      <div className="h-1.5 flex-1 rounded-full bg-muted">
         <div
           className={cn(
             "h-full rounded-full transition-all duration-300",
@@ -22,7 +22,7 @@ export function ProgressBar({ percent, className, showLabel = false }: ProgressB
         />
       </div>
       {showLabel && (
-        <span className="text-xs text-[#8b9cb6]">{clamped}%</span>
+        <span className="text-xs text-muted-foreground">{clamped}%</span>
       )}
     </div>
   );
