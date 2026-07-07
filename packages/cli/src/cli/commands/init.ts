@@ -4,9 +4,7 @@ import path from "node:path";
 
 import { TrailConfigSchema } from "../../schemas/config.js";
 import type { TrailError } from "../../core/errors.js";
-import { USER_AGENTS_MD } from "../templates/user-agents.md.js";
-
-const GITIGNORE_LINES = ["snapshot.json", "export/", "*.tmp"];
+import { writeTrailScaffold, type TrailScaffoldResult } from "../../core/trail-scaffold.js";
 
 /**
  * Parses a GitHub `origin` remote URL into owner and repo name.
@@ -75,7 +73,30 @@ export type InitOptions = {
   repo?: string;
   /** When true, do not write `AGENTS.md` at the repository root. */
   skipAgentsMd?: boolean;
+  /** When true, refresh scaffold files on an existing Trail project. */
+  update?: boolean;
 };
+
+function logScaffoldWrites(
+  root: string,
+  result: TrailScaffoldResult,
+  skipRootAgentsMd?: boolean,
+): void {
+  const trailDir = path.join(root, ".trail");
+  if (result.wroteTrailReadme) {
+    console.log(`Wrote ${path.join(trailDir, "README.md")}`);
+  }
+  if (result.wroteTrailAgents) {
+    console.log(`Wrote ${path.join(trailDir, "AGENTS.md")}`);
+  }
+  if (result.wroteRootAgents) {
+    console.log(`Wrote ${path.join(root, "AGENTS.md")}`);
+  } else if (skipRootAgentsMd === true) {
+    console.log(`Skipped root AGENTS.md (--skip-agents-md)`);
+  } else if (result.skippedRootAgents) {
+    console.log(`Skipped root AGENTS.md (file already exists with custom content)`);
+  }
+}
 
 export function runInit(options: InitOptions): void {
   const cwd = process.cwd();
@@ -83,9 +104,20 @@ export function runInit(options: InitOptions): void {
   const configPath = path.join(root, ".trail", "config.json");
 
   if (fs.existsSync(configPath)) {
+    if (options.update === true) {
+      const result = writeTrailScaffold(root, {
+        skipRootAgentsMd: options.skipAgentsMd,
+        update: true,
+      });
+      logScaffoldWrites(root, result, options.skipAgentsMd);
+      console.log(`Updated Trail scaffold at ${root}`);
+      return;
+    }
+
     const err: TrailError = {
       code: "VALIDATION_FAILED",
-      message: "Trail is already initialized (.trail/config.json exists).",
+      message:
+        "Trail is already initialized (.trail/config.json exists). Run `trail init --update` to refresh scaffold files.",
     };
     throw err;
   }
@@ -133,24 +165,14 @@ export function runInit(options: InitOptions): void {
   });
 
   const trailDir = path.join(root, ".trail");
-  const tasksDir = path.join(trailDir, "tasks");
   fs.mkdirSync(trailDir, { recursive: true });
-  fs.mkdirSync(tasksDir, { recursive: true });
 
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf-8");
 
-  const gitignorePath = path.join(trailDir, ".gitignore");
-  fs.writeFileSync(gitignorePath, `${GITIGNORE_LINES.join("\n")}\n`, "utf-8");
-
-  if (options.skipAgentsMd !== true) {
-    const agentsPath = path.join(root, "AGENTS.md");
-    if (!fs.existsSync(agentsPath)) {
-      fs.writeFileSync(agentsPath, USER_AGENTS_MD, "utf-8");
-      console.log(`Wrote ${agentsPath}`);
-    } else {
-      console.log(`Skipped AGENTS.md (file already exists)`);
-    }
-  }
+  const result = writeTrailScaffold(root, {
+    skipRootAgentsMd: options.skipAgentsMd,
+  });
+  logScaffoldWrites(root, result, options.skipAgentsMd);
 
   console.log(`Initialized Trail project at ${root}`);
 }

@@ -105,7 +105,7 @@ With a **local** install, use **`npx trail …`**. After **`npm install -g`**, u
 
 | Command | Description |
 | --- | --- |
-| **`trail init`** | Creates `.trail/config.json`, `.trail/tasks/`, and `.trail/.gitignore`. Resolves GitHub `owner`/`repo` from `origin` or `--owner`/`--repo`. |
+| **`trail init`** | Creates `.trail/config.json`, `.trail/tasks/`, `.trail/.gitignore`, `.trail/README.md`, `.trail/AGENTS.md`, and optional root `AGENTS.md`. Resolves GitHub `owner`/`repo` from `origin` or `--owner`/`--repo`. Use **`--update`** to refresh scaffold docs on an existing project. |
 | **`trail sync`** | Pulls from GitHub, then pushes **relevant** linked tasks (active work and tasks referenced by dependencies), then refreshes the snapshot. Progress is printed to stderr (`push` shows **n/total**). |
 | **`trail list`** / **`show`** / **`status`** / **`next`** / **`validate`** | List, inspect, counts, next task, graph validation. |
 | **`trail update`** / **`done`** | Edit tasks; linked issues are updated when the preset allows. |
@@ -119,6 +119,8 @@ With a **local** install, use **`npx trail …`**. After **`npm install -g`**, u
 ```text
 .trail/
 ├── config.json
+├── README.md         # quick reference for humans
+├── AGENTS.md         # agent workflow (linked from root AGENTS.md)
 ├── tasks/            # *.json task files (committed)
 ├── snapshot.json     # derived, gitignored
 └── .gitignore

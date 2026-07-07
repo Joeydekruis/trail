@@ -83,15 +83,22 @@ export async function runCli(argv: string[]): Promise<void> {
     .option("--owner <name>", "GitHub repository owner (with --repo)")
     .option("--repo <name>", "GitHub repository name (with --owner)")
     .option("--skip-agents-md", "Do not write AGENTS.md at the repository root")
+    .option(
+      "--update",
+      "Refresh .trail/README.md, .trail/AGENTS.md, and managed root AGENTS.md on an existing project",
+    )
     .action(
       async (opts: {
         preset?: "solo" | "collaborative" | "offline";
         owner?: string;
         repo?: string;
         skipAgentsMd?: boolean;
+        update?: boolean;
       }) => {
         let preset: "solo" | "collaborative" | "offline";
-        if (opts.preset !== undefined) {
+        if (opts.update === true) {
+          preset = "solo";
+        } else if (opts.preset !== undefined) {
           preset = opts.preset;
         } else if (process.stdin.isTTY) {
           preset = await promptPresetWhenInteractive();
@@ -103,6 +110,7 @@ export async function runCli(argv: string[]): Promise<void> {
           owner: opts.owner,
           repo: opts.repo,
           skipAgentsMd: opts.skipAgentsMd === true,
+          update: opts.update === true,
         });
       },
     );
