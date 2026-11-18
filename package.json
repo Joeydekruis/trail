@@ -15,6 +15,7 @@
     "ui:dev": "npm run build --workspace=@trail-pm/cli && npm --prefix packages/ui run dev:all",
     "ui:server": "npm --prefix packages/ui run server",
     "trail-ui": "npm run ui:prepare && npm --prefix packages/ui exec trail-ui",
+    "bootstrap:desktop": "npm ci --ignore-scripts && npm run desktop:postinstall",
     "desktop:postinstall": "node node_modules/electron/install.js && npx @electron/rebuild -w better-sqlite3 -f",
     "desktop:dev": "npm run build --workspace=@trail/ipc && npm run build --workspace=@trail/core && npm run dev --workspace=@trail/desktop",
     "desktop:build": "npm run build:desktop",

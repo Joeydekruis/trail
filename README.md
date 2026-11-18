@@ -12,7 +12,9 @@
 | Prestaties / buildgrootte | [docs/superpowers/specs/2026-11-18-trail-desktop-performance-briefing.md](docs/superpowers/specs/2026-11-18-trail-desktop-performance-briefing.md) |
 | Fase 0 plan | [docs/superpowers/plans/2026-11-18-trail-desktop-phase-0.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-0.md) |
 | Design reference | [design/desktop-dashboard/v1.html](design/desktop-dashboard/v1.html) |
-| Dev | Node **22** (see `.nvmrc`), then `npm ci` and `npm run desktop:dev` |
+| Dev | Node **22** (see `.nvmrc`), then `npm run bootstrap:desktop` and `npm run desktop:dev` |
+
+**Windows:** Sluit Trail/Electron vóór `npm ci` (anders `EBUSY` op `electron/dist/*`). Gebruik **`npm run bootstrap:desktop`** i.p.v. kale `npm ci` — `better-sqlite3` faalt vaak op Node 25 zonder MSVC; `--ignore-scripts` + `desktop:postinstall` werkt wel.
 
 **Monorepo:** `apps/desktop`, `packages/core`, `packages/ipc`, `packages/mcp`, `packages/tokens`. See [AGENTS.md](AGENTS.md).
 
