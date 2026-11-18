@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { WorkspaceDto } from "@trail/ipc";
 import { OnboardingPlaceholder } from "./OnboardingPlaceholder";
+import { applyWorkspaceAccent } from "./workspace-accent";
 
 declare global {
   interface Window {
     trail?: {
       platform: string;
+      listWorkspaces: () => Promise<{
+        workspaces: WorkspaceDto[];
+        activeWorkspaceId: string;
+      }>;
+      switchWorkspace: (workspaceId: string) => Promise<{
+        active: WorkspaceDto;
+        workspaces: WorkspaceDto[];
+      }>;
       syncNow: (workspaceId?: string) => Promise<void>;
     };
   }
@@ -17,6 +27,71 @@ const NAV_ITEMS = ["Dashboard", "Board", "Decisions", "Docs", "Designs"] as cons
 export function App() {
   const platform = window.trail?.platform ?? "unknown";
   const [view, setView] = useState<AppView>("dashboard");
+  const [workspaces, setWorkspaces] = useState<WorkspaceDto[]>([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const applyActive = useCallback((active: WorkspaceDto) => {
+    setActiveWorkspaceId(active.id);
+    applyWorkspaceAccent(active);
+  }, []);
+
+  const switchWorkspace = useCallback(
+    async (workspaceId: string) => {
+      const api = window.trail;
+      if (!api) {
+        return;
+      }
+      const result = await api.switchWorkspace(workspaceId);
+      setWorkspaces(result.workspaces);
+      applyActive(result.active);
+    },
+    [applyActive],
+  );
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api) {
+      setLoadError("Preload bridge unavailable");
+      return;
+    }
+    void api
+      .listWorkspaces()
+      .then((data) => {
+        setWorkspaces(data.workspaces);
+        const active =
+          data.workspaces.find((w) => w.id === data.activeWorkspaceId) ??
+          data.workspaces[0];
+        if (active) {
+          applyActive(active);
+        }
+      })
+      .catch((err: unknown) => {
+        setLoadError(err instanceof Error ? err.message : "Failed to load workspaces");
+      });
+  }, [applyActive]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) {
+        return;
+      }
+      const index = Number.parseInt(event.key, 10);
+      if (index < 1 || index > 9) {
+        return;
+      }
+      const target = workspaces[index - 1];
+      if (!target || target.id === activeWorkspaceId) {
+        return;
+      }
+      event.preventDefault();
+      void switchWorkspace(target.id);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [workspaces, activeWorkspaceId, switchWorkspace]);
+
+  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
 
   return (
     <div className="shell">
@@ -31,7 +106,9 @@ export function App() {
             ))}
           </nav>
         </div>
-        <span className="titlebar-meta">Shell · {platform} · fase 0</span>
+        <span className="titlebar-meta">
+          {activeWorkspace?.name ?? "—"} · {platform} · cache-first
+        </span>
       </header>
 
       <div className="shell-body">
@@ -42,9 +119,23 @@ export function App() {
         ) : (
           <>
             <aside className="workspace-strip" aria-label="Workspaces">
-              <div className="workspace-chip workspace-chip--active" title="Example">
-                ex
-              </div>
+              {workspaces.map((ws) => (
+                <button
+                  key={ws.id}
+                  type="button"
+                  className={
+                    ws.id === activeWorkspaceId
+                      ? "workspace-chip workspace-chip--active"
+                      : "workspace-chip"
+                  }
+                  title={ws.name}
+                  aria-label={`Switch to ${ws.name}`}
+                  aria-current={ws.id === activeWorkspaceId ? "true" : undefined}
+                  onClick={() => void switchWorkspace(ws.id)}
+                >
+                  {ws.shortLabel}
+                </button>
+              ))}
               <button
                 type="button"
                 className="workspace-add"
@@ -62,11 +153,15 @@ export function App() {
             <main className="shell-main">
               <div className="dashboard-placeholder">
                 <h1>Dashboard</h1>
-                <p>
-                  App chrome skeleton per{" "}
-                  <code>design/desktop-dashboard/v1.html</code>. Board, sync, and
-                  agents land in later phases.
-                </p>
+                {loadError ? (
+                  <p className="dashboard-error">{loadError}</p>
+                ) : (
+                  <p>
+                    Workspaces load from local SQLite on startup (
+                    {workspaces.length} cached). GitHub sync starts after first paint.
+                    Use <kbd>Cmd</kbd>+<kbd>1</kbd>–<kbd>3</kbd> to switch.
+                  </p>
+                )}
                 <button
                   type="button"
                   className="link-button"
@@ -85,7 +180,9 @@ export function App() {
           <span className="status-dot status-dot--idle" aria-hidden />
           GitHub — not connected
         </span>
-        <span className="statusbar-item">Sync — idle</span>
+        <span className="statusbar-item">
+          Workspace — {activeWorkspace?.name ?? "loading…"}
+        </span>
         <button
           type="button"
           className="statusbar-link"

@@ -8,7 +8,7 @@ const analyze = process.env.DESKTOP_ANALYZE === "1";
 const bundleMainPreload = {
   build: {
     rollupOptions: {
-      external: ["electron"],
+      external: ["electron", "better-sqlite3"],
     },
     sourcemap: false,
   },

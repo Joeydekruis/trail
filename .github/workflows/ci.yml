@@ -38,6 +38,7 @@ jobs:
 
       - run: npm ci
       - run: npm run build --workspace=@trail/ipc
+      - run: npm run build --workspace=@trail/core
       - name: Desktop production build + bundle stats
         env:
           DESKTOP_ANALYZE: "1"

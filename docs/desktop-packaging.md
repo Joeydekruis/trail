@@ -14,6 +14,8 @@ Op Windows zonder codesigning-certificaat: `set CSC_IDENTITY_AUTO_DISCOVERY=fals
 
 `electron-vite` verwacht `electron` in de repo-root (`package.json` `devDependencies`); de versie moet gelijk zijn aan `@trail/desktop`.
 
+**better-sqlite3:** native module voor fase 1+. Gebruik Node **22** (`.nvmrc` / engines); op Windows zonder prebuild zijn **Desktop development with C++** of `@electron/rebuild` na install nodig.
+
 Configuratie staat in `apps/desktop/electron-builder.yml`. De installer bevat alleen `out/**` (geen volledige `node_modules`), `asar: true`, `compression: maximum`, en Chromium-talen `en` + `nl`. Blockmaps voor differentiële updates worden gegenereerd bij publicatie naar GitHub Releases (`publish.provider: github`).
 
 Native modules (bijv. `better-sqlite3`) komen via `asarUnpack` op `**/*.node` zodra ze in de app zitten.
