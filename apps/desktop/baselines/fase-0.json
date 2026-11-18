@@ -1,0 +1,17 @@
+{
+  "phase": 0,
+  "recordedAt": "2026-11-18",
+  "rendererJsGzipBytes": 97550,
+  "rendererCssGzipBytes": 1720,
+  "installerBytes": {
+    "macArm64Dmg": null,
+    "macX64Dmg": null,
+    "winX64Nsis": null
+  },
+  "budget": {
+    "rendererJsGzipMaxBytes": 409600,
+    "rendererCssGzipMaxBytes": 51200,
+    "installerMaxDeltaBytes": 15728640,
+    "installerMaxPercentIncreasePerRelease": 0.05
+  }
+}

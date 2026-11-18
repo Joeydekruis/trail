@@ -3,6 +3,8 @@
 Nov 18, 2026 · @Joey de Kruis
 
 > **Amendement 2026-11-18 (ADR-008):** Geen tweerichtings-sync met een `docs/`-map in de repo. **Kennis** (interne docs, ADR's, beslissingen, ideeën) leeft in **Trail** (SQLite + UI); agents lezen via **MCP**. **Taken** blijven op **GitHub Issues**. **Designs** blijven git-gedreven in `design/`. Optioneel later: eenrichtings-export naar `docs/trail/` (alleen-lezen). Zie `docs/adr/008-trail-single-source-knowledge.md`.
+>
+> **Aanvulling 2026-11-18 (prestaties):** Buildgrootte, opstarttijd, runtime-zuinigheid en CI-budgets staan in [2026-11-18-trail-desktop-performance-briefing.md](./2026-11-18-trail-desktop-performance-briefing.md). Vanaf fase 0 gelden de CI-checks; acceptatiecriteria daar gelden naast de criteria onder Testen.
 
 ## Samenvatting
 
@@ -95,7 +97,7 @@ De renderer en de preview praten alleen met main; alleen main en de runner raken
 
 **Sync-regels**
 
-- De app pollt GitHub elke 60 seconden (instelbaar); geen webhooks. Gebruik ETags en `If-None-Match` zodat ongewijzigde data de rate limit niet raakt.
+- De app pollt GitHub elke 60 seconden bij focus (instelbaar in Settings), elke 5 minuten zonder focus, gepauzeerd bij systeemslaap; geen webhooks. Gebruik ETags en `If-None-Match` zodat ongewijzigde data de rate limit niet raakt (zie [prestatiebriefing](./2026-11-18-trail-desktop-performance-briefing.md)).
 - Docs en ADR's: geen sync met repo-`docs/` in MVP. Trail bewaart inhoud lokaal; agents gebruiken MCP. Alleen **issue/task**-conflicten met GitHub krijgen de Resolve-sync UI.
 - Een conflict tussen GitHub en Trail (bijvoorbeeld issue #37 gesloten op GitHub maar In progress in Trail) toont de amber `ConflictBanner` met een Resolve-actie die het scherm "Resolve sync conflict" opent. Daar kies je per veld (state, boardkolom, labels, assignee) de waarde van GitHub of van Trail, of in één keer "Use GitHub for all".
 - Elke kaart toont een sync-status: `synced`, `pending` (lokale wijziging nog niet gepusht) of `conflict`.
@@ -383,7 +385,7 @@ Eén GitHub Actions-workflow bouwt bij elke tag een gesigneerde DMG voor macOS e
 
 |  | macOS | Windows |
 | --- | --- | --- |
-| Architecturen | arm64 en x64 (of universal) | x64 (arm64 later) |
+| Architecturen | arm64 en x64 **apart** (geen universal-build) | x64 (arm64 later) |
 | Installer | DMG + ZIP (ZIP is nodig voor auto-update) | NSIS, per gebruiker, zonder admin-rechten |
 | Signing | Apple Developer ID Application-certificaat, hardened runtime | Azure Artifact Signing (voorheen Trusted Signing) of een OV-certificaat |
 | Extra stap | Notarisatie via `notarytool` (Apple ID of API-key) | SmartScreen-reputatie bouwt zich op na verloop van tijd |
@@ -416,7 +418,7 @@ Trail draait agents met schrijfrechten op je code en laadt willekeurige pagina's
 
 ## Testen en acceptatiecriteria
 
-De MVP is af als onderstaande checks op een schone Mac (Apple Silicon) en een schone Windows 11-machine slagen met de geïnstalleerde, gesigneerde build.
+De MVP is af als onderstaande checks op een schone Mac (Apple Silicon) en een schone Windows 11-machine slagen met de geïnstalleerde, gesigneerde build. **Prestatie-acceptatie** (bundle/installer CI, koude start, geheugen, smooth chat-scroll, diagnostics): [prestatiebriefing — Acceptatiecriteria](./2026-11-18-trail-desktop-performance-briefing.md#acceptatiecriteria).
 
 **Teststrategie**
 
@@ -453,7 +455,7 @@ Bouw in vijf fases; elke fase eindigt met een gesigneerde build die op beide pla
 
 &#91;embedded content: MVP-fasering · 5 fases, elk met een gate\]
 
-Signing en auto-update staan bewust in fase 0: notarisatie en native modules zijn de grootste platformrisico's en kosten het meeste tijd als ze pas aan het eind komen. Geen datums, want de beschikbare tijd (één dag per week plus vrije tijd) is nog niet per fase gepland.
+Signing en auto-update staan bewust in fase 0: notarisatie en native modules zijn de grootste platformrisico's en kosten het meeste tijd als ze pas aan het eind komen. In dezelfde fase: electron-builder op gebundelde `out/`, CI-groottebudgetten en snelle eerste paint (zie [prestatiebriefing — Koppeling aan MVP-fasering](./2026-11-18-trail-desktop-performance-briefing.md#koppeling-aan-mvp-fasering) en [fase 0 plan](../plans/2026-11-18-trail-desktop-phase-0.md)). Geen datums, want de beschikbare tijd (één dag per week plus vrije tijd) is nog niet per fase gepland.
 
 ## Open vragen en aannames
 
