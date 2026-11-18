@@ -25,6 +25,7 @@ jobs:
 
       - run: npm ci
       - run: npm run build --workspace=@trail/ipc
+      - run: npm run build --workspace=@trail/core
       - run: npm run build --workspace=@trail/desktop
 
       - name: Package macOS (${{ matrix.arch }})
@@ -61,6 +62,7 @@ jobs:
 
       - run: npm ci
       - run: npm run build --workspace=@trail/ipc
+      - run: npm run build --workspace=@trail/core
       - run: npm run build --workspace=@trail/desktop
 
       - name: Package Windows (x64)

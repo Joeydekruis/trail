@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
 import { IpcChannels, syncNowPayload } from "@trail/ipc";
+import { initDatabase } from "./database";
+import { scheduleDeferredStartup } from "./deferred-startup";
+import { registerWorkspaceIpc } from "./workspace-ipc";
 
 const MIN_WIDTH = 1180;
 const MIN_HEIGHT = 640;
@@ -24,6 +27,7 @@ function createWindow(): void {
 
   win.on("ready-to-show", () => {
     win.show();
+    scheduleDeferredStartup();
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -46,6 +50,8 @@ ipcMain.handle(IpcChannels.syncNow, (_event, raw: unknown) => {
 });
 
 void app.whenReady().then(() => {
+  initDatabase();
+  registerWorkspaceIpc();
   createWindow();
 
   app.on("activate", () => {

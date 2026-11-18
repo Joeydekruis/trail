@@ -24,6 +24,7 @@ For day-to-day CLI usage, see the repository **[README.md](../README.md)** (inst
 | Document | Description |
 | --- | --- |
 | [2026-11-18-trail-desktop-phase-0.md](superpowers/plans/2026-11-18-trail-desktop-phase-0.md) | Desktop MVP fase 0 (signing shell + size CI) |
+| [2026-11-18-trail-desktop-phase-1.md](superpowers/plans/2026-11-18-trail-desktop-phase-1.md) | Desktop MVP fase 1 (workspace & cache) |
 | [desktop-packaging.md](desktop-packaging.md) | electron-builder, signing, release workflow |
 
 ## Legacy implementation plans (archived)
