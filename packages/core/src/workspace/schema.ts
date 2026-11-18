@@ -46,9 +46,9 @@ const DEMO_WORKSPACES = [
     integrationBranch: "development",
     sortOrder: 1,
     accent: "#b26bff",
-    accentSoft: "#1a0f22",
-    accentLine: "#3d1c47",
-    onAccent: "#0c0414",
+    accentSoft: "#1b1230",
+    accentLine: "#3b2766",
+    onAccent: "#12071f",
   },
   {
     id: "dockyrd",
@@ -58,9 +58,9 @@ const DEMO_WORKSPACES = [
     integrationBranch: "development",
     sortOrder: 2,
     accent: "#3dd6f5",
-    accentSoft: "#0c1a22",
-    accentLine: "#1c3d47",
-    onAccent: "#041014",
+    accentSoft: "#0e2229",
+    accentLine: "#1b4553",
+    onAccent: "#04141a",
   },
 ] as const;
 

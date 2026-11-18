@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en"><head><style data-dc-design-system-vars="">@layer{:root{--bg:#0b0d10;--surface:#0e1115;--surface-raised:#12151a;--surface-card:#161a20;--surface-hover:#181c22;--line-soft:#1a1f25;--line:#1f242b;--line-strong:#2a313a;--ink:#e7e9ec;--ink-soft:#c3cad2;--ink-muted:#98a2af;--ink-faint:#8b95a1;--mint:#4af7a3;--mint-soft:#0f2219;--mint-line:#1c4733;--on-mint:#04140c;--amber:#f2b24c;--amber-soft:#2a2113;--amber-line:#3d3017;--amber-ink:#e9d3a6;--blue:#7fb6ff;--blue-soft:#12202f;--blue-line:#1f3a57;--violet:#c9a7ff;--violet-soft:#1d1730;--red:#ff8a7a;--red-soft:#2a1512;--gray-soft:#1d2229;--claude:#e0956b;--focus-ring:0 0 0 2px #0b0d10, 0 0 0 4px #4af7a3;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-11:44px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-pill:999px;--font-sans:Inter, system-ui, sans-serif;--font-mono:'JetBrains Mono', ui-monospace, monospace;--text-title-lg:600 26px/32px var(--font-sans);--text-title:600 20px/28px var(--font-sans);--text-stat:600 32px/36px var(--font-sans);--text-heading:600 15px/22px var(--font-sans);--text-body:400 14px/20px var(--font-sans);--text-body-strong:500 14px/20px var(--font-sans);--text-small:400 13px/20px var(--font-sans);--text-caption:400 12px/16px var(--font-sans);--text-overline:600 11px/16px var(--font-sans);--text-mono:400 12px/16px var(--font-mono);}}</style>
+
+
+<meta charset="utf-8">
+<title>Trail desktop dashboard</title>
+<script src="32e86940-f163-4caa-b7bd-faeed640331f"></script>
+<style>/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("b27449cc-2732-4fb5-b22c-13d0ad201363") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("643f121c-10d2-483f-976e-db9337874495") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("9f4feaaa-9b00-4dbe-a63a-a00ac706fca0") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("d6b1e3f8-96c5-4dfd-9cba-7093392bc925") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("dbad2ede-751e-4cd7-b208-05005058da5d") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("558a7394-2fed-44b5-999f-9559cd5edeeb") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("50d5f1aa-67d7-4029-9718-ecaece64489b") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("b27449cc-2732-4fb5-b22c-13d0ad201363") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("643f121c-10d2-483f-976e-db9337874495") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("9f4feaaa-9b00-4dbe-a63a-a00ac706fca0") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("d6b1e3f8-96c5-4dfd-9cba-7093392bc925") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("dbad2ede-751e-4cd7-b208-05005058da5d") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("558a7394-2fed-44b5-999f-9559cd5edeeb") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("50d5f1aa-67d7-4029-9718-ecaece64489b") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("b27449cc-2732-4fb5-b22c-13d0ad201363") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("643f121c-10d2-483f-976e-db9337874495") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("9f4feaaa-9b00-4dbe-a63a-a00ac706fca0") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("d6b1e3f8-96c5-4dfd-9cba-7093392bc925") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("dbad2ede-751e-4cd7-b208-05005058da5d") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("558a7394-2fed-44b5-999f-9559cd5edeeb") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("50d5f1aa-67d7-4029-9718-ecaece64489b") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("e8202d15-75bd-45ce-b591-8c5c528c3af6") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("37aa1713-1435-4d60-a15a-a2584aaef440") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("463c7f29-2493-445f-9b42-17d77fe990c1") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("4df151e8-23f5-4eb1-8197-5f5c26ad8c93") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("76f328eb-b214-437d-b85a-962cd1eb5e99") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("36cd401f-f212-4f0c-858d-6b82f1d73776") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("e8202d15-75bd-45ce-b591-8c5c528c3af6") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("37aa1713-1435-4d60-a15a-a2584aaef440") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("463c7f29-2493-445f-9b42-17d77fe990c1") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("4df151e8-23f5-4eb1-8197-5f5c26ad8c93") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("76f328eb-b214-437d-b85a-962cd1eb5e99") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("36cd401f-f212-4f0c-858d-6b82f1d73776") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 20px; }
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.tr-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-4); }
+.tr-stack { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); }
+.tr-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.tr-mono { font-family: var(--font-mono); font-size: 12px; line-height: 16px; }
+.tr-muted { color: var(--ink-muted); } .tr-faint { color: var(--ink-faint); } .tr-soft { color: var(--ink-soft); }
+.tr-small { font-size: 13px; color: var(--ink-muted); }
+.tr-overline { font-size: 11px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-faint); }
+.tr-tone-mint { color: var(--mint); } .tr-tone-amber { color: var(--amber); } .tr-tone-blue { color: var(--blue); }
+.tr-tone-violet { color: var(--violet); } .tr-tone-red { color: var(--red); } .tr-tone-gray { color: var(--ink-muted); } .tr-tone-claude { color: var(--claude); }
+.tr-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.tr-btn { font: inherit; font-weight: 500; min-height: 44px; padding: 0 16px; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: transparent; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.tr-btn-primary { background: var(--mint); border-color: var(--mint); color: var(--on-mint); font-weight: 600; }
+.tr-btn-secondary { background: var(--surface-raised); }
+.tr-btn-ghost { border-color: transparent; color: var(--ink-muted); }
+.tr-btn:disabled { opacity: .45; cursor: not-allowed; }
+.tr-chip { display: inline-block; font-size: 12px; line-height: 20px; padding: 0 10px; border-radius: var(--radius-pill); white-space: nowrap; color: var(--ink-muted); background: var(--gray-soft); }
+.tr-chip-mint { color: var(--mint); background: var(--mint-soft); } .tr-chip-amber { color: var(--amber); background: var(--amber-soft); }
+.tr-chip-blue { color: var(--blue); background: var(--blue-soft); } .tr-chip-violet { color: var(--violet); background: var(--violet-soft); }
+.tr-chip-red { color: var(--red); background: var(--red-soft); }
+.tr-sync { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; white-space: nowrap; }
+.tr-avatar { width: 28px; height: 28px; flex: 0 0 28px; box-sizing: border-box; border-radius: 8px; background: var(--surface-hover); border: 1px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+.tr-search { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; box-sizing: border-box; background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: var(--radius-md); color: var(--ink-faint); }
+.tr-search input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--ink); font: inherit; min-height: 40px; }
+.tr-search:focus-within { box-shadow: var(--focus-ring); }
+.tr-kbd { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 2px 6px; }
+.tr-toggle { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; color: var(--ink-soft); }
+.tr-toggle input { width: 18px; height: 18px; accent-color: var(--mint); }
+.tr-nav { display: flex; align-items: center; gap: 10px; padding: 0 10px; min-height: 44px; box-sizing: border-box; border-radius: 8px; text-decoration: none; color: var(--ink-muted); }
+.tr-nav-active { background: var(--surface-hover); color: var(--ink); font-weight: 500; }
+.tr-nav-dot { width: 6px; height: 6px; border-radius: 2px; background: var(--line-strong); }
+.tr-nav-active .tr-nav-dot { background: var(--mint); }
+.tr-nav-count { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+.tr-stat { display: flex; flex-direction: column; gap: 4px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px 20px; }
+.tr-stat-value { font-size: 32px; line-height: 36px; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.tr-panel { background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+.tr-panel-head { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.tr-panel-head h2 { margin: 0; font-size: 15px; line-height: 22px; font-weight: 600; }
+.tr-panel-action { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
+.tr-panel-body { padding: 20px; } .tr-flush { padding: 0; }
+.tr-table-wrap { overflow-x: auto; }
+.tr-table { width: 100%; min-width: 480px; border-collapse: collapse; font-size: 13px; }
+.tr-table th { text-align: left; padding: 10px 16px; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); }
+.tr-table td { padding: 12px 16px; border-top: 1px solid var(--line-soft); color: var(--ink-soft); vertical-align: middle; }
+.tr-table td:first-child { color: var(--ink); font-weight: 500; }
+.tr-card { background: var(--surface-card); border: 1px solid var(--line-strong); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.tr-card-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tr-card-title { font-weight: 500; color: var(--ink); }
+.tr-board-col { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 12px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; width: 272px; }
+.tr-board-head { display: flex; align-items: center; gap: 8px; padding: 2px 4px; }
+.tr-board-head strong { font-weight: 600; }
+.tr-sq { width: 8px; height: 8px; border-radius: 2px; background: currentColor; }
+.tr-count { font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); background: var(--surface-hover); border-radius: var(--radius-pill); padding: 1px 8px; }
+.tr-dec { display: flex; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line-soft); align-items: flex-start; }
+.tr-dec-sel { background: var(--surface-hover); }
+.tr-id { font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); background: var(--surface-hover); border-radius: var(--radius-sm); padding: 2px 8px; margin-top: 1px; }
+.tr-dec-sel .tr-id { background: var(--surface-card); }
+.tr-act { display: flex; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line-soft); }
+.tr-bar { border-radius: 10px; padding: 8px 12px; border: 1px solid; display: flex; flex-direction: column; gap: 6px; min-height: 44px; box-sizing: border-box; }
+.tr-bar-now { background: var(--mint-soft); border-color: var(--mint-line); color: var(--mint); }
+.tr-bar-next { background: var(--blue-soft); border-color: var(--blue-line); color: var(--blue); }
+.tr-bar-later { background: var(--surface-card); border-color: var(--line-strong); color: var(--ink-faint); }
+.tr-track { height: 4px; border-radius: 2px; background: var(--line-strong); overflow: hidden; }
+.tr-fill { height: 4px; background: currentColor; }
+.tr-code { font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; overflow-x: auto; white-space: pre; }
+.tr-conflict { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--amber-soft); border: 1px solid var(--amber-line); border-radius: 12px; padding: 12px 14px; }
+.tr-conflict-text { flex: 1 1 240px; font-size: 13px; color: var(--amber-ink); }
+.tr-pill { min-height: 44px; padding: 0 14px; border-radius: var(--radius-pill); border: 1px solid var(--line-strong); background: var(--surface-raised); color: var(--ink-soft); font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.tr-pill-active { background: var(--mint); border-color: var(--mint); color: var(--on-mint); }
+.tr-pill .tr-mono { opacity: .85; }
+.tr-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--radius-md); overflow: hidden; }
+.tr-seg button { min-height: 44px; padding: 0 14px; border: 0; background: var(--surface-raised); color: var(--ink-muted); font: inherit; cursor: pointer; }
+.tr-seg button[aria-pressed="true"] { background: var(--surface-hover); color: var(--ink); }
+.tr-select { min-height: 44px; padding: 0 12px; border-radius: var(--radius-md); border: 1px solid var(--line-strong); background: var(--surface-raised); color: var(--ink); font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+</style>
+<script src="079c05d4-cfcd-4ed2-91d8-dce3d22d32ca"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+:root{--bg:#0b0d10;--surface:#0e1115;--surface-raised:#12151a;--surface-card:#161a20;--surface-hover:#181c22;--line-soft:#1a1f25;--line:#1f242b;--line-strong:#2a313a;--ink:#e7e9ec;--ink-soft:#c3cad2;--ink-muted:#98a2af;--ink-faint:#8b95a1;--mint:#4af7a3;--mint-soft:#0f2219;--mint-line:#1c4733;--on-mint:#04140c;--amber:#f2b24c;--amber-soft:#2a2113;--amber-line:#3d3017;--amber-ink:#e9d3a6;--blue:#7fb6ff;--blue-soft:#12202f;--blue-line:#1f3a57;--violet:#c9a7ff;--violet-soft:#1d1730;--red:#ff8a7a;--red-soft:#2a1512;--gray-soft:#1d2229;--claude:#e0956b;--font-sans:Inter,system-ui,sans-serif;--font-mono:'JetBrains Mono',ui-monospace,monospace;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-11:44px;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-pill:999px;--focus-ring:0 0 0 2px #0b0d10,0 0 0 4px #4af7a3}
+body{margin:0;background:var(--bg);font-size:13px}
+a{color:var(--ink-muted)}a:hover{color:var(--ink)}
+body .tr-btn{min-height:30px;padding:0 12px;font-size:13px;border-radius:8px}
+body .tr-select{min-height:28px;padding:0 10px;font-size:12px;border-radius:8px}
+body .tr-seg{display:flex;width:100%;border-radius:8px}
+body .tr-seg button{flex:1;min-height:26px;padding:0 10px;font-size:12px}
+body .tr-pill{min-height:28px;padding:0 12px;font-size:12px}
+body .tr-toggle{min-height:28px}
+body .tr-search{min-height:30px;padding:0 10px;border-radius:8px}
+body .tr-search input{min-height:26px;font-size:13px}
+body .tr-stat{padding:12px 14px;gap:2px}
+body .tr-stat-value{font-size:24px;line-height:28px}
+body .tr-panel-head{padding:10px 14px}
+body .tr-dec,body .tr-act{padding:10px 14px}
+body .tr-conflict{padding:8px 12px}
+body .tr-bar{min-height:36px;padding:6px 10px}
+body .tr-card{padding:10px}
+body .tr-btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+body .tr-pill-active{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+body .tr-nav-active .tr-nav-dot{background:var(--accent)}
+body .tr-bar-now{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+body .tr-toggle input{accent-color:var(--accent)}
+body .tr-board-col{width:272px;padding:10px}
+body .tr-btn.is-on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+body .wt-composer:focus-within,body .composer:focus-within{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}body .composer textarea:focus-visible,body .wt-composer textarea:focus-visible{box-shadow:none;outline:0}
+[data-tip]{position:relative}
+[data-tip]::after,[data-tip]::before{position:absolute;z-index:200;pointer-events:none;opacity:0;transition:opacity .1s ease .08s,transform .1s ease .08s}
+[data-tip]::after{content:attr(data-tip);white-space:nowrap;padding:7px 12px;border-radius:9px;background:#1b2027;border:1px solid var(--line-strong);color:var(--ink);font:500 13px/18px var(--font-sans);letter-spacing:0;text-transform:none;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+[data-tip]::before{content:"";width:8px;height:8px;background:#1b2027;transform:rotate(45deg)}
+[data-tip-pos="below"]::after{top:calc(100% + 8px);left:50%;transform:translate(-50%,-3px)}
+[data-tip-pos="below"]::before{top:calc(100% + 4px);left:calc(50% - 4px);border-left:1px solid var(--line-strong);border-top:1px solid var(--line-strong);transform:translateY(-3px) rotate(45deg)}
+[data-tip-pos="below-end"]::after{top:calc(100% + 8px);right:4px;transform:translateY(-3px)}
+[data-tip-pos="below-end"]::before{top:calc(100% + 4px);right:16px;border-left:1px solid var(--line-strong);border-top:1px solid var(--line-strong);transform:translateY(-3px) rotate(45deg)}
+[data-tip-pos="right"]::after{left:calc(100% + 10px);top:50%;transform:translate(-3px,-50%)}
+[data-tip-pos="right"]::before{left:calc(100% + 6px);top:calc(50% - 4px);border-left:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong);transform:translateX(-3px) rotate(45deg)}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1}
+[data-tip]:hover::before,[data-tip]:focus-visible::before{opacity:1}
+[data-tip-pos="below"]:hover::after,[data-tip-pos="below"]:focus-visible::after{transform:translate(-50%,0)}
+[data-tip-pos="below"]:hover::before,[data-tip-pos="below"]:focus-visible::before{transform:rotate(45deg)}
+[data-tip-pos="below-end"]:hover::after,[data-tip-pos="below-end"]:focus-visible::after{transform:none}
+[data-tip-pos="below-end"]:hover::before,[data-tip-pos="below-end"]:focus-visible::before{transform:rotate(45deg)}
+[data-tip-pos="right"]:hover::after,[data-tip-pos="right"]:focus-visible::after{transform:translate(0,-50%)}
+[data-tip-pos="right"]:hover::before,[data-tip-pos="right"]:focus-visible::before{transform:rotate(45deg)}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+*::-webkit-scrollbar-track{background:transparent}
+.bd-col x-import,.bd-col .tr-board-col{display:block;height:100%}.bd-col .tr-board-col{display:flex;overflow-y:auto;padding-top:0;scrollbar-width:thin}.bd-col .tr-board-head{position:sticky;top:0;z-index:1;background:var(--surface);padding:12px 4px 8px}</style>
+</helmet>
+<div style="position: relative; height: 100vh; min-height: 640px; min-width: 1180px; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 13px; line-height: 20px; --accent: {{accent}}; --accent-soft: {{accentSoft}}; --accent-line: {{accentLine}}; --on-accent: {{onAccent}}; --focus-ring: 0 0 0 2px #0b0d10, 0 0 0 4px {{accent}};">
+
+<header style="flex: 0 0 36px; display: flex; align-items: center; background: var(--surface); border-bottom: 1px solid var(--line);">
+<div style="display: flex; align-items: center; gap: 8px; padding: 0 12px; width: 72px;">
+<svg width="20" height="20" sc-camel-view-box="0 0 28 28" fill="none" aria-hidden="true">
+<rect width="28" height="28" rx="8" fill="#0f2219"></rect>
+<rect x="0.5" y="0.5" width="27" height="27" rx="7.5" stroke="#1c4733"></rect>
+<g fill="#4af7a3" opacity="0.28"><circle cx="8" cy="8" r="1"></circle><circle cx="14" cy="8" r="1"></circle><circle cx="20" cy="8" r="1"></circle><circle cx="8" cy="14" r="1"></circle><circle cx="14" cy="14" r="1"></circle><circle cx="20" cy="14" r="1"></circle><circle cx="8" cy="20" r="1"></circle><circle cx="14" cy="20" r="1"></circle><circle cx="20" cy="20" r="1"></circle></g>
+<path d="M8 8H20M14 8V20" stroke="#4af7a3" stroke-width="1.8" stroke-linecap="round"></path>
+<g fill="#4af7a3"><circle cx="8" cy="8" r="2.2"></circle><circle cx="20" cy="8" r="2.2"></circle><circle cx="14" cy="20" r="2.2"></circle></g>
+</svg>
+<span style="font-size: 13px; font-weight: 600; letter-spacing: -0.01em;">Trail</span>
+</div>
+<nav aria-label="Application menu" style="display: flex; gap: 2px;">
+<button type="button" style="height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer;">File</button>
+<button type="button" style="height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer;">Edit</button>
+<button type="button" style="height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer;">View</button>
+<button type="button" style="height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer;">Go</button>
+<button type="button" style="height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer;">Agents</button>
+<button type="button" style="height: 24px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer;">Help</button>
+</nav>
+<div style="flex: 1; display: flex; justify-content: center; padding: 0 16px;">
+<button type="button" sc-camel-on-click="{{openPalette}}" data-tip="Search (Ctrl K)" data-tip-pos="below" style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 420px; height: 26px; padding: 0 8px 0 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-raised); color: var(--ink-muted); font: inherit; font-size: 12px; cursor: pointer;">
+<svg width="13" height="13" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5"></circle><path d="M11 11l3.5 3.5"></path></svg>
+<span>Search tasks, decisions and docs</span>
+<kbd class="tr-kbd" style="margin-left: auto;">Ctrl K</kbd>
+</button>
+</div>
+<div style="display: flex; height: 36px;">
+<button type="button" aria-label="Minimize" data-tip="Minimize" data-tip-pos="below-end" style="width: 46px; height: 36px; border: 0; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" sc-camel-view-box="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true"><path d="M1 5h8"></path></svg></button><button type="button" aria-label="Maximize" data-tip="Maximize" data-tip-pos="below-end" style="width: 46px; height: 36px; border: 0; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" sc-camel-view-box="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="1"></rect></svg></button><button type="button" aria-label="Close window" data-tip="Close window" data-tip-pos="below-end" style="width: 46px; height: 36px; border: 0; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" sc-camel-view-box="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true"><path d="M1 1l8 8M9 1l-8 8"></path></svg></button>
+</div>
+</header>
+
+<div style="flex: 1 1 auto; min-height: 0; display: flex;">
+
+<nav aria-label="Workspaces" style="flex: 0 0 56px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 0; background: var(--bg); border-right: 1px solid var(--line);">
+<sc-for list="{{workspaces}}" as="ws" hint-placeholder-count="3">
+<div style="position: relative; width: 56px; display: flex; justify-content: center;">
+<span style="position: absolute; left: 0; top: 8px; width: 3px; height: 20px; border-radius: 0 3px 3px 0; background: {{ws.accent}}; opacity: {{ws.pip}};"></span>
+<button type="button" sc-camel-on-click="{{ws.pick}}" aria-label="{{ws.label}}" aria-pressed="{{ws.active}}" data-tip="{{ws.label}}" data-tip-pos="right" style="width: 36px; height: 36px; padding: 0; border-radius: 10px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; background: {{ws.soft}}; color: {{ws.accent}}; border: 1px solid {{ws.border}};">{{ws.letter}}</button>
+</div>
+</sc-for>
+<button type="button" aria-label="Add workspace" data-tip="Add workspace" data-tip-pos="right" style="width: 36px; height: 36px; padding: 0; border-radius: 10px; border: 1px dashed var(--line-strong); background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="14" height="14" sc-camel-view-box="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7 2v10M2 7h10"></path></svg></button>
+<button type="button" aria-label="Joey de Kruis, local workspace" data-tip="Joey de Kruis · Local workspace" data-tip-pos="right" style="margin-top: auto; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 10px; background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><x-import component-from-global-scope="Trail.Avatar" initials="JK" name="Joey de Kruis" tone="mint"></x-import></button>
+</nav>
+
+<nav aria-label="Views" style="flex: 0 0 48px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; background: var(--surface); border-right: 1px solid var(--line);">
+<a href="Main.dc.html" aria-label="Dashboard" data-tip="Dashboard" data-tip-pos="right" aria-current="page" style="width: 36px; height: 36px; border-radius: 8px; background: var(--surface-hover); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;"><svg width="18" height="18" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="5" height="6" rx="1"></rect><rect x="9" y="2" width="5" height="3" rx="1"></rect><rect x="9" y="7" width="5" height="7" rx="1"></rect><rect x="2" y="10" width="5" height="4" rx="1"></rect></svg></a>
+<a href="Board.dc.html" aria-label="Board" data-tip="Board" data-tip-pos="right" style="width: 36px; height: 36px; border-radius: 8px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;"><svg width="18" height="18" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="3.5" height="12" rx="1"></rect><rect x="6.25" y="2" width="3.5" height="8" rx="1"></rect><rect x="10.5" y="2" width="3.5" height="10" rx="1"></rect></svg></a>
+<a href="Roadmap.dc.html" aria-label="Roadmap" data-tip="Roadmap" data-tip-pos="right" style="width: 36px; height: 36px; border-radius: 8px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;"><svg width="18" height="18" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 4h7M5 8h9M2 12h8"></path></svg></a>
+<a href="Decisions.dc.html" aria-label="Decisions" data-tip="Decisions" data-tip-pos="right" style="width: 36px; height: 36px; border-radius: 8px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;"><svg width="18" height="18" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M8 2l6 6-6 6-6-6z"></path></svg></a>
+<a href="Docs.dc.html" aria-label="Docs" data-tip="Docs" data-tip-pos="right" style="width: 36px; height: 36px; border-radius: 8px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;"><svg width="18" height="18" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M4 2h5l3 3v9H4zM9 2v3h3"></path></svg></a>
+<a href="Designs.dc.html" aria-label="Designs" data-tip="Designs" data-tip-pos="right" style="width: 36px; height: 36px; border-radius: 8px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;"><svg width="18" height="18" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"></rect><path d="M2 6h12M6 6v8"></path></svg></a>
+<a href="Settings.dc.html" aria-label="Settings" data-tip="Settings" data-tip-pos="right" style="margin-top: auto; width: 36px; height: 36px; border-radius: 8px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; text-decoration: none;"><svg width="18" height="18" sc-camel-view-box="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M3 5h10M3 11h10"></path><circle cx="6" cy="5" r="1.6" fill="#0e1115"></circle><circle cx="10" cy="11" r="1.6" fill="#0e1115"></circle></svg></a>
+</nav>
+
+<aside aria-label="Projects" style="flex: 0 0 256px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); min-height: 0;">
+<div style="flex: 0 0 36px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--line);">
+<span style="width: 8px; height: 8px; border-radius: 2px; background: var(--accent);"></span>
+<span style="font-weight: 600;">{{wsName}}</span>
+<kbd class="tr-kbd" style="margin-left: auto;">{{wsKey}}</kbd>
+</div>
+<div style="flex: 1 1 auto; min-height: 0; overflow: auto;">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 6px 16px;">
+<span class="tr-overline">Worktrees <span class="tr-mono tr-faint" style="margin-left: 4px;">{{nLocal}}</span></span>
+<button type="button" aria-label="New worktree" data-tip="New worktree" data-tip-pos="below" style="width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="14" height="14" sc-camel-view-box="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7 2v10M2 7h10"></path></svg></button>
+</div>
+<nav aria-label="Worktrees" style="padding: 0 8px; display: flex; flex-direction: column; gap: 1px;">
+<sc-for list="{{wtLocal}}" as="w" hint-placeholder-count="3">
+<a href="{{w.href}}" style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; text-decoration: none; background: {{w.bg}}; color: {{w.ink}};">
+<span class="tr-dot" style="color: {{w.dot}}; flex: 0 0 auto;"></span>
+<span style="min-width: 0; display: flex; flex-direction: column;">
+<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 18px;">{{w.title}}</span>
+<span class="tr-mono tr-faint" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 14px;">{{w.sub}}</span>
+</span>
+</a>
+</sc-for>
+</nav>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 14px 6px 16px;">
+<span class="tr-overline">Remote worktrees <span class="tr-mono tr-faint" style="margin-left: 4px;">{{nRemote}}</span></span>
+</div>
+<nav aria-label="Remote worktrees" style="padding: 0 8px 12px; display: flex; flex-direction: column; gap: 1px;">
+<sc-for list="{{wtRemote}}" as="r" hint-placeholder-count="3">
+<a href="{{r.href}}" style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; text-decoration: none; background: {{r.bg}}; color: {{r.ink}};">
+<span class="tr-dot" style="color: {{r.dot}}; flex: 0 0 auto;"></span>
+<span style="min-width: 0; display: flex; flex-direction: column;">
+<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 18px;">{{r.title}}</span>
+<span class="tr-mono tr-faint" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 14px;">{{r.sub}}</span>
+</span>
+</a>
+</sc-for>
+</nav>
+</div>
+<a href="Board.dc.html" style="display: flex; align-items: center; gap: 8px; margin: 0 8px 8px; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface-raised); text-decoration: none; color: var(--ink-soft); font-size: 12px; line-height: 16px;">
+<span class="tr-dot" style="color: var(--mint);"></span>
+<span>Autopilot on</span>
+<span class="tr-faint">{{tool}}</span>
+<span class="tr-mono tr-faint" style="margin-left: auto;">{{apCount}}</span>
+</a>
+</aside>
+
+<section aria-label="Workspace" style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; background: var(--bg);">
+
+<div role="tablist" aria-label="Open views" style="flex: 0 0 36px; box-sizing: border-box; display: flex; align-items: stretch; background: var(--surface); border-bottom: 1px solid var(--line);">
+<div style="display: flex; align-items: center; gap: 4px; padding: 0 6px 0 14px; border-right: 1px solid var(--line); background: var(--bg); box-shadow: inset 0 2px 0 var(--accent);"><span role="tab" aria-selected="true" style="display: inline-flex; align-items: center; height: 34px; color: var(--ink); font-size: 13px;">Dashboard</span><button type="button" aria-label="Close Dashboard" data-tip="Close Dashboard" data-tip-pos="below" style="width: 22px; height: 22px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-faint); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" sc-camel-view-box="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6"></path></svg></button></div>
+<div style="display: flex; align-items: center; gap: 4px; padding: 0 6px 0 14px; border-right: 1px solid var(--line);"><span class="tr-dot" style="color: var(--mint);"></span><a href="Worktree.dc.html" role="tab" aria-selected="false" style="display: inline-flex; align-items: center; height: 34px; padding-left: 4px; color: var(--ink-muted); font-size: 13px; text-decoration: none;">#42 Fix redirect</a><button type="button" aria-label="Close #42 Fix redirect" data-tip="Close #42 Fix redirect" data-tip-pos="below" style="width: 22px; height: 22px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-faint); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="10" height="10" sc-camel-view-box="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6"></path></svg></button></div>
+<div style="display: flex; align-items: center; gap: 4px; padding: 0 14px; border-right: 1px solid var(--line);"><a href="Board.dc.html" role="tab" aria-selected="false" style="display: inline-flex; align-items: center; height: 34px; padding-left: 0; color: var(--ink-muted); font-size: 13px; text-decoration: none;">Board</a></div>
+<button type="button" aria-label="New tab" data-tip="New tab" data-tip-pos="below" style="width: 36px; height: 36px; border: 0; background: transparent; color: var(--ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"><svg width="14" height="14" sc-camel-view-box="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7 2v10M2 7h10"></path></svg></button></div>
+
+<div style="flex: 1 1 auto; min-height: 0; overflow: auto; padding: 20px 24px;">
+<div style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+<div style="display: flex; align-items: baseline; gap: 12px;">
+<h1 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em;">Dashboard</h1>
+<span class="tr-small">{{wsRepo}} · development</span>
+</div>
+<div style="display: flex; gap: 8px;"><x-import component-from-global-scope="Trail.Button" variant="secondary">Sync now</x-import><x-import component-from-global-scope="Trail.Button" variant="primary">New task</x-import></div>
+</div><x-import component-from-global-scope="Trail.ConflictBanner" action="Resolve">Issue #37 was closed on GitHub, but the task is still In progress in Trail.</x-import><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;"><x-import component-from-global-scope="Trail.StatTile" label="Open tasks" value="24" note="6 added this week"></x-import><x-import component-from-global-scope="Trail.StatTile" label="Running now" value="1" note="Limit is 2 at once" tone="mint"></x-import><x-import component-from-global-scope="Trail.StatTile" label="In review" value="2" note="Draft pull requests" tone="violet"></x-import><x-import component-from-global-scope="Trail.StatTile" label="Decisions" value="12" note="1 proposed" tone="blue"></x-import></div><x-import component-from-global-scope="Trail.Panel" title="Worktrees" flush="{{yes}}"><div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line-soft);">
+<x-import component-from-global-scope="Trail.Avatar" initials="CU" name="Cursor" tone="blue"></x-import>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span style="font-weight: 500;"><span class="tr-mono tr-faint">#42</span> Fix redirect after sign-in</span>
+<span class="tr-mono tr-faint" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">› Running tests: 12 passed, 0 failed · agent/42-fix-redirect</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+<x-import component-from-global-scope="Trail.Chip" tone="mint">Running</x-import><span class="tr-mono tr-faint">04:12</span>
+</div>
+</div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line-soft);">
+<x-import component-from-global-scope="Trail.Avatar" initials="CL" name="Claude" tone="claude"></x-import>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span style="font-weight: 500;"><span class="tr-mono tr-faint">#38</span> Export decisions to Markdown</span>
+<span class="tr-mono tr-faint" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">› Opened draft pull request #51 · agent/38-adr-export</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+<x-import component-from-global-scope="Trail.Chip" tone="violet">Draft PR</x-import><span class="tr-mono tr-faint">11:40</span>
+</div>
+</div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line-soft);">
+<x-import component-from-global-scope="Trail.Avatar" initials="CL" name="Claude" tone="claude"></x-import>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span style="font-weight: 500;"><span class="tr-mono tr-faint">#44</span> Store decisions in GitHub</span>
+<span class="tr-mono tr-faint" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">› Paused: needs ADR-012 to be accepted or rejected · agent/44-adr-store</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+<x-import component-from-global-scope="Trail.Chip" tone="amber">Waiting for decision</x-import><span class="tr-mono tr-faint">07:55</span>
+</div>
+</div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; ">
+<x-import component-from-global-scope="Trail.Avatar" initials="CU" name="Cursor" tone="blue"></x-import>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span style="font-weight: 500;"><span class="tr-mono tr-faint">#45</span> Sync labels when an issue closes</span>
+<span class="tr-mono tr-faint" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">› Waiting for a free slot · from Backlog to Todo</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+<x-import component-from-global-scope="Trail.Chip" tone="gray">Queued</x-import><span class="tr-mono tr-faint"></span>
+</div>
+</div></x-import>
+</div>
+</div><div style="flex: 0 0 auto; padding: 12px 24px 14px; border-top: 1px solid var(--line);">
+<div class="composer" style="width: 100%; max-width: 1100px; margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 12px;">
+<label for="composer" class="tr-sr">Ask Trail</label>
+<textarea id="composer" rows="2" placeholder="Ask Trail, or type # for issues, @ for files, / for commands" style="width: 100%; box-sizing: border-box; resize: none; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; line-height: 20px;"></textarea>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+<x-import component-from-global-scope="Trail.SelectButton" label="Cursor CLI"></x-import><x-import component-from-global-scope="Trail.SelectButton" label="New worktree"></x-import><x-import component-from-global-scope="Trail.SelectButton" label="Draft PR only"></x-import>
+<span style="margin-left: auto; display: inline-flex; align-items: center; gap: 10px;">
+<kbd class="tr-kbd">Ctrl Enter</kbd>
+<x-import component-from-global-scope="Trail.Button" variant="secondary">Start run</x-import>
+</span>
+</div>
+</div>
+</div>
+
+</section>
+<aside aria-label="Inspector" style="flex: 0 0 304px; box-sizing: border-box; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); min-height: 0;">
+<div style="flex: 0 0 36px; box-sizing: border-box; display: flex; align-items: center; padding: 0 14px; border-bottom: 1px solid var(--line);"><span class="tr-overline">Inspector</span></div>
+<div style="flex: 1 1 auto; min-height: 0; overflow: auto;">
+<div style="padding: 14px 14px 8px; display: flex; align-items: center; justify-content: space-between;"><span class="tr-overline">Needs your review</span><span class="tr-count">1</span></div>
+<div style="padding: 0 14px 8px;">
+<x-import component-from-global-scope="Trail.KanbanCard" issue="#38" title="Export decisions to Markdown" labels="{{reviewLabels}}" adr="ADR-011" pr="PR #51 draft" pr-tone="violet" sync="synced" agent="{{reviewAgent}}"></x-import>
+</div>
+<div style="padding: 14px 14px 6px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line-soft); margin-top: 8px;"><span class="tr-overline">Decisions</span><span class="tr-count">12</span></div>
+<x-import component-from-global-scope="Trail.DecisionRow" id="ADR-012" title="Run agents in separate git worktrees" status="Proposed" meta="Claude · today"></x-import><x-import component-from-global-scope="Trail.DecisionRow" id="ADR-011" title="Use GitHub issues as the task store" status="Accepted" meta="You · 2 days ago"></x-import>
+<div style="padding: 14px 14px 6px; border-top: 1px solid var(--line-soft);"><span class="tr-overline">Activity</span></div>
+<x-import component-from-global-scope="Trail.ActivityItem" initials="CU" tone="blue" who="Cursor" did="opened a draft pull request" what="#51 Export decisions to Markdown" when="6 min ago"></x-import><x-import component-from-global-scope="Trail.ActivityItem" initials="GH" tone="violet" who="GitHub" did="closed an issue" what="#37 Sync board columns with Projects" when="3 hours ago"></x-import><x-import component-from-global-scope="Trail.ActivityItem" initials="JK" tone="mint" who="You" did="accepted a decision" what="ADR-011 Use GitHub issues as the task store" when="2 days ago"></x-import>
+</div>
+</aside>
+</div>
+
+<footer style="flex: 0 0 24px; box-sizing: border-box; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: var(--surface); border-top: 1px solid var(--line); font-size: 11px; line-height: 16px; color: var(--ink-muted);">
+<span style="display: inline-flex; align-items: center; gap: 6px;">
+<svg width="12" height="12" sc-camel-view-box="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><circle cx="3.5" cy="2.5" r="1.3"></circle><circle cx="3.5" cy="9.5" r="1.3"></circle><circle cx="8.5" cy="5" r="1.3"></circle><path d="M3.5 3.8v4.4M8.5 6.3c0 1.7-2.2 1.4-5 2.2"></path></svg>
+<span class="tr-mono" style="font-size: 11px;">development</span>
+</span>
+<x-import component-from-global-scope="Trail.SyncStatus" state="synced" label="Synced 2 min ago"></x-import>
+<span style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px;"><span class="tr-dot" style="color: var(--mint);"></span>{{runText}}</span>
+<span>{{tool}}</span>
+<span>GitHub connected</span>
+</footer>
+<sc-if value="{{paletteOpen}}" hint-placeholder-val="{{ false }}">
+<div sc-camel-on-click="{{closePalette}}" style="position: absolute; inset: 0; z-index: 50; background: rgba(5, 6, 8, 0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; box-sizing: border-box;">
+<div role="dialog" aria-label="Search" sc-camel-on-click="{{stop}}" style="width: 640px; max-width: calc(100% - 48px); background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 14px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55); overflow: hidden; display: flex; flex-direction: column;">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 52px; border-bottom: 1px solid var(--line);">
+<svg width="16" height="16" sc-camel-view-box="0 0 16 16" fill="none" stroke="var(--ink-muted)" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5"></circle><path d="M11 11l3.5 3.5"></path></svg>
+<input type="text" autofocus="" value="{{query}}" sc-camel-on-input="{{onQuery}}" sc-camel-on-key-down="{{onKey}}" placeholder="Search tasks, worktrees, decisions, docs and actions" style="flex: 1; min-width: 0; height: 40px; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 15px;">
+<kbd class="tr-kbd">Esc</kbd>
+</div>
+<div style="max-height: 400px; overflow: auto; padding: 4px 8px 8px;">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<div style="padding: 12px 8px 4px;"><span class="tr-overline">{{g.name}}</span></div>
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="3">
+<a href="{{it.href}}" style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 8px; text-decoration: none; background: {{it.bg}}; color: {{it.ink}};">
+<span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{it.title}}</span>
+<span class="tr-mono tr-faint" style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{it.sub}}</span>
+<span class="tr-mono tr-faint" style="margin-left: auto; font-size: 11px;">{{it.hint}}</span>
+</a>
+</sc-for>
+</sc-for>
+<sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 24px 12px; text-align: center;" class="tr-small">Nothing matches that search.</div>
+</sc-if>
+</div>
+<div style="display: flex; align-items: center; gap: 16px; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-muted);">
+<span style="display: inline-flex; align-items: center; gap: 6px;"><kbd class="tr-kbd">Up Down</kbd>Navigate</span>
+<span style="display: inline-flex; align-items: center; gap: 6px;"><kbd class="tr-kbd">Enter</kbd>Open</span>
+<span style="display: inline-flex; align-items: center; gap: 6px;"><kbd class="tr-kbd">Esc</kbd>Close</span>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;workspace&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;trail&quot;,&quot;options&quot;:[&quot;trail&quot;,&quot;loupe&quot;,&quot;dockyrd&quot;]},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+
+wsVals() {
+const SEL = 0;
+const WS = [
+{ id: 'trail', name: 'Trail', repo: 'trail', letter: 'T', accent: '#4af7a3', soft: '#0f2219', line: '#1c4733', on: '#04140c', key: 'Ctrl 1', ap: '1 of 2',
+  local: [['development', 'base checkout', 'base', 'Main.dc.html'], ['#42 Fix redirect after sign-in', 'agent/42-fix-redirect', 'running', 'Worktree.dc.html'], ['#45 Sync labels when an issue closes', 'agent/45-label-sync', 'queued', 'Worktree.dc.html'], ['#44 Store decisions in GitHub', 'agent/44-adr-store · waiting on ADR-012', 'waiting', 'Decisions.dc.html']],
+  remote: [['#38 Export decisions to Markdown', 'agent/38-adr-export · PR #51 draft', 'review'], ['#34 Fix label colours', 'hotfix/34-label-colours · development and main', 'merged'], ['#36 Read issues from GitHub', 'agent/36-read-issues · PR #41 merged', 'merged']] },
+{ id: 'loupe', name: 'Loupe', repo: 'loupe', letter: 'L', accent: '#b26bff', soft: '#1b1230', line: '#3b2766', on: '#12071f', key: 'Ctrl 2', ap: '1 of 2',
+  local: [['development', 'base checkout', 'base', 'Main.dc.html'], ['#12 Pin comments on pages', 'agent/12-pin-comments', 'running', 'Worktree.dc.html']],
+  remote: [['#15 Export pins as issues', 'agent/15-issue-export · PR #19 draft', 'review'], ['#9 Fix pin offset on scroll', 'hotfix/9-pin-offset · development and main', 'merged']] },
+{ id: 'dockyrd', name: 'Dockyrd', repo: 'dockyrd', letter: 'D', accent: '#3dd6f5', soft: '#0e2229', line: '#1b4553', on: '#04141a', key: 'Ctrl 3', ap: '1 of 2',
+  local: [['development', 'base checkout', 'base', 'Main.dc.html'], ['#8 Add deploy hooks', 'agent/8-deploy-hooks', 'running', 'Worktree.dc.html']],
+  remote: [['#6 Add health checks', 'agent/6-health-checks · PR #9 merged', 'merged']] }
+];
+const curId = (this.state && this.state.ws) || this.props.workspace || 'trail';
+const cur = WS.find((w) => w.id === curId) || WS[0];
+const dots = { base: 'var(--ink-faint)', running: 'var(--mint)', review: 'var(--violet)', waiting: 'var(--amber)', queued: 'var(--ink-faint)', merged: 'var(--ink-faint)' };
+const row = (r, i, sel) => ({ title: r[0], sub: r[1], tip: r[0] + ' · ' + r[1], dot: dots[r[2]], href: r[3] || 'Worktree.dc.html', bg: sel ? 'var(--surface-hover)' : 'transparent', ink: sel ? 'var(--ink)' : 'var(--ink-muted)' });
+const ST = this.state || {};
+const q = (ST.q || '').toLowerCase().trim();
+const ALL = [
+['Pages', [['Dashboard', 'Overview', 'Main.dc.html'], ['Board', 'Kanban', 'Board.dc.html'], ['Roadmap', 'Epics and milestones', 'Roadmap.dc.html'], ['Decisions', 'ADRs', 'Decisions.dc.html'], ['Docs', 'docs folder', 'Docs.dc.html'], ['Designs', 'Design versions', 'Designs.dc.html']], 'Page'],
+['Worktrees', [['#42 Fix redirect after sign-in', 'agent/42-fix-redirect', 'Worktree.dc.html'], ['#45 Sync labels when an issue closes', 'agent/45-label-sync', 'Worktree.dc.html'], ['#38 Export decisions to Markdown', 'agent/38-adr-export', 'Worktree.dc.html']], 'Worktree'],
+['Tasks', [['#37 Sync board columns with Projects', 'In progress', 'Board.dc.html'], ['#46 Link decisions to issues', 'Todo', 'Board.dc.html'], ['#47 Add a Ctrl K command palette', 'Todo', 'Board.dc.html']], 'Task'],
+['Decisions', [['ADR-012 Run agents in separate git worktrees', 'Proposed', 'Decisions.dc.html'], ['ADR-011 Use GitHub issues as the task store', 'Accepted', 'Decisions.dc.html'], ['ADR-010 Name the worktree after the task', 'Accepted', 'Decisions.dc.html']], 'Decision'],
+['Docs', [['Worktrees', 'docs/architecture/worktrees.md', 'Docs.dc.html'], ['Sync', 'docs/architecture/sync.md', 'Docs.dc.html']], 'Doc'],
+['Actions', [['New task', '', '#'], ['New worktree', '', '#'], ['Sync now', '', '#']], 'Action']
+];
+let first = true;
+const groups = [];
+ALL.forEach((g) => {
+const items = g[1].filter((r) => !q || (r[0] + ' ' + r[1]).toLowerCase().indexOf(q) >= 0).map((r) => {
+const sel = first; first = false;
+return { title: r[0], sub: r[1], href: r[2], hint: g[2], bg: sel ? 'var(--surface-hover)' : 'transparent', ink: sel ? 'var(--ink)' : 'var(--ink-soft)' };
+});
+if (items.length) groups.push({ name: g[0], items: items });
+});
+return {
+paletteOpen: !!ST.pal,
+query: ST.q || '',
+groups: groups,
+noResults: groups.length === 0,
+openPalette: () => this.setState({ pal: true, q: '' }),
+closePalette: () => this.setState({ pal: false }),
+stop: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+onQuery: (e) => this.setState({ q: (e && e.target && e.target.value) || '' }),
+onKey: (e) => { if (e && e.key === 'Escape') this.setState({ pal: false }); },
+accent: cur.accent,
+accentSoft: cur.soft,
+accentLine: cur.line,
+onAccent: cur.on,
+wsName: cur.name,
+wsRepo: cur.repo,
+wsKey: cur.key,
+tool: 'Cursor CLI',
+apCount: cur.ap,
+runText: '1 worktree running',
+nLocal: cur.local.length - 1,
+nRemote: cur.remote.length,
+wtLocal: cur.local.map((r, i) => row(r, i, i === SEL)),
+wtRemote: cur.remote.map((r, i) => row(r, i, false)),
+workspaces: WS.map((w) => ({
+label: w.name + ' workspace, ' + w.key,
+letter: w.letter,
+accent: w.accent,
+soft: w.soft,
+border: w.id === cur.id ? w.accent : w.line,
+pip: w.id === cur.id ? 1 : 0,
+active: w.id === cur.id,
+pick: () => this.setState({ ws: w.id })
+}))
+};
+}
+renderVals() {
+return Object.assign(this.wsVals(), { yes: true, reviewLabels: [{ text: 'feature', tone: 'blue' }], reviewAgent: { initials: 'CL', name: 'Claude', tone: 'claude' } });
+}
+}
+</script>
+
+
+</body></html>

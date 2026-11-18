@@ -16,7 +16,14 @@ const bundleMainPreload = {
 
 export default defineConfig({
   main: bundleMainPreload,
-  preload: bundleMainPreload,
+  preload: {
+    build: {
+      rollupOptions: {
+        external: ["electron"],
+      },
+      sourcemap: false,
+    },
+  },
   renderer: {
     resolve: {
       alias: {

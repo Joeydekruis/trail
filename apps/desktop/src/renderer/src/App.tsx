@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { WorkspaceDto } from "@trail/ipc";
-import { OnboardingPlaceholder } from "./OnboardingPlaceholder";
+import { OnboardingView } from "./OnboardingView";
+import { TrailShell } from "./TrailShell";
+import { isElectronRenderer, waitForTrail } from "./wait-for-trail";
 import { applyWorkspaceAccent } from "./workspace-accent";
 
 declare global {
@@ -16,13 +18,14 @@ declare global {
         workspaces: WorkspaceDto[];
       }>;
       syncNow: (workspaceId?: string) => Promise<void>;
+      minimize?: () => Promise<void>;
+      maximize?: () => Promise<void>;
+      close?: () => Promise<void>;
     };
   }
 }
 
 type AppView = "dashboard" | "onboarding";
-
-const NAV_ITEMS = ["Dashboard", "Board", "Decisions", "Docs", "Designs"] as const;
 
 export function App() {
   const platform = window.trail?.platform ?? "unknown";
@@ -30,6 +33,7 @@ export function App() {
   const [workspaces, setWorkspaces] = useState<WorkspaceDto[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const applyActive = useCallback((active: WorkspaceDto) => {
     setActiveWorkspaceId(active.id);
@@ -50,25 +54,46 @@ export function App() {
   );
 
   useEffect(() => {
-    const api = window.trail;
-    if (!api) {
-      setLoadError("Preload bridge unavailable");
-      return;
-    }
-    void api
-      .listWorkspaces()
-      .then((data) => {
-        setWorkspaces(data.workspaces);
-        const active =
-          data.workspaces.find((w) => w.id === data.activeWorkspaceId) ??
-          data.workspaces[0];
-        if (active) {
-          applyActive(active);
+    let cancelled = false;
+    void waitForTrail().then((api) => {
+      if (cancelled) {
+        return;
+      }
+      if (!api) {
+        if (!isElectronRenderer()) {
+          setLoadError(
+            "You are in a browser tab. Close it and use the Trail window opened by npm run desktop:dev (Electron).",
+          );
+        } else {
+          setLoadError(
+            "Preload bridge unavailable in Electron. Check the terminal for “[trail] Preload failed”. Then run: npm run desktop:dev from the repo root.",
+          );
         }
-      })
-      .catch((err: unknown) => {
-        setLoadError(err instanceof Error ? err.message : "Failed to load workspaces");
-      });
+        return;
+      }
+      void api
+        .listWorkspaces()
+        .then((data) => {
+          if (cancelled) {
+            return;
+          }
+          setWorkspaces(data.workspaces);
+          const active =
+            data.workspaces.find((w) => w.id === data.activeWorkspaceId) ??
+            data.workspaces[0];
+          if (active) {
+            applyActive(active);
+          }
+        })
+        .catch((err: unknown) => {
+          if (!cancelled) {
+            setLoadError(err instanceof Error ? err.message : "Failed to load workspaces");
+          }
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [applyActive]);
 
   useEffect(() => {
@@ -93,106 +118,44 @@ export function App() {
 
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
 
-  return (
-    <div className="shell">
-      <header className="titlebar">
-        <div className="titlebar-start">
-          <span className="logo">Trail</span>
-          <nav className="titlebar-tabs" aria-label="Views">
-            {NAV_ITEMS.map((item) => (
-              <span key={item} className="titlebar-tab titlebar-tab--disabled">
-                {item}
-              </span>
-            ))}
-          </nav>
-        </div>
-        <span className="titlebar-meta">
-          {activeWorkspace?.name ?? "—"} · {platform} · cache-first
-        </span>
-      </header>
+  const onSyncNow = useCallback(() => {
+    const api = window.trail;
+    if (!api || syncing) {
+      return;
+    }
+    setSyncing(true);
+    void api
+      .syncNow(activeWorkspace?.id)
+      .catch(() => undefined)
+      .finally(() => setSyncing(false));
+  }, [activeWorkspace?.id, syncing]);
 
-      <div className="shell-body">
-        {view === "onboarding" ? (
-          <div className="shell-main shell-main--solo">
-            <OnboardingPlaceholder />
-          </div>
-        ) : (
-          <>
-            <aside className="workspace-strip" aria-label="Workspaces">
-              {workspaces.map((ws) => (
-                <button
-                  key={ws.id}
-                  type="button"
-                  className={
-                    ws.id === activeWorkspaceId
-                      ? "workspace-chip workspace-chip--active"
-                      : "workspace-chip"
-                  }
-                  title={ws.name}
-                  aria-label={`Switch to ${ws.name}`}
-                  aria-current={ws.id === activeWorkspaceId ? "true" : undefined}
-                  onClick={() => void switchWorkspace(ws.id)}
-                >
-                  {ws.shortLabel}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="workspace-add"
-                disabled
-                aria-label="Add workspace"
-              >
-                +
-              </button>
-            </aside>
-            <nav className="view-rail" aria-label="Sections">
-              <span className="view-rail-item view-rail-item--active">Overview</span>
-              <span className="view-rail-item">Activity</span>
-              <span className="view-rail-item">Runs</span>
-            </nav>
-            <main className="shell-main">
-              <div className="dashboard-placeholder">
-                <h1>Dashboard</h1>
-                {loadError ? (
-                  <p className="dashboard-error">{loadError}</p>
-                ) : (
-                  <p>
-                    Workspaces load from local SQLite on startup (
-                    {workspaces.length} cached). GitHub sync starts after first paint.
-                    Use <kbd>Cmd</kbd>+<kbd>1</kbd>–<kbd>3</kbd> to switch.
-                  </p>
-                )}
-                <button
-                  type="button"
-                  className="link-button"
-                  onClick={() => setView("onboarding")}
-                >
-                  Preview onboarding placeholder
-                </button>
-              </div>
-            </main>
-          </>
-        )}
+  if (view === "onboarding") {
+    return (
+      <div className="trail-app trail-app--solo">
+        <OnboardingView onComplete={() => setView("dashboard")} onBack={() => setView("dashboard")} />
       </div>
+    );
+  }
 
-      <footer className="statusbar">
-        <span className="statusbar-item">
-          <span className="status-dot status-dot--idle" aria-hidden />
-          GitHub — not connected
-        </span>
-        <span className="statusbar-item">
-          Workspace — {activeWorkspace?.name ?? "loading…"}
-        </span>
-        <button
-          type="button"
-          className="statusbar-link"
-          onClick={() =>
-            setView(view === "onboarding" ? "dashboard" : "onboarding")
-          }
-        >
-          {view === "onboarding" ? "Back to dashboard" : "Onboarding"}
-        </button>
-      </footer>
-    </div>
+  if (loadError && workspaces.length === 0) {
+    return (
+      <div className="trail-app trail-app--solo">
+        <p className="tr-conflict-text">{loadError}</p>
+      </div>
+    );
+  }
+
+  return (
+    <TrailShell
+      workspaces={workspaces}
+      activeWorkspace={activeWorkspace}
+      activeWorkspaceId={activeWorkspaceId}
+      platform={platform}
+      onSwitchWorkspace={(id) => void switchWorkspace(id)}
+      onSyncNow={onSyncNow}
+      syncing={syncing}
+      onShowOnboarding={() => setView("onboarding")}
+    />
   );
 }

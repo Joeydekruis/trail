@@ -14,7 +14,8 @@
     "size-limit": "size-limit --config size-limit.config.js",
     "dist": "electron-builder --config electron-builder.yml",
     "dist:dir": "electron-builder --config electron-builder.yml --dir",
-    "test": "node --test scripts/installer-budget.test.mjs"
+    "test": "node --test scripts/installer-budget.test.mjs",
+    "verify:sqlite": "electron scripts/sqlite-smoke.cjs"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1"

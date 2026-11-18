@@ -5,6 +5,9 @@ export const IpcChannels = {
   workspaceList: "workspace.list",
   workspaceSwitch: "workspace.switch",
   syncNow: "sync.now",
+  windowMinimize: "window.minimize",
+  windowMaximize: "window.maximize",
+  windowClose: "window.close",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
