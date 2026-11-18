@@ -18,13 +18,13 @@ For day-to-day CLI usage, see the repository **[README.md](../README.md)** (inst
 
 ---
 
-## Implementation plans (`superpowers/plans/`)
+## Legacy implementation plans (archived)
 
 | Document | Description |
 | --- | --- |
-| [2026-04-10-repo-scaffolding.md](superpowers/plans/2026-04-10-repo-scaffolding.md) | Repository and package scaffolding |
-| [2026-04-10-mvp-a-cli-sync.md](superpowers/plans/2026-04-10-mvp-a-cli-sync.md) | MVP A — CLI and sync |
-| [2026-04-10-mvp-b-rich-tasks-mcp.md](superpowers/plans/2026-04-10-mvp-b-rich-tasks-mcp.md) | MVP B — Drafts, deps, graph, context, MCP |
+| [legacy-cli-plans/](archive/legacy-cli-plans/README.md) | April 2026 CLI/UI plans (historical) |
+
+Repo map: [REPO-STATUS.md](REPO-STATUS.md)
 
 ---
 

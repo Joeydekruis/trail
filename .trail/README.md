@@ -1,52 +1,20 @@
-# Trail
+# Trail (this repository)
 
-Trail stores structured task data in this folder and syncs with **GitHub Issues** when online.
+This folder was used for **legacy** `@trail-pm/cli` dogfooding (JSON tasks + GitHub sync). The **Trail Desktop** pivot (2026-11) uses briefing specs and GitHub Issues directly; see [docs/REPO-STATUS.md](../docs/REPO-STATUS.md).
 
-## Layout
+## What stays here
 
-| File / folder | Commit to git? | Purpose |
+| File / folder | In git? | Notes |
 | --- | --- | --- |
-| `config.json` | Yes | Repository settings and sync preset |
-| `tasks/*.json` | Yes | Source task files (one file per task) |
-| `snapshot.json` | No | Compiled aggregate for fast reads (regenerated automatically) |
-| `AGENTS.md` | Yes | Instructions for AI coding agents |
-| `.gitignore` | Yes | Keeps derived files out of git |
+| `config.json` | Yes | Legacy CLI/UI settings for optional local dev |
+| `tasks/` | No JSON files tracked | See [tasks/README.md](./tasks/README.md) |
+| `AGENTS.md` | Yes | Update when legacy CLI is fully retired |
+| `.gitignore` | Yes | Still ignores `snapshot.json` |
 
-## Quick start
-
-```bash
-npx trail sync              # pull from GitHub, push local changes, refresh snapshot
-npx trail list              # list tasks
-npx trail next              # highest-priority unblocked task
-npx trail context <id>      # compact work packet for an agent session
-```
-
-Use `trail` instead of `npx trail` if the CLI is installed globally.
-
-## Local roadmap UI
-
-Trail has an optional browser UI (**`@trail-pm/ui`**) for kanban, list, and dependency views over this folder.
+## Legacy CLI (optional)
 
 ```bash
-npm install -D @trail-pm/ui   # once, alongside the CLI
-npx trail-ui                  # from the repository root
+npx trail sync    # only if you still use @trail-pm/cli in this repo
 ```
 
-Open the URL printed in the terminal (default **http://localhost:4700**). Set `TRAIL_UI_PORT` to change the port.
-
-The UI reads `snapshot.json`, shows last sync time, and includes a **Sync** button (GitHub pull/push when not in offline mode). Refresh interval is `sync.ui_poll_interval_seconds` in `config.json` (default 30 seconds).
-
-## Sync presets
-
-Configured in `config.json` under `sync.preset`:
-
-| Preset | Behavior |
-| --- | --- |
-| **collaborative** | Auto-sync on every command; best for teams |
-| **solo** | Sync only when you run `trail sync` |
-| **offline** | No GitHub; local files only |
-
-## More help
-
-- Agent workflow: see [AGENTS.md](./AGENTS.md)
-- Full CLI reference: [Trail README](https://github.com/joeydekruis/trail/blob/main/README.md)
+Desktop development: `npm run desktop:dev` at repo root.

@@ -1,27 +1,17 @@
-# Trail — Agent workflow
+# Trail monorepo — agent notes
 
-This repository uses [Trail](https://github.com/joeydekruis/trail) for GitHub-native task tracking. Task JSON lives in `.trail/tasks/`; GitHub Issues are the remote source of truth when online.
+**Product direction:** [Trail Desktop](../docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md). Read [AGENTS.md](../AGENTS.md) at repo root first.
 
-See also: [README.md](./README.md) for folder layout and sync presets.
+## Tasks
 
-If Trail is installed **locally** (`npm install @trail-pm/cli`), prefix commands with `npx` (e.g. `npx trail sync`). If you use a **global** install (`npm install -g`), run `trail …` directly.
+- Use **GitHub Issues** on this repo for work tracking (legacy test issues are closed).
+- Do **not** expect committed `.trail/tasks/*.json` in git — this repo no longer dogfoods JSON task files.
 
-## Before coding
+## Legacy CLI (optional)
 
-1. Run `npx trail sync` or `trail sync` (or rely on collaborative mode) so local tasks match GitHub.
-2. Run `npx trail next` or `trail next` (add `--json` when scripting) to pick the highest-priority unblocked task.
-3. Run `npx trail context <id>` or `trail context <id>` to load a compact JSON work packet for your session.
+`@trail-pm/cli` still exists in `packages/cli/` for other repos. In **this** repo it is maintenance-only until desktop MVP.
 
-## While working
+## Specs
 
-- Update status: `npx trail update <id> --status in_progress` (or `trail update …` if global).
-- Use `npx trail list`, `npx trail show <id>`, and `npx trail validate` as needed (drop `npx` if Trail is installed globally).
-
-## When finished
-
-1. `npx trail done <id> "what you did"` (or `trail done …`) — closes the linked GitHub issue when configured.
-2. Commit task changes under `.trail/tasks/` and use the suggested commit message (includes `closes #N` when linked).
-
-## Docs
-
-- Trail design (upstream): see the `trail` repo `docs/superpowers/specs/`
+- Desktop: `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md`
+- Repo map: `docs/REPO-STATUS.md`

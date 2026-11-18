@@ -1,7 +1,7 @@
 # Trail — Design Specification
 
-**Date:** 2026-04-10
-**Status:** Approved
+**Date:** 2026-04-10  
+**Status:** legacy — superseded by [2026-11-18-trail-desktop-briefing.md](./2026-11-18-trail-desktop-briefing.md) (ADR-007/008)  
 **Supersedes:** `docs/plans/PROJECT.md` (initial vision doc)
 
 ---

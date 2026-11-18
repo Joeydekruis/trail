@@ -1,6 +1,6 @@
 # Briefing: opschonen van de oude Trail (docs-sync met GitHub)
 
-**Status:** in uitvoering · legacy code verwijderd 18 nov 2026 · desktop briefing bijgewerkt (ADR-008)
+**Status:** legacy code + test GitHub issues opgeschoond (18 nov 2026); desktop knowledge layer nog te bouwen
 
 ## Context
 
