@@ -27,7 +27,7 @@ docs/superpowers/specs/    — Design specifications
 
 1. Read `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md`
 2. Read `docs/adr/007-electron-desktop-pivot.md`
-3. Run `npm install` at the repo root
+3. Desktop bootstrap: Node **22** (`.nvmrc`). Close any running Electron/Trail app, then `npm run bootstrap:desktop` (not plain `npm ci` on Windows).
 4. Run `npm test` (legacy CLI + new package tests)
 5. Desktop dev: `npm run desktop:dev`
 
