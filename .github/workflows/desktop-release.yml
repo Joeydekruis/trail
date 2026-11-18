@@ -1,0 +1,104 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, x64]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build --workspace=@trail/ipc
+      - run: npm run build --workspace=@trail/desktop
+
+      - name: Package macOS (${{ matrix.arch }})
+        working-directory: apps/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.DESKTOP_MAC_CSC_LINK != '' && 'true' || 'false' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.DESKTOP_MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.DESKTOP_MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.DESKTOP_APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.DESKTOP_APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.DESKTOP_APPLE_TEAM_ID }}
+        run: npx electron-builder --config electron-builder.yml --mac dmg zip --${{ matrix.arch }} --publish always
+
+      - name: Upload mac artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-${{ matrix.arch }}
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+            apps/desktop/release/*.blockmap
+            apps/desktop/release/latest-mac.yml
+
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build --workspace=@trail/ipc
+      - run: npm run build --workspace=@trail/desktop
+
+      - name: Package Windows (x64)
+        working-directory: apps/desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.DESKTOP_WIN_CSC_LINK != '' && 'true' || 'false' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.DESKTOP_WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.DESKTOP_WIN_CSC_KEY_PASSWORD }}
+        run: npx electron-builder --config electron-builder.yml --win nsis --x64 --publish always
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-x64
+          path: |
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.blockmap
+            apps/desktop/release/latest.yml
+
+  # Nulmeting installergrootte — archief voor size-budget (+15 MB / +5% per release).
+  record-installer-baseline:
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Report installer sizes
+        run: |
+          find artifacts -type f \( -name '*.dmg' -o -name '*.exe' \) -exec ls -lh {} \;
+
+      - name: Enforce installer size budget
+        run: node apps/desktop/scripts/check-installer-budget.mjs artifacts

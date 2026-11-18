@@ -25,3 +25,29 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build --workspace=@trail/ipc
+      - name: Desktop production build + bundle stats
+        env:
+          DESKTOP_ANALYZE: "1"
+        run: npm run build --workspace=@trail/desktop
+      - run: npm run size-limit --workspace=@trail/desktop
+
+      - name: Upload renderer bundle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-renderer-stats
+          path: apps/desktop/out/renderer/stats.html
+          if-no-files-found: ignore

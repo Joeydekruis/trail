@@ -1,20 +1,39 @@
 import { resolve } from "node:path";
-import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { defineConfig } from "electron-vite";
 import react from "@vitejs/plugin-react";
+import { visualizer } from "rollup-plugin-visualizer";
+
+const analyze = process.env.DESKTOP_ANALYZE === "1";
+
+const bundleMainPreload = {
+  build: {
+    rollupOptions: {
+      external: ["electron"],
+    },
+    sourcemap: false,
+  },
+};
 
 export default defineConfig({
-  main: {
-    plugins: [externalizeDepsPlugin()],
-  },
-  preload: {
-    plugins: [externalizeDepsPlugin()],
-  },
+  main: bundleMainPreload,
+  preload: bundleMainPreload,
   renderer: {
     resolve: {
       alias: {
         "@renderer": resolve("src/renderer/src"),
       },
     },
-    plugins: [react()],
+    plugins: [
+      react(),
+      analyze &&
+        visualizer({
+          filename: resolve("out/renderer/stats.html"),
+          gzipSize: true,
+          template: "treemap",
+        }),
+    ].filter(Boolean),
+    build: {
+      sourcemap: false,
+    },
   },
 });

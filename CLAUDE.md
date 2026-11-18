@@ -5,6 +5,8 @@ Read `AGENTS.md` for the full instructions. This file adds Claude-specific guida
 ## Quick reference
 
 - Spec: `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md`
+- Performance: `docs/superpowers/specs/2026-11-18-trail-desktop-performance-briefing.md`
+- Fase 0 plan: `docs/superpowers/plans/2026-11-18-trail-desktop-phase-0.md`
 - Design HTML: `design/desktop-dashboard/v1.html`
 - Test: `npm test`
 - Typecheck: `npm run typecheck`

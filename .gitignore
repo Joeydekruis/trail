@@ -148,6 +148,10 @@ dist/
 .trail/export/
 .trail/*.tmp
 
+# Electron desktop packaging output
+apps/desktop/release
+apps/desktop/release-*
+
 
 template/**/* 
 template/**/.*

@@ -4,7 +4,7 @@
 
 **Trail Desktop** is an Electron app: PM layer and orchestrator above GitHub (issues, Projects v2, ADRs, docs, designs), local agent worktrees, preview with pins, and MCP.
 
-TypeScript monorepo. **Primary spec:** `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md`
+TypeScript monorepo. **Primary spec:** `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md` · **Performance:** `docs/superpowers/specs/2026-11-18-trail-desktop-performance-briefing.md` · **Fase 0 plan:** `docs/superpowers/plans/2026-11-18-trail-desktop-phase-0.md`
 
 **Legacy (parallel):** `@trail-pm/cli` + `@trail-pm/ui` — see `docs/legacy-cli-ui.md`. Do not add desktop features there.
 

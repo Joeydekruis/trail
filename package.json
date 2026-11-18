@@ -8,7 +8,7 @@
   "scripts": {
     "build": "npm run build --workspace=@trail-pm/cli && npm run build --workspace=@trail-pm/ui",
     "build:desktop": "npm run build --workspace=@trail/ipc && npm run build --workspace=@trail/desktop",
-    "test": "npm run test --workspace=@trail-pm/cli && npm run test --workspace=@trail/core && npm run test --workspace=@trail/ipc",
+    "test": "npm run test --workspace=@trail-pm/cli && npm run test --workspace=@trail/core && npm run test --workspace=@trail/ipc && npm run test --workspace=@trail/desktop",
     "typecheck": "npm run typecheck --workspace=@trail-pm/cli && npm run typecheck --workspace=@trail/core --if-present && npm run typecheck --workspace=@trail/ipc --if-present && npm run typecheck --workspace=@trail/desktop --if-present",
     "lint": "npm run lint --workspace=@trail-pm/cli",
     "ui:prepare": "npm run build --workspace=@trail-pm/cli && npm run build --workspace=@trail-pm/ui",
@@ -16,9 +16,13 @@
     "ui:server": "npm --prefix packages/ui run server",
     "trail-ui": "npm run ui:prepare && npm --prefix packages/ui exec trail-ui",
     "desktop:dev": "npm run build --workspace=@trail/ipc && npm run dev --workspace=@trail/desktop",
-    "desktop:build": "npm run build:desktop"
+    "desktop:build": "npm run build:desktop",
+    "desktop:dist": "npm run build:desktop && npm run dist --workspace=@trail/desktop"
   },
   "engines": {
     "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "electron": "33.2.1"
   }
 }

@@ -13,10 +13,18 @@ For day-to-day CLI usage, see the repository **[README.md](../README.md)** (inst
 | Document | Description |
 | --- | --- |
 | [2026-11-18-trail-desktop-briefing.md](superpowers/specs/2026-11-18-trail-desktop-briefing.md) | Electron desktop — canonical briefing |
+| [2026-11-18-trail-desktop-performance-briefing.md](superpowers/specs/2026-11-18-trail-desktop-performance-briefing.md) | Build size, startup, runtime, CI budgets |
 | [2026-11-18-trail-desktop-design.md](superpowers/specs/2026-11-18-trail-desktop-design.md) | Desktop pivot index + repo map |
 | [2026-04-10-trail-design.md](superpowers/specs/2026-04-10-trail-design.md) | Legacy CLI + JSON tasks |
 
 ---
+
+## Implementation plans (`superpowers/plans/`)
+
+| Document | Description |
+| --- | --- |
+| [2026-11-18-trail-desktop-phase-0.md](superpowers/plans/2026-11-18-trail-desktop-phase-0.md) | Desktop MVP fase 0 (signing shell + size CI) |
+| [desktop-packaging.md](desktop-packaging.md) | electron-builder, signing, release workflow |
 
 ## Legacy implementation plans (archived)
 
