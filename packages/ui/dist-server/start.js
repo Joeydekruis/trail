@@ -13,11 +13,7 @@ var REQUIRED_EXPORTS = [
   "publishTaskToGitHub",
   "pushLinkedTaskToGitHub",
   "resolveGitHubToken",
-  "shouldPublishTaskToGitHub",
-  "listDocs",
-  "readDocFile",
-  "writeDocFile",
-  "deleteDocFile"
+  "shouldPublishTaskToGitHub"
 ];
 function resolveCliLibPath() {
   try {
@@ -60,7 +56,7 @@ var __dirname = path.dirname(fileURLToPath2(import.meta.url));
 var distDir = path.resolve(__dirname, "..", "dist");
 await ensureCliLibBuilt();
 var { findTrailRoot } = await import("@trail-pm/cli/lib");
-var { createApi } = await import("./api-BA4YFDXN.js");
+var { createApi } = await import("./api-HM6D2U23.js");
 function buildApp(trailRoot, hasClient) {
   const app2 = createApi(trailRoot);
   if (hasClient) {

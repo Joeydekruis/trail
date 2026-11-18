@@ -31,7 +31,6 @@ export interface TrailPaths {
   root: string;
   trailDir: string;
   tasksDir: string;
-  docsDir: string;
   configPath: string;
   snapshotPath: string;
   gitignorePath: string;
@@ -44,7 +43,6 @@ export function trailPaths(root: string): TrailPaths {
     root,
     trailDir,
     tasksDir: path.join(trailDir, "tasks"),
-    docsDir: path.join(trailDir, "docs"),
     configPath: path.join(trailDir, "config.json"),
     snapshotPath: path.join(trailDir, "snapshot.json"),
     gitignorePath: path.join(trailDir, ".gitignore"),

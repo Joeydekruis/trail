@@ -4,14 +4,17 @@ Read `AGENTS.md` for the full instructions. This file adds Claude-specific guida
 
 ## Quick reference
 
-- Spec: `docs/superpowers/specs/2026-04-10-trail-design.md`
+- Spec: `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md`
+- Design HTML: `design/desktop-dashboard/v1.html`
 - Test: `npm test`
 - Typecheck: `npm run typecheck`
-- Build: `npm run build`
+- Legacy build: `npm run build`
+- Desktop dev: `npm run desktop:dev`
 
 ## Claude-specific
 
 - Use `npm test` before every commit
 - Use `npm run typecheck` to catch type errors
-- All code goes in `packages/cli/src/` — this is a monorepo
+- Desktop code: `apps/desktop/`, shared logic in `packages/core`, `packages/ipc`
+- Legacy CLI: `packages/cli/src/` only when fixing the parallel track
 - Follow the commit message conventions in `CONTRIBUTING.md`

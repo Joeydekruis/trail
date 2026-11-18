@@ -1,0 +1,78 @@
+@import "@trail/tokens/tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--trail-font-sans);
+  font-size: 14px;
+  color: var(--trail-ink);
+  background: var(--trail-bg);
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.titlebar {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--trail-line);
+  background: var(--trail-surface);
+}
+
+.logo {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.titlebar-meta {
+  font-size: 12px;
+  color: var(--trail-ink-muted);
+}
+
+.placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.placeholder h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.placeholder p {
+  margin: 0;
+  color: var(--trail-ink-soft);
+  line-height: 1.5;
+}
+
+code {
+  font-family: var(--trail-font-mono);
+  font-size: 12px;
+  color: var(--accent);
+}

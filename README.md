@@ -1,11 +1,26 @@
 # Trail
 
 > **T**ask & **R**epository **AI** **L**ayer  
-> A GitHub-native AI project management CLI.
 
-Trail keeps tasks in **JSON** under `.trail/tasks/`, syncs with **GitHub Issues**, and offers a **CLI**, **`--json`** output, an optional **local UI**, and an **MCP (stdio) server** for agents and editors.
+## Trail Desktop (current direction)
 
-Full product vision and schema: **[design specification](docs/superpowers/specs/2026-04-10-trail-design.md)** · **[docs/README.md](docs/README.md)** · **[CHANGELOG.md](CHANGELOG.md)**
+**Trail Desktop** is an Electron app for macOS and Windows: GitHub-native PM, worktrees, coding agents, in-app preview with pins, and MCP. Source of truth is **GitHub**; Trail keeps a local cache.
+
+| Resource | Link |
+| --- | --- |
+| Bouwbriefing | [docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md](docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md) |
+| Design reference | [design/desktop-dashboard/v1.html](design/desktop-dashboard/v1.html) |
+| Dev | `npm run desktop:dev` (after `npm install`) |
+
+**Monorepo:** `apps/desktop`, `packages/core`, `packages/ipc`, `packages/mcp`, `packages/tokens`. See [AGENTS.md](AGENTS.md).
+
+---
+
+## Legacy CLI + local web UI
+
+The packages **`@trail-pm/cli`** and **`@trail-pm/ui`** remain in this repo until Desktop MVP. They use JSON tasks under `.trail/tasks/`, sync with GitHub Issues, and provide CLI, `--json`, local UI, and MCP on stdio.
+
+Legacy spec: **[2026-04-10-trail-design.md](docs/superpowers/specs/2026-04-10-trail-design.md)** · [docs/legacy-cli-ui.md](docs/legacy-cli-ui.md) · [docs/README.md](docs/README.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -134,7 +149,8 @@ With a **local** install, use **`npx trail …`**. After **`npm install -g`**, u
 npm install
 npm test
 npm run typecheck
-npm run build
+npm run build          # legacy CLI + UI
+npm run desktop:dev    # Electron shell
 ```
 
 See **[CONTRIBUTING.md](CONTRIBUTING.md)** and **[AGENTS.md](AGENTS.md)**.

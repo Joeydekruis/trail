@@ -5,7 +5,6 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { api, type TaskWriteResponse } from "./client";
-import type { DocTreeEntry } from "@/types/document";
 import type { Task, TrailConfig, TrailConfigPayload } from "@/types/task";
 
 export function useTasks(pollIntervalMs: number) {
@@ -80,7 +79,11 @@ export function useUpdateTask() {
   return useMutation<
     TaskWriteResponse,
     Error,
-    { id: string; data: Record<string, unknown> }
+    { id: string; data: Record<string, unknown> },
+    {
+      previous: Task[] | undefined;
+      previousTask: Task | null | undefined;
+    }
   >({
     mutationFn: ({ id, data }) => api.updateTask(id, data),
     onMutate: async ({ id, data }) => {
@@ -192,86 +195,3 @@ export function useCreateTaskComment(taskId: string) {
   });
 }
 
-export function useDocs(pollIntervalMs: number) {
-  return useQuery({
-    queryKey: ["docs"],
-    queryFn: async () => {
-      const res = await api.getDocs();
-      return { docs: res.docs, tree: res.tree };
-    },
-    refetchInterval: pollIntervalMs > 0 ? pollIntervalMs : false,
-  });
-}
-
-export function useDocTree(pollIntervalMs: number): DocTreeEntry[] {
-  const { data } = useDocs(pollIntervalMs);
-  return data?.tree ?? [];
-}
-
-export function useDoc(path: string | null) {
-  return useQuery({
-    queryKey: ["docs", path],
-    queryFn: async () => {
-      if (!path) return null;
-      const res = await api.getDoc(path);
-      return res.doc;
-    },
-    enabled: !!path,
-  });
-}
-
-export function useCreateDoc() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: {
-      title?: string;
-      path?: string;
-      content?: string;
-      icon?: string;
-      folder?: string;
-    }) => api.createDoc(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["docs"] });
-    },
-  });
-}
-
-export function useCreateDocFolder() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: { path: string; name?: string; icon?: string }) =>
-      api.createDocFolder(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["docs"] });
-    },
-  });
-}
-
-export function useUpdateDoc() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      path,
-      data,
-    }: {
-      path: string;
-      data: { content?: string; path?: string };
-    }) => api.updateDoc(path, data),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["docs"] });
-      queryClient.setQueryData(["docs", res.doc.path], res.doc);
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-}
-
-export function useDeleteDoc() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (path: string) => api.deleteDoc(path),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["docs"] });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-}

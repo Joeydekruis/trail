@@ -19,14 +19,7 @@ import {
   writeLastFullSyncAt,
   writeTrailConfig,
   publishTaskToGitHub,
-  shouldPublishTaskToGitHub,
-  listDocs,
-  readDocFile,
-  writeDocFile,
-  deleteDocFile,
-  resolveDocPath,
-  slugifyDocPath,
-  uniqueDocPath
+  shouldPublishTaskToGitHub
 } from "@trail-pm/cli/lib";
 var GITHUB_AUTH_HINT = "Set GITHUB_TOKEN or run `gh auth login` to sync with GitHub.";
 function isPathInsideRepo(repoRoot, absolutePath) {
@@ -391,102 +384,6 @@ function createApi(root) {
     writeLastFullSyncAt(paths, iso);
     return c.json({ ok: true, last_full_sync_at: iso });
   });
-  app.get("/api/docs", (c) => {
-    fs.mkdirSync(paths.docsDir, { recursive: true });
-    const docs = listDocs(paths.docsDir);
-    const tasks = loadAllTasks(paths.tasksDir);
-    const withTasks = docs.map((doc) => ({
-      ...doc,
-      task_ids: tasks.filter(
-        (t) => t.refs.some(
-          (ref) => ref.type === "doc" && (ref.path === doc.path || ref.path === `docs/${doc.path}` || ref.path.replace(/^\.trail\/docs\//, "") === doc.path)
-        )
-      ).map((t) => t.id)
-    }));
-    return c.json({ docs: withTasks });
-  });
-  app.get("/api/docs/file", (c) => {
-    const rel = c.req.query("path") ?? "";
-    fs.mkdirSync(paths.docsDir, { recursive: true });
-    const doc = readDocFile(paths.docsDir, rel);
-    if (!doc) {
-      return c.json({ error: "Document not found" }, 404);
-    }
-    const tasks = loadAllTasks(paths.tasksDir);
-    const task_ids = tasks.filter(
-      (t) => t.refs.some(
-        (ref) => ref.type === "doc" && (ref.path === doc.path || ref.path === `docs/${doc.path}` || ref.path.replace(/^\.trail\/docs\//, "") === doc.path)
-      )
-    ).map((t) => t.id);
-    return c.json({ doc: { ...doc, task_ids } });
-  });
-  app.post("/api/docs", async (c) => {
-    const body = await c.req.json();
-    const title = typeof body.title === "string" ? body.title.trim() : "";
-    const content = typeof body.content === "string" ? body.content : title ? `# ${title}
-
-` : "# Untitled\n\n";
-    let rel = typeof body.path === "string" && body.path.trim() ? body.path.trim().replace(/\\/g, "/") : slugifyDocPath(title || "untitled");
-    if (!rel.endsWith(".md") && !rel.endsWith(".mdx")) {
-      rel = `${rel}.md`;
-    }
-    fs.mkdirSync(paths.docsDir, { recursive: true });
-    rel = uniqueDocPath(paths.docsDir, rel);
-    const written = writeDocFile(paths.docsDir, rel, content);
-    return c.json({ doc: written }, 201);
-  });
-  app.patch("/api/docs/file", async (c) => {
-    const rel = (c.req.query("path") ?? "").trim();
-    const existing = readDocFile(paths.docsDir, rel);
-    if (!existing) {
-      return c.json({ error: "Document not found" }, 404);
-    }
-    const body = await c.req.json();
-    let targetRel = rel;
-    if (typeof body.path === "string" && body.path.trim()) {
-      const next = resolveDocPath(paths.docsDir, body.path.trim());
-      if (!next) {
-        return c.json({ error: "Invalid document path" }, 400);
-      }
-      if (next.relative !== rel) {
-        if (fs.existsSync(next.absolute)) {
-          return c.json({ error: "Document path already exists" }, 409);
-        }
-        fs.renameSync(
-          resolveDocPath(paths.docsDir, rel).absolute,
-          next.absolute
-        );
-        targetRel = next.relative;
-      }
-    }
-    const content = typeof body.content === "string" ? body.content : existing.content;
-    const written = writeDocFile(paths.docsDir, targetRel, content);
-    return c.json({ doc: written });
-  });
-  app.delete("/api/docs/file", (c) => {
-    const rel = c.req.query("path") ?? "";
-    if (!deleteDocFile(paths.docsDir, rel)) {
-      return c.json({ error: "Document not found" }, 404);
-    }
-    const tasks = loadAllTasks(paths.tasksDir);
-    for (const task of tasks) {
-      const nextRefs = task.refs.filter(
-        (ref) => !(ref.type === "doc" && (ref.path === rel || ref.path === `docs/${rel}` || ref.path.replace(/^\.trail\/docs\//, "") === rel))
-      );
-      if (nextRefs.length !== task.refs.length) {
-        const result = findTaskFileById(paths.tasksDir, task.id);
-        if (result) {
-          writeTaskFile(result.filePath, {
-            ...task,
-            refs: nextRefs,
-            updated_at: (/* @__PURE__ */ new Date()).toISOString()
-          });
-        }
-      }
-    }
-    rebuildSnapshot(paths);
-    return c.json({ deleted: true });
-  });
   app.get("/api/repo-file", (c) => {
     const rel = c.req.query("path") ?? "";
     const abs = resolveSafeRepoPath(root, rel);
@@ -505,4 +402,4 @@ function createApi(root) {
 export {
   createApi
 };
-//# sourceMappingURL=api-BA4YFDXN.js.map
+//# sourceMappingURL=api-HM6D2U23.js.map

@@ -7,13 +7,6 @@ const REQUIRED_EXPORTS = [
   "pushLinkedTaskToGitHub",
   "resolveGitHubToken",
   "shouldPublishTaskToGitHub",
-  "listDocs",
-  "listDocTree",
-  "readDocFile",
-  "writeDocFile",
-  "updateDocFile",
-  "deleteDocFile",
-  "createDocFolder",
 ] as const;
 
 function resolveCliLibPath(): string | null {

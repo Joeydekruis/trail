@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import type { DocTreeEntry } from "@/types/document";
 import type { Task } from "@/types/task";
 import {
   EMPTY_FILTERS,
@@ -21,12 +20,6 @@ interface AppLayoutProps {
   syncPending: boolean;
   syncDisabled: boolean;
   lastSyncedAt: string | null;
-  docTree: DocTreeEntry[];
-  selectedDocPath: string | null;
-  onSelectDoc: (path: string) => void;
-  onClearDoc: () => void;
-  onCreateDoc: (folder?: string) => void;
-  onCreateFolder: (parentFolder?: string) => void;
   children: (view: AppView, filteredTasks: Task[]) => React.ReactNode;
 }
 
@@ -41,12 +34,6 @@ export function AppLayout({
   syncPending,
   syncDisabled,
   lastSyncedAt,
-  docTree,
-  selectedDocPath,
-  onSelectDoc,
-  onClearDoc,
-  onCreateDoc,
-  onCreateFolder,
   children,
 }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -62,8 +49,7 @@ export function AppLayout({
   ).length;
   const closedCount = filteredTasks.length - openCount;
 
-  const showTaskFilters =
-    selectedDocPath === null && activeView !== "settings";
+  const showTaskFilters = activeView !== "settings";
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
@@ -74,12 +60,6 @@ export function AppLayout({
         onToggleCollapsed={() => setSidebarCollapsed((c) => !c)}
         openCount={openCount}
         closedCount={closedCount}
-        docTree={docTree}
-        selectedDocPath={selectedDocPath}
-        onSelectDoc={onSelectDoc}
-        onClearDoc={onClearDoc}
-        onCreateDoc={onCreateDoc}
-        onCreateFolder={onCreateFolder}
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">

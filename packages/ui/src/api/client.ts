@@ -75,42 +75,4 @@ export const api = {
       `/tasks/${taskId}/comments`,
       { method: "POST", body: JSON.stringify({ body }) },
     ),
-  getDocs: () =>
-    request<{
-      docs: import("@/types/document").TrailDocumentMeta[];
-      tree: import("@/types/document").DocTreeEntry[];
-    }>("/docs"),
-  getDoc: (docPath: string) =>
-    request<{ doc: import("@/types/document").TrailDocument }>(
-      `/docs/file?path=${encodeURIComponent(docPath)}`,
-    ),
-  createDoc: (data: {
-    title?: string;
-    path?: string;
-    content?: string;
-    icon?: string;
-    folder?: string;
-  }) =>
-    request<{ doc: import("@/types/document").TrailDocument }>("/docs", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-  createDocFolder: (data: { path: string; name?: string; icon?: string }) =>
-    request<{ folder: import("@/types/document").TrailDocFolder }>(
-      "/docs/folders",
-      { method: "POST", body: JSON.stringify(data) },
-    ),
-  updateDoc: (
-    docPath: string,
-    data: { content?: string; path?: string; title?: string; icon?: string },
-  ) =>
-    request<{ doc: import("@/types/document").TrailDocument }>(
-      `/docs/file?path=${encodeURIComponent(docPath)}`,
-      { method: "PATCH", body: JSON.stringify(data) },
-    ),
-  deleteDoc: (docPath: string) =>
-    request<{ deleted: boolean }>(
-      `/docs/file?path=${encodeURIComponent(docPath)}`,
-      { method: "DELETE" },
-    ),
 };

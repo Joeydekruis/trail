@@ -1,0 +1,11 @@
+{
+  "name": "@trail/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.json": "./tokens.json",
+    "./tokens.css": "./tokens.css"
+  },
+  "files": ["tokens.json", "tokens.css", "tokens.schema.json"]
+}

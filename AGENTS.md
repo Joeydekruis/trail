@@ -2,32 +2,34 @@
 
 ## What is this project?
 
-Trail (Task & Repository AI Layer) is a GitHub-native AI project management CLI.
-TypeScript, Node.js, npm workspaces monorepo.
+**Trail Desktop** is an Electron app: PM layer and orchestrator above GitHub (issues, Projects v2, ADRs, docs, designs), local agent worktrees, preview with pins, and MCP.
 
-Spec: `docs/superpowers/specs/2026-04-10-trail-design.md`
+TypeScript monorepo. **Primary spec:** `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md`
 
-CLI installation, commands, and MCP: [README.md](README.md).
+**Legacy (parallel):** `@trail-pm/cli` + `@trail-pm/ui` — see `docs/legacy-cli-ui.md`. Do not add desktop features there.
 
 ## Project structure
 
 ```
-packages/cli/src/cli/        — CLI command definitions (thin wrappers)
-packages/cli/src/core/       — Core library (sync engine, GitHub client, compiler)
-packages/cli/src/schemas/    — Zod schemas (single source of truth for all data shapes)
-packages/ui/                 — React roadmap UI (separate package, MVP C)
-docs/adr/                    — Architectural Decision Records
-docs/superpowers/specs/      — Design specifications
-docs/superpowers/plans/      — Implementation plans
+apps/desktop/              — Electron main, preload, renderer (electron-vite)
+packages/core/             — Domain, sync, git (migrate from cli over time)
+packages/ipc/              — Zod IPC contracts
+packages/mcp/              — Desktop MCP server
+packages/tokens/           — Design tokens (CSS variables)
+packages/cli/              — LEGACY CLI
+packages/ui/               — LEGACY web UI
+design/                    — HTML design exports
+docs/adr/                  — Architectural Decision Records (see ADR-007)
+docs/superpowers/specs/    — Design specifications
 ```
 
 ## Before you start
 
-1. Read `docs/superpowers/specs/2026-04-10-trail-design.md` for the full design
-2. Read `docs/adr/` for architecture decisions
+1. Read `docs/superpowers/specs/2026-11-18-trail-desktop-briefing.md`
+2. Read `docs/adr/007-electron-desktop-pivot.md`
 3. Run `npm install` at the repo root
-4. Run `npm test` to verify everything passes
-5. Run `npm run typecheck` to verify types
+4. Run `npm test` (legacy CLI + new package tests)
+5. Desktop dev: `npm run desktop:dev`
 
 ## How to make changes
 
@@ -37,20 +39,20 @@ docs/superpowers/plans/      — Implementation plans
 - Every new function gets at least one test
 - Run `npm test && npm run typecheck` before committing
 
-## Key patterns
+## Key patterns (desktop)
 
-- Zod schemas in `src/schemas/` are the single source of truth for all data shapes
-- Core library (`src/core/`) exports pure functions. CLI commands are thin wrappers.
-- GitHub API calls go through `src/core/github-client.ts` — nowhere else
+- Zod schemas in `packages/ipc` (and later `packages/core`) are contracts for IPC and domain data
+- Renderer: no Node — only `window.trail` via `contextBridge`
+- GitHub/git/agents run in **main** or **utility** processes, not in renderer
+- GitHub is source of truth for tasks; SQLite is local cache only
 - Errors are typed. Never throw untyped strings.
-- JSON is the task file format. No YAML.
-- All file I/O happens in core modules, never in CLI command handlers
+- `.trail/config.yml` in repos (not JSON task files) for workspace config
 
 ## What NOT to do
 
-- Don't add dependencies without justification
-- Don't put business logic in CLI command handlers
-- Don't bypass Zod validation
-- Don't store secrets or tokens in any file
+- Don't add desktop features to `packages/cli` / legacy UI
+- Don't put business logic in renderer React components without going through IPC
+- Don't bypass Zod validation on IPC
+- Don't store secrets or tokens in any file (use OS keychain via Electron `safeStorage`)
 - Don't use `any` — use `unknown` and narrow
-- Don't skip tests. Every feature ships with tests.
+- Don't skip tests for new core logic

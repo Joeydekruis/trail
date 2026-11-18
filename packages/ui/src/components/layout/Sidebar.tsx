@@ -9,8 +9,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { DocSidebarTree } from "@/components/docs/DocSidebarTree";
-import type { DocTreeEntry } from "@/types/document";
 
 export type AppView = "kanban" | "list" | "settings";
 
@@ -21,12 +19,6 @@ interface SidebarProps {
   onToggleCollapsed: () => void;
   openCount: number;
   closedCount: number;
-  docTree: DocTreeEntry[];
-  selectedDocPath: string | null;
-  onSelectDoc: (path: string) => void;
-  onClearDoc: () => void;
-  onCreateDoc: (folder?: string) => void;
-  onCreateFolder: (parentFolder?: string) => void;
 }
 
 const navItems: {
@@ -49,18 +41,7 @@ export function Sidebar({
   onToggleCollapsed,
   openCount,
   closedCount,
-  docTree,
-  selectedDocPath,
-  onSelectDoc,
-  onClearDoc,
-  onCreateDoc,
-  onCreateFolder,
 }: SidebarProps) {
-  function selectView(view: AppView) {
-    onClearDoc();
-    onViewChange(view);
-  }
-
   return (
     <aside
       className={cn(
@@ -79,13 +60,10 @@ export function Sidebar({
         )}
       </div>
 
-      <nav className="shrink-0 space-y-0.5 p-2">
+      <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            item.view !== null &&
-            item.view === activeView &&
-            selectedDocPath === null;
+          const isActive = item.view !== null && item.view === activeView;
 
           return (
             <Button
@@ -94,7 +72,7 @@ export function Sidebar({
               variant="ghost"
               disabled={item.disabled}
               onClick={() => {
-                if (item.view) selectView(item.view);
+                if (item.view) onViewChange(item.view);
               }}
               className={cn(
                 "h-auto w-full justify-start gap-2 px-2.5 py-1.5 text-sm font-normal",
@@ -120,21 +98,6 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="mx-2 border-t border-border" />
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <DocSidebarTree
-          tree={docTree}
-          selectedPath={selectedDocPath}
-          collapsed={collapsed}
-          onSelectDoc={(path) => {
-            onSelectDoc(path);
-          }}
-          onCreateDoc={onCreateDoc}
-          onCreateFolder={onCreateFolder}
-        />
-      </div>
-
       <div className="shrink-0 space-y-2 border-t border-border p-2">
         <div className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground">
           <GitBranch size={14} className="shrink-0" />
@@ -143,7 +106,9 @@ export function Sidebar({
 
         {!collapsed && (
           <div className="flex items-center gap-3 px-2 text-xs">
-            <span className="text-green-600 dark:text-green-400">{openCount} open</span>
+            <span className="text-green-600 dark:text-green-400">
+              {openCount} open
+            </span>
             <span className="text-muted-foreground">{closedCount} closed</span>
           </div>
         )}

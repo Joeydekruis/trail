@@ -1,0 +1,34 @@
+/**
+ * Trail design tokens (dark). Workspace accent overrides --accent* at runtime.
+ * Source: packages/tokens/tokens.json
+ */
+:root {
+  --trail-bg: #0b0d10;
+  --trail-surface: #0e1115;
+  --trail-surface-raised: #12151a;
+  --trail-surface-card: #161a20;
+  --trail-surface-hover: #181c22;
+  --trail-line-soft: #1a1f25;
+  --trail-line: #1f242b;
+  --trail-line-strong: #2a313a;
+  --trail-ink: #e7e9ec;
+  --trail-ink-soft: #c3cad2;
+  --trail-ink-muted: #98a2af;
+  --trail-ink-faint: #8b95a1;
+  --accent: #4af7a3;
+  --accent-soft: #0f2219;
+  --accent-line: #1c4733;
+  --on-accent: #04140c;
+  --trail-status-amber: #f2b24c;
+  --trail-status-blue: #7fb6ff;
+  --trail-status-violet: #c9a7ff;
+  --trail-status-red: #ff8a7a;
+  --trail-status-claude: #e0956b;
+  --trail-tooltip-bg: #1b2027;
+  --trail-radius-sm: 6px;
+  --trail-radius-md: 10px;
+  --trail-radius-lg: 14px;
+  --trail-radius-pill: 9999px;
+  --trail-font-sans: "Inter", system-ui, sans-serif;
+  --trail-font-mono: "JetBrains Mono", ui-monospace, monospace;
+}

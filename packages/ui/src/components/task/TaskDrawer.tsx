@@ -19,12 +19,7 @@ import { OptionalSelect } from "@/components/shared/OptionalSelect";
 import { MarkdownBody } from "@/components/shared/MarkdownBody";
 import { TaskDescription } from "@/components/task/TaskDescription";
 import { TaskComments } from "@/components/task/TaskComments";
-import { useUpdateTask, useDeleteTask, useDocs } from "@/api/hooks";
-import {
-  docRefForPath,
-  docRefMatches,
-  normalizeDocRefPath,
-} from "@/lib/doc-ref";
+import { useUpdateTask, useDeleteTask } from "@/api/hooks";
 import { useToast } from "@/components/shared/Toast";
 import { api } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -70,18 +65,18 @@ interface TaskDrawerProps {
   onNavigateTask: (taskId: string) => void;
 }
 
-function DocPeekPanel({ path, onClose }: { path: string; onClose: () => void }) {
-  const trailPath = normalizeDocRefPath(path);
+function RepoFilePeekPanel({
+  path,
+  onClose,
+}: {
+  path: string;
+  onClose: () => void;
+}) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["doc-peek", path, trailPath],
+    queryKey: ["repo-file-peek", path],
     queryFn: async () => {
-      try {
-        const res = await api.getDoc(trailPath);
-        return { content: res.doc.content, source: "trail" as const };
-      } catch {
-        const res = await api.getRepoFile(path);
-        return { content: res.content, source: "repo" as const };
-      }
+      const res = await api.getRepoFile(path);
+      return res.content;
     },
   });
 
@@ -121,14 +116,7 @@ function DocPeekPanel({ path, onClose }: { path: string; onClose: () => void }) 
             Could not read this path from the repository.
           </p>
         )}
-        {data?.content !== undefined && (
-          <MarkdownBody markdown={data.content} />
-        )}
-        {data?.source === "trail" && (
-          <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-            .trail/docs/{trailPath}
-          </p>
-        )}
+        {data !== undefined && <MarkdownBody markdown={data} />}
       </div>
     </aside>
   );
@@ -157,49 +145,7 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
 
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
-  const { data: docsPayload } = useDocs(30_000);
-  const docs = docsPayload?.docs ?? [];
   const { toast } = useToast();
-
-  const docRefs = task.refs.filter((r) => r.type === "doc");
-  const linkableDocs = docs.filter(
-    (d) => !docRefs.some((ref) => docRefMatches(d.path, ref.path)),
-  );
-
-  function linkDoc(docPath: string) {
-    updateTask.mutate(
-      {
-        id: task.id,
-        data: { refs: [...task.refs, docRefForPath(docPath)] },
-      },
-      {
-        onSuccess: (res) => {
-          if (res.warning) toast("warning", res.warning);
-          else toast("success", "Document linked");
-        },
-        onError: () => toast("error", "Could not link document"),
-      },
-    );
-  }
-
-  function unlinkDoc(refPath: string) {
-    updateTask.mutate(
-      {
-        id: task.id,
-        data: {
-          refs: task.refs.filter(
-            (ref) => !(ref.type === "doc" && ref.path === refPath),
-          ),
-        },
-      },
-      {
-        onSuccess: (res) => {
-          if (res.warning) toast("warning", res.warning);
-        },
-        onError: () => toast("error", "Could not unlink document"),
-      },
-    );
-  }
 
   useEffect(() => {
     setDocPreviewPath(null);
@@ -305,7 +251,7 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
           )}
         >
           {docPreviewPath ? (
-            <DocPeekPanel
+            <RepoFilePeekPanel
               path={docPreviewPath}
               onClose={() => setDocPreviewPath(null)}
             />
@@ -565,79 +511,28 @@ export function TaskDrawer({ task, onClose, onNavigateTask }: TaskDrawerProps) {
                 ) : null}
 
                 <div className="mt-6 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Documents
-                    </span>
-                    {linkableDocs.length > 0 && (
-                      <Select onValueChange={linkDoc}>
-                        <SelectTrigger className="h-7 w-[140px] text-xs">
-                          <SelectValue placeholder="Link doc…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {linkableDocs.map((d) => (
-                            <SelectItem key={d.path} value={d.path}>
-                              {d.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                  {docRefs.length === 0 ? (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    References
+                  </span>
+                  {task.refs.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      No documents linked.
+                      No file references on this task.
                     </p>
                   ) : (
                     <ul className="space-y-1">
-                      {docRefs.map((ref, i) => (
-                        <li
-                          key={i}
-                          className="flex items-center justify-between gap-2"
-                        >
+                      {task.refs.map((ref, i) => (
+                        <li key={i}>
                           <Button
                             type="button"
                             variant="link"
-                            className="h-auto min-w-0 flex-1 justify-start p-0 font-mono text-xs text-blue-500 dark:text-blue-400"
+                            className="h-auto p-0 font-mono text-xs text-blue-500 dark:text-blue-400"
                             onClick={() => setDocPreviewPath(ref.path)}
                           >
-                            {normalizeDocRefPath(ref.path)}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label="Unlink document"
-                            onClick={() => unlinkDoc(ref.path)}
-                          >
-                            <X size={14} />
+                            {ref.type}: {ref.path}
                           </Button>
                         </li>
                       ))}
                     </ul>
-                  )}
-                  {task.refs.filter((r) => r.type !== "doc").length > 0 && (
-                    <div className="space-y-1 pt-2">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Other refs
-                      </span>
-                      <ul className="space-y-1">
-                        {task.refs
-                          .filter((r) => r.type !== "doc")
-                          .map((ref, i) => (
-                            <li key={i}>
-                              <Button
-                                type="button"
-                                variant="link"
-                                className="h-auto p-0 font-mono text-xs text-blue-500 dark:text-blue-400"
-                                onClick={() => setDocPreviewPath(ref.path)}
-                              >
-                                {ref.type}: {ref.path}
-                              </Button>
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
                   )}
                 </div>
               </main>
