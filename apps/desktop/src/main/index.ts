@@ -15,6 +15,7 @@ import { scheduleDeferredStartup } from "./deferred-startup";
 import { registerBoardIpc } from "./board-ipc";
 import { registerIssueIpc } from "./issue-ipc";
 import { registerWorktreeIpc } from "./worktree-ipc";
+import { registerAgentIpc } from "./agent-ipc";
 import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
 
@@ -127,6 +128,7 @@ void app.whenReady().then(() => {
   registerBoardIpc();
   registerIssueIpc();
   registerWorktreeIpc();
+  registerAgentIpc();
   createWindow();
 
   app.on("activate", () => {

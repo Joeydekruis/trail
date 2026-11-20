@@ -96,6 +96,33 @@ declare global {
         | { ok: true; worktree: WorktreeDto }
         | { ok: false; message: string }
       >;
+      agentStatus?: () => Promise<{ backends: import("@trail/ipc").AgentBackendStatusDto[] }>;
+      startAgentRun?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+        prompt?: string;
+      }) => Promise<{ ok: true } | { ok: false; message: string }>;
+      stopAgentRun?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+      }) => Promise<{ stopped: boolean }>;
+      onAgentOutput?: (
+        listener: (payload: {
+          workspaceId: string;
+          issueNumber: number;
+          stream: "stdout" | "stderr";
+          line: string;
+          backend: "cursor" | "claude" | null;
+        }) => void,
+      ) => () => void;
+      onAgentRunState?: (
+        listener: (payload: {
+          workspaceId: string;
+          issueNumber: number;
+          state: "running" | "stopped";
+          exitCode?: number;
+        }) => void,
+      ) => () => void;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;
@@ -270,6 +297,18 @@ export function App() {
   useEffect(() => {
     void refreshWorktrees();
   }, [refreshWorktrees]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.onAgentRunState) {
+      return;
+    }
+    return api.onAgentRunState((payload) => {
+      if (payload.workspaceId === activeWorkspaceId) {
+        void refreshWorktrees();
+      }
+    });
+  }, [activeWorkspaceId, refreshWorktrees]);
 
   const refreshWorkspaces = useCallback(async () => {
     const api = window.trail;

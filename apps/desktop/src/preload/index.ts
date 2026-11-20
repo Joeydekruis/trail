@@ -121,6 +121,33 @@ export type TrailApi = {
     | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
     | { ok: false; message: string }
   >;
+  agentStatus: () => Promise<{ backends: import("@trail/ipc").AgentBackendStatusDto[] }>;
+  startAgentRun: (input: {
+    workspaceId?: string;
+    issueNumber: number;
+    prompt?: string;
+  }) => Promise<{ ok: true } | { ok: false; message: string }>;
+  stopAgentRun: (input: {
+    workspaceId?: string;
+    issueNumber: number;
+  }) => Promise<{ stopped: boolean }>;
+  onAgentOutput: (
+    listener: (payload: {
+      workspaceId: string;
+      issueNumber: number;
+      stream: "stdout" | "stderr";
+      line: string;
+      backend: "cursor" | "claude" | null;
+    }) => void,
+  ) => () => void;
+  onAgentRunState: (
+    listener: (payload: {
+      workspaceId: string;
+      issueNumber: number;
+      state: "running" | "stopped";
+      exitCode?: number;
+    }) => void,
+  ) => () => void;
   setWorktreeStatus: (input: {
     workspaceId?: string;
     issueNumber: number;
@@ -257,6 +284,51 @@ const trailApi: TrailApi = {
       | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
       | { ok: false; message: string }
     >,
+  agentStatus: () =>
+    ipcRenderer.invoke(PreloadIpcChannels.agentStatus) as Promise<{
+      backends: import("@trail/ipc").AgentBackendStatusDto[];
+    }>,
+  startAgentRun: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.agentRunStart, input) as Promise<
+      { ok: true } | { ok: false; message: string }
+    >,
+  stopAgentRun: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.agentRunStop, input) as Promise<{
+      stopped: boolean;
+    }>,
+  onAgentOutput: (listener) => {
+    const channel = "trail.agentOutput";
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: {
+        workspaceId: string;
+        issueNumber: number;
+        stream: "stdout" | "stderr";
+        line: string;
+        backend: "cursor" | "claude" | null;
+      },
+    ) => {
+      listener(payload);
+    };
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
+  onAgentRunState: (listener) => {
+    const channel = "trail.agentRunState";
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: {
+        workspaceId: string;
+        issueNumber: number;
+        state: "running" | "stopped";
+        exitCode?: number;
+      },
+    ) => {
+      listener(payload);
+    };
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
   setWorktreeStatus: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.worktreeSetStatus, input) as Promise<
       | { ok: true; worktree: import("@trail/ipc").WorktreeDto }

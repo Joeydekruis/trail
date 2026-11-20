@@ -63,3 +63,6 @@ export {
   defaultWorktreeRootForWorkspace,
 } from "./worktree/settings.js";
 export { WorktreeStore, openWorktreeStore, worktreeId } from "./worktree/store.js";
+export { parseAgentVersionOutput } from "./agent/parse-version.js";
+export type { AgentBackendId, AgentBackendStatus } from "./agent/types.js";
+export { AGENT_BACKEND_IDS } from "./agent/types.js";

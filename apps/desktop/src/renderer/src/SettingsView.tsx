@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
+import type { AgentBackendStatusDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { DEFAULT_PROJECT_STATUS_FIELD, DEFAULT_SYNC_INTERVAL_SEC, formatWorkspaceRepoLine } from "@trail/core";
 import { TrailButton, TrailSelect, trailFieldStyle } from "./design/TrailUi";
 import { formatSyncLabel } from "./sync-label";
@@ -93,6 +93,8 @@ export function SettingsView({
   const [worktreeRoot, setWorktreeRoot] = useState("");
   const [repoRootBusy, setRepoRootBusy] = useState(false);
   const [repoRootError, setRepoRootError] = useState<string | null>(null);
+  const [agentBackends, setAgentBackends] = useState<AgentBackendStatusDto[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
   const name = workspace?.name ?? "Trail";
   const repoLine = workspace
     ? formatWorkspaceRepoLine({
@@ -111,6 +113,18 @@ export function SettingsView({
       setSyncIntervalSec(result.syncIntervalSec);
     });
   }, [section, workspace?.id]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (section !== "agents" || !api?.agentStatus) {
+      return;
+    }
+    setAgentsLoading(true);
+    void api
+      .agentStatus()
+      .then((result) => setAgentBackends(result.backends))
+      .finally(() => setAgentsLoading(false));
+  }, [section]);
 
   useEffect(() => {
     const api = window.trail;
@@ -539,6 +553,51 @@ export function SettingsView({
                     }}
                   />
                 </label>
+              </SettingsBlock>
+            </div>
+          ) : section === "agents" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <SettingsBlock
+                title="Coding agents"
+                lead="Trail detects CLIs on your PATH. Runs stream into the worktree chat (preview runner until utility process lands)."
+              >
+                {agentsLoading ? (
+                  <p className="tr-small">Detecting…</p>
+                ) : (
+                  <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {agentBackends.map((backend) => (
+                      <li key={backend.id} className="tr-small">
+                        <span className="tr-mono">{backend.binary}</span>
+                        {backend.found ? (
+                          <>
+                            {" "}
+                            — found
+                            {backend.version ? ` (${backend.version})` : ""}
+                          </>
+                        ) : (
+                          " — not on PATH"
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <TrailButton
+                  variant="secondary"
+                  disabled={agentsLoading}
+                  onClick={() => {
+                    const api = window.trail;
+                    if (!api?.agentStatus) {
+                      return;
+                    }
+                    setAgentsLoading(true);
+                    void api
+                      .agentStatus()
+                      .then((result) => setAgentBackends(result.backends))
+                      .finally(() => setAgentsLoading(false));
+                  }}
+                >
+                  Re-detect
+                </TrailButton>
               </SettingsBlock>
             </div>
           ) : (

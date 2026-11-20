@@ -19,6 +19,9 @@ export const IpcChannels = {
   worktreeList: "worktree.list",
   worktreeCreate: "worktree.create",
   worktreeSetStatus: "worktree.setStatus",
+  agentStatus: "agent.status",
+  agentRunStart: "agent.runStart",
+  agentRunStop: "agent.runStop",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -420,6 +423,51 @@ export const worktreeSetStatusResult = z.union([
 ]);
 
 export type WorktreeSetStatusResult = z.infer<typeof worktreeSetStatusResult>;
+
+const agentBackendId = z.enum(["cursor", "claude"]);
+
+export const agentBackendStatusDto = z.object({
+  id: agentBackendId,
+  binary: z.string().min(1),
+  found: z.boolean(),
+  version: z.string().nullable(),
+});
+
+export type AgentBackendStatusDto = z.infer<typeof agentBackendStatusDto>;
+
+export const agentStatusResult = z.object({
+  backends: z.array(agentBackendStatusDto),
+});
+
+export type AgentStatusResult = z.infer<typeof agentStatusResult>;
+
+export const agentRunStartPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive(),
+  prompt: z.string().max(4000).optional(),
+});
+
+export type AgentRunStartPayload = z.infer<typeof agentRunStartPayload>;
+
+export const agentRunStartResult = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type AgentRunStartResult = z.infer<typeof agentRunStartResult>;
+
+export const agentRunStopPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive(),
+});
+
+export type AgentRunStopPayload = z.infer<typeof agentRunStopPayload>;
+
+export const agentRunStopResult = z.object({
+  stopped: z.boolean(),
+});
+
+export type AgentRunStopResult = z.infer<typeof agentRunStopResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

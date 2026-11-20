@@ -1,4 +1,4 @@
-import { useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
 import { SelectButton, SyncStatus, TrailAvatar, TrailButton, TrailChip, TrailPanel, TrailProgressBar } from "./design/TrailUi";
 import type { WorktreeSessionContext } from "./worktree-session";
@@ -11,15 +11,21 @@ type PreviewDraft = { n: number; x: number; y: number; el: string };
 
 type WorktreeViewProps = {
   context?: WorktreeSessionContext | null;
+  workspaceId?: string;
   onOpenIssue?: (issue: string, title: string) => void;
+  runError?: string | null;
   onStartAgentRun?: () => void;
+  onStopAgentRun?: () => void;
   startRunBusy?: boolean;
 };
 
 export function WorktreeView({
   context,
+  workspaceId,
   onOpenIssue,
+  runError,
   onStartAgentRun,
+  onStopAgentRun,
   startRunBusy = false,
 }: WorktreeViewProps) {
   if (!context) {
@@ -43,8 +49,11 @@ export function WorktreeView({
   return (
     <WorktreeViewBody
       context={context}
+      workspaceId={workspaceId}
       onOpenIssue={onOpenIssue}
+      runError={runError}
       onStartAgentRun={onStartAgentRun}
+      onStopAgentRun={onStopAgentRun}
       startRunBusy={startRunBusy}
     />
   );
@@ -52,13 +61,19 @@ export function WorktreeView({
 
 function WorktreeViewBody({
   context,
+  workspaceId,
   onOpenIssue,
+  runError,
   onStartAgentRun,
+  onStopAgentRun,
   startRunBusy,
 }: {
   context: WorktreeSessionContext;
+  workspaceId?: string;
   onOpenIssue?: (issue: string, title: string) => void;
+  runError?: string | null;
   onStartAgentRun?: () => void;
+  onStopAgentRun?: () => void;
   startRunBusy?: boolean;
 }) {
   const fixture = getWorktreeFixture();
@@ -89,6 +104,36 @@ function WorktreeViewBody({
     () => [...seededMessages, ...extraMessages],
     [seededMessages, extraMessages],
   );
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.onAgentOutput || !workspaceId) {
+      return;
+    }
+    return api.onAgentOutput((payload) => {
+      if (
+        payload.workspaceId !== workspaceId ||
+        payload.issueNumber !== context.issueNumber
+      ) {
+        return;
+      }
+      const now = new Date();
+      const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      setExtraMessages((prev) => [
+        ...prev,
+        {
+          who: payload.backend === "claude" ? "Claude" : "Agent",
+          initials: payload.backend === "claude" ? "CL" : "CU",
+          tone: payload.backend === "claude" ? "blue" : "blue",
+          time,
+          body: payload.line,
+          ...(payload.stream === "stderr"
+            ? { chip: { text: "stderr", tone: "gray" as const } }
+            : {}),
+        },
+      ]);
+    });
+  }, [workspaceId, context.issueNumber]);
 
   const setViewMode = (next: "chat" | "preview") => {
     setMode(next);
@@ -157,6 +202,11 @@ function WorktreeViewBody({
           >
             Open folder
           </TrailButton>
+          {runError ? (
+            <span className="tr-small" style={{ color: "var(--warning)" }}>
+              {runError}
+            </span>
+          ) : null}
           {onStartAgentRun && context.status !== "running" ? (
             <TrailButton
               variant="primary"
@@ -164,6 +214,11 @@ function WorktreeViewBody({
               onClick={onStartAgentRun}
             >
               {startRunBusy ? "Starting…" : "Start run"}
+            </TrailButton>
+          ) : null}
+          {onStopAgentRun && context.status === "running" ? (
+            <TrailButton variant="secondary" onClick={onStopAgentRun}>
+              Stop run
             </TrailButton>
           ) : null}
           <ViewModeToggle mode={mode} onChange={setViewMode} />

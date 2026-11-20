@@ -135,6 +135,7 @@ export function TrailShell({
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
   const [issueWorktreeBusy, setIssueWorktreeBusy] = useState(false);
   const [startRunBusy, setStartRunBusy] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
   const [selectedWorktreeIssue, setSelectedWorktreeIssue] = useState<number | null>(null);
   const showRepoRootNudge =
     Boolean(activeWorkspace?.repository) &&
@@ -238,22 +239,41 @@ export function TrailShell({
       return;
     }
     const api = window.trail;
-    if (!api?.setWorktreeStatus || startRunBusy) {
+    if (!api?.startAgentRun || startRunBusy) {
       return;
     }
     setStartRunBusy(true);
+    setRunError(null);
     try {
-      const result = await api.setWorktreeStatus({
+      const title = activeWorktree?.title ?? `Issue #${selectedWorktreeIssue}`;
+      const result = await api.startAgentRun({
         workspaceId: activeWorkspace.id,
         issueNumber: selectedWorktreeIssue,
-        status: "running",
+        prompt: `Implement GitHub issue #${selectedWorktreeIssue}: ${title}`,
       });
-      if (result.ok) {
-        onRefreshWorktrees?.();
+      if (!result.ok) {
+        setRunError(result.message);
+        return;
       }
+      onRefreshWorktrees?.();
     } finally {
       setStartRunBusy(false);
     }
+  };
+
+  const handleStopAgentRun = async () => {
+    if (!activeWorkspace?.id || selectedWorktreeIssue === null) {
+      return;
+    }
+    const api = window.trail;
+    if (!api?.stopAgentRun) {
+      return;
+    }
+    await api.stopAgentRun({
+      workspaceId: activeWorkspace.id,
+      issueNumber: selectedWorktreeIssue,
+    });
+    onRefreshWorktrees?.();
   };
 
   const handlePalettePick = (item: PaletteItem) => {
@@ -721,7 +741,9 @@ export function TrailShell({
             onShowOnboarding={onShowOnboarding}
             onOpenIssue={openIssue}
             activeWorktreeSession={activeWorktreeSession}
+            runError={runError}
             onStartAgentRun={() => void handleStartAgentRun()}
+            onStopAgentRun={() => void handleStopAgentRun()}
             startRunBusy={startRunBusy}
           />
           {onComposer ? <TrailComposer modKey={modKey} maxWidth={shellContentMaxWidth("dashboard")} /> : null}
@@ -993,7 +1015,9 @@ function ShellMain({
   onShowOnboarding,
   onOpenIssue,
   activeWorktreeSession,
+  runError,
   onStartAgentRun,
+  onStopAgentRun,
   startRunBusy,
 }: {
   centerView: CenterView;
@@ -1015,7 +1039,9 @@ function ShellMain({
   onShowOnboarding?: () => void;
   onOpenIssue: (issue: string, title: string) => void;
   activeWorktreeSession: import("./worktree-session").WorktreeSessionContext | null;
+  runError?: string | null;
   onStartAgentRun?: () => void;
+  onStopAgentRun?: () => void;
   startRunBusy?: boolean;
 }) {
   if (centerView === "worktree") {
@@ -1023,8 +1049,11 @@ function ShellMain({
       <div style={{ flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <WorktreeView
           context={activeWorktreeSession}
+          workspaceId={activeWorkspace?.id}
           onOpenIssue={onOpenIssue}
+          runError={runError}
           onStartAgentRun={onStartAgentRun}
+          onStopAgentRun={onStopAgentRun}
           startRunBusy={startRunBusy}
         />
       </div>
