@@ -48,11 +48,18 @@ export type TrailApi = {
   githubListRepos: () => Promise<{ repos: GithubRepoDto[] }>;
   githubListBranches: (repository: string) => Promise<{ branches: string[]; error?: string }>;
   githubClearToken: () => Promise<{ cleared: true }>;
-  getGithubBoardMapping: (workspaceId?: string) => Promise<{ projectStatusField: string }>;
+  getGithubBoardMapping: (workspaceId?: string) => Promise<{
+    projectStatusField: string;
+    syncIntervalSec: number;
+  }>;
   setGithubBoardMapping: (input: {
     workspaceId?: string;
-    projectStatusField: string;
-  }) => Promise<{ projectStatusField: string }>;
+    projectStatusField?: string;
+    syncIntervalSec?: number;
+  }) => Promise<{ projectStatusField: string; syncIntervalSec: number }>;
+  onBackgroundSync: (
+    listener: (payload: { workspaceId: string; syncedAt: string; issueCount: number }) => void,
+  ) => () => void;
   getIssueDetail: (input: {
     workspaceId?: string;
     issueNumber: number;
@@ -131,11 +138,24 @@ const trailApi: TrailApi = {
   getGithubBoardMapping: (workspaceId) =>
     ipcRenderer.invoke(PreloadIpcChannels.githubBoardMappingGet, { workspaceId }) as Promise<{
       projectStatusField: string;
+      syncIntervalSec: number;
     }>,
   setGithubBoardMapping: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.githubBoardMappingSet, input) as Promise<{
       projectStatusField: string;
+      syncIntervalSec: number;
     }>,
+  onBackgroundSync: (listener) => {
+    const channel = "trail.backgroundSync";
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { workspaceId: string; syncedAt: string; issueCount: number },
+    ) => {
+      listener(payload);
+    };
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
   getIssueDetail: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.issueGet, input) as Promise<
       | { found: true; detail: import("@trail/ipc").IssueDetailDto }

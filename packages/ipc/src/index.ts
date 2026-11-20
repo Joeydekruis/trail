@@ -226,19 +226,22 @@ export type GithubBoardMappingGetPayload = z.infer<typeof githubBoardMappingGetP
 
 export const githubBoardMappingGetResult = z.object({
   projectStatusField: z.string().min(1),
+  syncIntervalSec: z.number().int().nonnegative(),
 });
 
 export type GithubBoardMappingGetResult = z.infer<typeof githubBoardMappingGetResult>;
 
 export const githubBoardMappingSetPayload = z.object({
   workspaceId: z.string().min(1).optional(),
-  projectStatusField: z.string().min(1).max(64),
+  projectStatusField: z.string().min(1).max(64).optional(),
+  syncIntervalSec: z.number().int().nonnegative().optional(),
 });
 
 export type GithubBoardMappingSetPayload = z.infer<typeof githubBoardMappingSetPayload>;
 
 export const githubBoardMappingSetResult = z.object({
   projectStatusField: z.string().min(1),
+  syncIntervalSec: z.number().int().nonnegative(),
 });
 
 export type GithubBoardMappingSetResult = z.infer<typeof githubBoardMappingSetResult>;

@@ -16,9 +16,12 @@ export {
 export {
   APP_SETTING_GITHUB_LOGIN,
   DEFAULT_PROJECT_STATUS_FIELD,
+  DEFAULT_SYNC_INTERVAL_SEC,
   resolveProjectStatusField,
+  resolveSyncIntervalSec,
   workspaceLastSyncKey,
   workspaceProjectStatusFieldKey,
+  workspaceSyncIntervalKey,
 } from "./workspace/settings.js";
 export type { IssueCacheRecord } from "./issues/types.js";
 export {

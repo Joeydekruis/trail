@@ -1,6 +1,8 @@
 import {
   resolveProjectStatusField,
+  resolveSyncIntervalSec,
   workspaceProjectStatusFieldKey,
+  workspaceSyncIntervalKey,
   type WorkspaceStore,
 } from "@trail/core";
 
@@ -21,4 +23,18 @@ export function writeWorkspaceProjectStatusField(
     workspaceProjectStatusFieldKey(workspaceId),
     resolveProjectStatusField(trimmed),
   );
+}
+
+export function readWorkspaceSyncIntervalSec(store: WorkspaceStore, workspaceId: string): number {
+  return resolveSyncIntervalSec(store.getAppSetting(workspaceSyncIntervalKey(workspaceId)));
+}
+
+export function writeWorkspaceSyncIntervalSec(
+  store: WorkspaceStore,
+  workspaceId: string,
+  seconds: number,
+): number {
+  const normalized = resolveSyncIntervalSec(String(seconds));
+  store.setAppSetting(workspaceSyncIntervalKey(workspaceId), String(normalized));
+  return normalized;
 }

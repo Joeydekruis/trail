@@ -16,12 +16,21 @@ type BoardViewProps = {
   workspace: WorkspaceDto | undefined;
   onSyncNow: () => void;
   syncing: boolean;
+  boardRefreshKey?: number;
   onNewTask: () => void;
   modKey: string;
   onOpenWorktree: () => void;
 };
 
-export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, onOpenWorktree }: BoardViewProps) {
+export function BoardView({
+  workspace,
+  onSyncNow,
+  syncing,
+  boardRefreshKey = 0,
+  onNewTask,
+  modKey,
+  onOpenWorktree,
+}: BoardViewProps) {
   const fixture = getBoardFixture(workspace);
   const [boardMode, setBoardMode] = useState(true);
   const [autopilot, setAutopilot] = useState(true);
@@ -38,7 +47,7 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
       return;
     }
     void api.getBoardSnapshot(workspace?.id).then(setLiveBoard);
-  }, [workspace?.id, syncing]);
+  }, [workspace?.id, syncing, boardRefreshKey]);
 
   useEffect(() => {
     if (liveBoard?.source === "cache") {

@@ -42,11 +42,18 @@ declare global {
         }>;
       }>;
       githubClearToken?: () => Promise<{ cleared: true }>;
-      getGithubBoardMapping?: (workspaceId?: string) => Promise<{ projectStatusField: string }>;
+      getGithubBoardMapping?: (workspaceId?: string) => Promise<{
+        projectStatusField: string;
+        syncIntervalSec: number;
+      }>;
       setGithubBoardMapping?: (input: {
         workspaceId?: string;
-        projectStatusField: string;
-      }) => Promise<{ projectStatusField: string }>;
+        projectStatusField?: string;
+        syncIntervalSec?: number;
+      }) => Promise<{ projectStatusField: string; syncIntervalSec: number }>;
+      onBackgroundSync?: (
+        listener: (payload: { workspaceId: string; syncedAt: string; issueCount: number }) => void,
+      ) => () => void;
       getBoardSnapshot?: (workspaceId?: string) => Promise<import("@trail/ipc").BoardSnapshotResult>;
       moveBoardIssue?: (input: {
         workspaceId?: string;
@@ -81,6 +88,7 @@ export function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [boardRefreshKey, setBoardRefreshKey] = useState(0);
   const [github, setGithub] = useState<WorkspaceGithubSnapshot>({ connected: false });
   const [activeLastSyncedAt, setActiveLastSyncedAt] = useState<string | null>(null);
   const initialOnboardingGate = useRef(true);
@@ -207,6 +215,20 @@ export function App() {
     await refreshWorkspaces();
   }, [refreshWorkspaces]);
 
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.onBackgroundSync) {
+      return;
+    }
+    return api.onBackgroundSync((payload) => {
+      if (payload.workspaceId === activeWorkspaceId) {
+        setActiveLastSyncedAt(payload.syncedAt);
+      }
+      void refreshWorkspaces();
+      setBoardRefreshKey((key) => key + 1);
+    });
+  }, [activeWorkspaceId, refreshWorkspaces]);
+
   const onSyncNow = useCallback(() => {
     const api = window.trail;
     if (!api || syncing) {
@@ -219,6 +241,7 @@ export function App() {
       .then((result) => {
         if (result.ok) {
           setActiveLastSyncedAt(result.syncedAt);
+          setBoardRefreshKey((key) => key + 1);
           return;
         }
         setSyncError(result.message);
@@ -265,6 +288,7 @@ export function App() {
       github={github}
       onGithubDisconnect={() => void onGithubDisconnect()}
       onShowOnboarding={() => setView("onboarding")}
+      boardRefreshKey={boardRefreshKey}
       onGithubRefresh={() => void refreshWorkspaces()}
     />
   );

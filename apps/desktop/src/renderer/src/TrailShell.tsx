@@ -64,6 +64,7 @@ export type TrailShellProps = {
   onGithubDisconnect?: () => void;
   onGithubRefresh?: () => void;
   onShowOnboarding?: () => void;
+  boardRefreshKey?: number;
 };
 
 const MENU = ["File", "Edit", "View", "Go", "Agents", "Help"] as const;
@@ -107,6 +108,7 @@ export function TrailShell({
   onGithubDisconnect,
   onGithubRefresh,
   onShowOnboarding,
+  boardRefreshKey = 0,
 }: TrailShellProps) {
   const [centerView, setCenterView] = useState<CenterView>("dashboard");
   const [worktreeTabOpen, setWorktreeTabOpen] = useState(true);
@@ -555,6 +557,7 @@ export function TrailShell({
             activeWorkspace={activeWorkspace}
             onSyncNow={onSyncNow}
             syncing={syncing}
+            boardRefreshKey={boardRefreshKey}
             github={github}
             onGithubDisconnect={onGithubDisconnect}
             onGithubRefresh={onGithubRefresh}
@@ -808,6 +811,7 @@ function ShellMain({
   activeWorkspace,
   onSyncNow,
   syncing,
+  boardRefreshKey,
   github,
   onGithubDisconnect,
   onGithubRefresh,
@@ -823,6 +827,7 @@ function ShellMain({
   activeWorkspace: WorkspaceDto | undefined;
   onSyncNow: () => void;
   syncing: boolean;
+  boardRefreshKey: number;
   github?: WorkspaceGithubSnapshot;
   onGithubDisconnect?: () => void;
   onGithubRefresh?: () => void;
@@ -846,6 +851,7 @@ function ShellMain({
           workspace={activeWorkspace}
           onSyncNow={onSyncNow}
           syncing={syncing}
+          boardRefreshKey={boardRefreshKey}
           onNewTask={onNewTask}
           modKey={modKey}
           onOpenWorktree={onOpenWorktree}

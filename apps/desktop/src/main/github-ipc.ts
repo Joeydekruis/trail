@@ -15,9 +15,12 @@ import {
   githubStatusResult,
 } from "@trail/ipc";
 import { getWorkspaceStore } from "./database";
+import { restartBackgroundSync } from "./background-sync";
 import {
   readWorkspaceProjectStatusField,
+  readWorkspaceSyncIntervalSec,
   writeWorkspaceProjectStatusField,
+  writeWorkspaceSyncIntervalSec,
 } from "./workspace-github-settings";
 import { fetchGitHubBranches, fetchGitHubRepos, fetchGitHubUser } from "./github-api";
 import {
@@ -100,16 +103,25 @@ export function registerGitHubIpc(): void {
     const id = workspaceId ?? store.getActiveId();
     return githubBoardMappingGetResult.parse({
       projectStatusField: readWorkspaceProjectStatusField(store, id),
+      syncIntervalSec: readWorkspaceSyncIntervalSec(store, id),
     });
   });
 
   ipcMain.handle(IpcChannels.githubBoardMappingSet, (_event, raw: unknown) => {
-    const { workspaceId, projectStatusField } = githubBoardMappingSetPayload.parse(raw);
+    const { workspaceId, projectStatusField, syncIntervalSec } =
+      githubBoardMappingSetPayload.parse(raw);
     const store = getWorkspaceStore();
     const id = workspaceId ?? store.getActiveId();
-    writeWorkspaceProjectStatusField(store, id, projectStatusField);
+    if (projectStatusField !== undefined) {
+      writeWorkspaceProjectStatusField(store, id, projectStatusField);
+    }
+    if (syncIntervalSec !== undefined) {
+      writeWorkspaceSyncIntervalSec(store, id, syncIntervalSec);
+      restartBackgroundSync();
+    }
     return githubBoardMappingSetResult.parse({
       projectStatusField: readWorkspaceProjectStatusField(store, id),
+      syncIntervalSec: readWorkspaceSyncIntervalSec(store, id),
     });
   });
 }

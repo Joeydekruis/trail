@@ -1,12 +1,20 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
-import { DEFAULT_PROJECT_STATUS_FIELD, formatWorkspaceRepoLine } from "@trail/core";
+import { DEFAULT_PROJECT_STATUS_FIELD, DEFAULT_SYNC_INTERVAL_SEC, formatWorkspaceRepoLine } from "@trail/core";
 import { TrailButton, TrailSelect, trailFieldStyle } from "./design/TrailUi";
 
 const PROJECT_STATUS_FIELD_PRESETS = [
   DEFAULT_PROJECT_STATUS_FIELD,
   "State",
   "Column",
+] as const;
+
+const SYNC_INTERVAL_OPTIONS = [
+  { value: 0, label: "Off" },
+  { value: 30, label: "Every 30 seconds" },
+  { value: DEFAULT_SYNC_INTERVAL_SEC, label: "Every 60 seconds" },
+  { value: 120, label: "Every 2 minutes" },
+  { value: 300, label: "Every 5 minutes" },
 ] as const;
 
 function SettingsBlock({
@@ -72,6 +80,8 @@ export function SettingsView({
   const [statusField, setStatusField] = useState<string>(DEFAULT_PROJECT_STATUS_FIELD);
   const [statusFieldBusy, setStatusFieldBusy] = useState(false);
   const [statusFieldSaved, setStatusFieldSaved] = useState(false);
+  const [syncIntervalSec, setSyncIntervalSec] = useState<number>(DEFAULT_SYNC_INTERVAL_SEC);
+  const [syncIntervalBusy, setSyncIntervalBusy] = useState(false);
   const name = workspace?.name ?? "Trail";
   const repoLine = workspace
     ? formatWorkspaceRepoLine({
@@ -87,14 +97,36 @@ export function SettingsView({
     }
     void api.getGithubBoardMapping(workspace.id).then((result) => {
       setStatusField(result.projectStatusField);
+      setSyncIntervalSec(result.syncIntervalSec);
     });
   }, [section, workspace?.id]);
+
+  const syncIntervalLabel =
+    SYNC_INTERVAL_OPTIONS.find((opt) => opt.value === syncIntervalSec)?.label ??
+    SYNC_INTERVAL_OPTIONS[2].label;
 
   const statusFieldOptions = PROJECT_STATUS_FIELD_PRESETS.includes(
     statusField as (typeof PROJECT_STATUS_FIELD_PRESETS)[number],
   )
     ? [...PROJECT_STATUS_FIELD_PRESETS]
     : [...PROJECT_STATUS_FIELD_PRESETS, statusField];
+
+  async function saveSyncInterval(nextSec: number) {
+    const api = window.trail;
+    if (!api?.setGithubBoardMapping || !workspace?.id || syncIntervalBusy) {
+      return;
+    }
+    setSyncIntervalBusy(true);
+    try {
+      const result = await api.setGithubBoardMapping({
+        workspaceId: workspace.id,
+        syncIntervalSec: nextSec,
+      });
+      setSyncIntervalSec(result.syncIntervalSec);
+    } finally {
+      setSyncIntervalBusy(false);
+    }
+  }
 
   async function saveStatusField(next: string) {
     const api = window.trail;
@@ -354,6 +386,28 @@ export function SettingsView({
                       Options should match your project (e.g. Backlog, Todo, In progress).
                     </span>
                   )}
+                </label>
+              </SettingsBlock>
+              <SettingsBlock
+                title="Background sync"
+                lead="Keeps the board cache fresh while Trail is open. Manual Sync now always works."
+              >
+                <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
+                  <span style={{ fontWeight: 500 }}>Sync interval</span>
+                  <TrailSelect
+                    aria-label="Sync interval"
+                    value={syncIntervalLabel}
+                    options={SYNC_INTERVAL_OPTIONS.map((opt) => opt.label)}
+                    disabled={syncIntervalBusy || !workspace?.repository}
+                    onChange={(label) => {
+                      const match = SYNC_INTERVAL_OPTIONS.find((opt) => opt.label === label);
+                      if (!match) {
+                        return;
+                      }
+                      setSyncIntervalSec(match.value);
+                      void saveSyncInterval(match.value);
+                    }}
+                  />
                 </label>
               </SettingsBlock>
             </div>
