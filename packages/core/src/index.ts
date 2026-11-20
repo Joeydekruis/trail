@@ -29,6 +29,7 @@ export {
   type NewIssuePriority,
   type NewIssueType,
 } from "./issues/create-labels.js";
+export { draftIssueFromPrompt, type IssueChatDraft } from "./issues/draft-from-prompt.js";
 export {
   mapGitHubIssueToCache,
   isPullRequestIssue,

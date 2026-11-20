@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
+import { draftIssueFromPrompt, type IssueChatDraft } from "@trail/core";
 import type { WorkspaceDto } from "@trail/ipc";
 import { IconClose } from "./design/TrailIcons";
 import { SelectButton, TrailButton, TrailChip } from "./design/TrailUi";
@@ -31,7 +32,10 @@ const PRIO_OPTIONS: Array<{ id: PriorityId; label: string; dot: string }> = [
 ];
 
 export function NewTaskModal({ open, workspace, modKey, onClose, onCreated }: NewTaskModalProps) {
-  const [mode, setMode] = useState<Mode>("form");
+  const [mode, setMode] = useState<Mode>("chat");
+  const [chatInput, setChatInput] = useState("");
+  const [chatDraft, setChatDraft] = useState<IssueChatDraft | null>(null);
+  const [lastUserPrompt, setLastUserPrompt] = useState<string | null>(null);
   const [readyForAgent, setReadyForAgent] = useState(true);
   const [startWorktree, setStartWorktree] = useState(false);
   const [title, setTitle] = useState("");
@@ -57,7 +61,36 @@ export function NewTaskModal({ open, workspace, modKey, onClose, onCreated }: Ne
     }
     setCreateError(null);
     setCreateBusy(false);
+    setChatInput("");
+    setChatDraft(null);
+    setLastUserPrompt(null);
   }, [open]);
+
+  function applyDraft(draft: IssueChatDraft) {
+    setTitle(draft.title);
+    setBody(draft.body);
+    setTypeId(draft.type);
+    setPriorityId(draft.priority);
+    setChatDraft(draft);
+  }
+
+  function sendChatPrompt() {
+    const prompt = chatInput.trim();
+    if (!prompt) {
+      return;
+    }
+    setCreateError(null);
+    setLastUserPrompt(prompt);
+    applyDraft(draftIssueFromPrompt(prompt));
+    setChatInput("");
+  }
+
+  function editDraftManually() {
+    if (chatDraft) {
+      applyDraft(chatDraft);
+    }
+    setMode("form");
+  }
 
   async function createOnGitHub() {
     const api = window.trail;
@@ -179,7 +212,20 @@ export function NewTaskModal({ open, workspace, modKey, onClose, onCreated }: Ne
         </div>
 
         {mode === "chat" ? (
-          <ChatMode modKey={modKey} onEditManually={() => setMode("form")} />
+          <ChatMode
+            modKey={modKey}
+            chatInput={chatInput}
+            lastUserPrompt={lastUserPrompt}
+            draft={chatDraft}
+            createBusy={createBusy}
+            createError={createError}
+            canCreate={Boolean(workspace?.repository)}
+            readyForAgent={readyForAgent}
+            onChatInputChange={setChatInput}
+            onSend={sendChatPrompt}
+            onCreate={() => void createOnGitHub()}
+            onEditManually={editDraftManually}
+          />
         ) : (
           <FormMode
             modKey={modKey}
@@ -207,7 +253,33 @@ export function NewTaskModal({ open, workspace, modKey, onClose, onCreated }: Ne
   );
 }
 
-function ChatMode({ modKey, onEditManually }: { modKey: string; onEditManually: () => void }) {
+function ChatMode({
+  modKey,
+  chatInput,
+  lastUserPrompt,
+  draft,
+  createBusy,
+  createError,
+  canCreate,
+  readyForAgent,
+  onChatInputChange,
+  onSend,
+  onCreate,
+  onEditManually,
+}: {
+  modKey: string;
+  chatInput: string;
+  lastUserPrompt: string | null;
+  draft: IssueChatDraft | null;
+  createBusy: boolean;
+  createError: string | null;
+  canCreate: boolean;
+  readyForAgent: boolean;
+  onChatInputChange: (value: string) => void;
+  onSend: () => void;
+  onCreate: () => void;
+  onEditManually: () => void;
+}) {
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <div
@@ -232,26 +304,43 @@ function ChatMode({ modKey, onEditManually }: { modKey: string; onEditManually: 
               color: "var(--ink-soft)",
             }}
           >
-            Describe what you want in your own words. I turn it into an issue with a title, acceptance
-            criteria, labels and a priority. You approve the draft before anything is created on GitHub.
+            Describe what you want in your own words. Trail drafts a title, description, labels and priority.
+            Nothing is created on GitHub until you approve.
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
-          <span className="tr-small">You</span>
-          <div
-            style={{
-              maxWidth: "88%",
-              padding: "10px 12px",
-              border: "1px solid var(--line-strong)",
-              borderRadius: 10,
-              background: "var(--surface-card)",
-              color: "var(--ink-soft)",
-            }}
-          >
-            Add a retry button when sync fails on a card, single-issue sync only.
+        {lastUserPrompt ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+            <span className="tr-small">You</span>
+            <div
+              style={{
+                maxWidth: "88%",
+                padding: "10px 12px",
+                border: "1px solid var(--line-strong)",
+                borderRadius: 10,
+                background: "var(--surface-card)",
+                color: "var(--ink-soft)",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {lastUserPrompt}
+            </div>
           </div>
-        </div>
-        <DraftIssueCard onEditManually={onEditManually} />
+        ) : null}
+        {createError ? (
+          <p className="tr-small" style={{ margin: 0, color: "var(--warning)" }}>
+            {createError}
+          </p>
+        ) : null}
+        {draft ? (
+          <DraftIssueCard
+            draft={draft}
+            readyForAgent={readyForAgent}
+            createBusy={createBusy}
+            canCreate={canCreate}
+            onCreate={onCreate}
+            onEditManually={onEditManually}
+          />
+        ) : null}
       </div>
       <div style={{ flex: "0 0 auto", padding: "10px 14px 14px", borderTop: "1px solid var(--line)" }}>
         <div
@@ -272,7 +361,14 @@ function ChatMode({ modKey, onEditManually }: { modKey: string; onEditManually: 
           <textarea
             id="ntchat"
             rows={3}
-            readOnly
+            value={chatInput}
+            onChange={(event) => onChatInputChange(event.target.value)}
+            onKeyDown={(event) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                event.preventDefault();
+                onSend();
+              }
+            }}
             placeholder="Describe the task, a bug you saw, or paste a link. Type # to refer to an issue"
             style={{
               width: "100%",
@@ -290,7 +386,14 @@ function ChatMode({ modKey, onEditManually }: { modKey: string; onEditManually: 
             <SelectButton label="You" />
             <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10 }}>
               <kbd className="tr-kbd">{modKey} Enter</kbd>
-              <TrailButton variant="primary">Send</TrailButton>
+              <TrailButton
+                variant="primary"
+                disabled={chatInput.trim() === ""}
+                onClick={onSend}
+                type="button"
+              >
+                Send
+              </TrailButton>
             </span>
           </div>
         </div>
@@ -299,7 +402,21 @@ function ChatMode({ modKey, onEditManually }: { modKey: string; onEditManually: 
   );
 }
 
-function DraftIssueCard({ onEditManually }: { onEditManually: () => void }) {
+function DraftIssueCard({
+  draft,
+  readyForAgent,
+  createBusy,
+  canCreate,
+  onCreate,
+  onEditManually,
+}: {
+  draft: IssueChatDraft;
+  readyForAgent: boolean;
+  createBusy: boolean;
+  canCreate: boolean;
+  onCreate: () => void;
+  onEditManually: () => void;
+}) {
   return (
     <div
       style={{
@@ -330,28 +447,33 @@ function DraftIssueCard({ onEditManually }: { onEditManually: () => void }) {
           Not created yet
         </span>
       </div>
-      <div style={{ fontSize: 15, fontWeight: 600, lineHeight: "22px" }}>
-        Add a retry button to failed syncs
-      </div>
-      <div style={{ color: "var(--ink-soft)" }}>
-        When a sync fails the card shows a red state but there is no way to try again.
+      <div style={{ fontSize: 15, fontWeight: 600, lineHeight: "22px" }}>{draft.title}</div>
+      <div style={{ color: "var(--ink-soft)", whiteSpace: "pre-wrap" }}>
+        {draft.body.split("\n\n")[0]}
       </div>
       <div>
         <div className="tr-overline">Acceptance criteria</div>
         <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4, color: "var(--ink-soft)" }}>
-          <span>The change works as described above</span>
-          <span>Existing behaviour keeps working and has a test</span>
+          {draft.acceptance.map((line) => (
+            <span key={line}>{line}</span>
+          ))}
         </div>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        <TrailChip tone="blue">feature</TrailChip>
-        <TrailChip tone="mint">agent-ready</TrailChip>
-        <TrailChip tone="gray">priority:medium</TrailChip>
+        <TrailChip tone="blue">{draft.type}</TrailChip>
+        {readyForAgent ? <TrailChip tone="mint">agent-ready</TrailChip> : null}
+        <TrailChip tone="gray">priority:{draft.priority}</TrailChip>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <TrailButton variant="primary">Create on GitHub</TrailButton>
-        <TrailButton variant="secondary">Create and start in a worktree</TrailButton>
-        <TrailButton variant="ghost" onClick={onEditManually}>
+        <TrailButton
+          variant="primary"
+          disabled={!canCreate || createBusy}
+          onClick={onCreate}
+          type="button"
+        >
+          {createBusy ? "Creating…" : "Create on GitHub"}
+        </TrailButton>
+        <TrailButton variant="ghost" onClick={onEditManually} type="button">
           Edit manually
         </TrailButton>
       </div>
