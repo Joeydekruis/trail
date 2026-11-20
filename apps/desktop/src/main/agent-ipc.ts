@@ -9,7 +9,7 @@ import {
 } from "@trail/ipc";
 import { detectAgentBackends } from "./agent-cli";
 import { startAgentRun, stopAgentRun } from "./agent-run";
-import { getWorktreeStore, getWorkspaceStore } from "./database";
+import { getWorkspaceStore } from "./database";
 
 function resolveWorkspaceId(explicit?: string): string {
   return explicit ?? getWorkspaceStore().getActiveId();
@@ -24,7 +24,7 @@ export function registerAgentIpc(): void {
   ipcMain.handle(IpcChannels.agentRunStart, async (_event, raw: unknown) => {
     const payload = agentRunStartPayload.parse(raw);
     const workspaceId = resolveWorkspaceId(payload.workspaceId);
-    const start = startAgentRun({
+    const start = await startAgentRun({
       workspaceId,
       issueNumber: payload.issueNumber,
       prompt: payload.prompt,
@@ -32,7 +32,6 @@ export function registerAgentIpc(): void {
     if (!start.ok) {
       return agentRunStartResult.parse({ ok: false, message: start.message });
     }
-    getWorktreeStore().updateStatus(workspaceId, payload.issueNumber, "running");
     return agentRunStartResult.parse({ ok: true });
   });
 
@@ -40,9 +39,6 @@ export function registerAgentIpc(): void {
     const payload = agentRunStopPayload.parse(raw);
     const workspaceId = resolveWorkspaceId(payload.workspaceId);
     const stopped = stopAgentRun(workspaceId, payload.issueNumber);
-    if (stopped) {
-      getWorktreeStore().updateStatus(workspaceId, payload.issueNumber, "stopped");
-    }
     return agentRunStopResult.parse({ stopped });
   });
 }

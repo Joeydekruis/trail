@@ -563,7 +563,7 @@ export function SettingsView({
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <SettingsBlock
                 title="Coding agents"
-                lead="Trail detects CLIs on your PATH. Runs stream into the worktree chat (preview runner until utility process lands)."
+                lead="Trail detects CLIs on your PATH. Claude Code runs via -p when available; cursor-agent uses a preview runner until Trail wires its flags."
               >
                 {agentsLoading ? (
                   <p className="tr-small">Detecting…</p>

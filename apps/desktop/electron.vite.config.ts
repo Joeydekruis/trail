@@ -15,7 +15,25 @@ const bundleMainPreload = {
 };
 
 export default defineConfig({
-  main: bundleMainPreload,
+  main: {
+    ...bundleMainPreload,
+    build: {
+      ...bundleMainPreload.build,
+      rollupOptions: {
+        ...bundleMainPreload.build.rollupOptions,
+        input: {
+          index: resolve("src/main/index.ts"),
+          "utility/agent-runner": resolve("src/utility/agent-runner.ts"),
+        },
+        output: {
+          entryFileNames: (chunk) =>
+            chunk.name === "utility/agent-runner"
+              ? "utility/agent-runner.js"
+              : "[name].js",
+        },
+      },
+    },
+  },
   preload: {
     build: {
       rollupOptions: {
