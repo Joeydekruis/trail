@@ -559,6 +559,7 @@ export function TrailShell({
             activeWorkspace={activeWorkspace}
             onSyncNow={onSyncNow}
             syncing={syncing}
+            lastSyncedAt={lastSyncedAt}
             boardRefreshKey={boardRefreshKey}
             github={github}
             onGithubDisconnect={onGithubDisconnect}
@@ -814,6 +815,7 @@ function ShellMain({
   activeWorkspace,
   onSyncNow,
   syncing,
+  lastSyncedAt,
   boardRefreshKey,
   github,
   onGithubDisconnect,
@@ -830,6 +832,7 @@ function ShellMain({
   activeWorkspace: WorkspaceDto | undefined;
   onSyncNow: () => void;
   syncing: boolean;
+  lastSyncedAt?: string | null;
   boardRefreshKey: number;
   github?: WorkspaceGithubSnapshot;
   onGithubDisconnect?: () => void;
@@ -878,6 +881,9 @@ function ShellMain({
           onGithubDisconnect={onGithubDisconnect}
           onGithubRefresh={onGithubRefresh}
           onShowOnboarding={onShowOnboarding}
+          onSyncNow={onSyncNow}
+          syncing={syncing}
+          lastSyncedAt={lastSyncedAt}
         />
       </div>
     );

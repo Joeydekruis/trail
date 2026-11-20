@@ -10,6 +10,7 @@ import {
   workspaceSwitchResult,
   type WorkspaceDto,
 } from "@trail/ipc";
+import { restartBackgroundSync } from "./background-sync";
 import { getWorkspaceStore } from "./database";
 
 function toDto(record: WorkspaceRecord): WorkspaceDto {
@@ -52,6 +53,7 @@ export function registerWorkspaceIpc(): void {
     const { workspaceId } = workspaceSwitchPayload.parse(raw);
     const store = getWorkspaceStore();
     const active = store.switchTo(workspaceId);
+    restartBackgroundSync();
     const workspaces = store.list().map(toDto);
     return workspaceSwitchResult.parse({ active: toDto(active), workspaces });
   });
@@ -60,6 +62,7 @@ export function registerWorkspaceIpc(): void {
     const payload = workspaceCreatePayload.parse(raw);
     const store = getWorkspaceStore();
     const active = store.create(payload);
+    restartBackgroundSync();
     const workspaces = store.list().map(toDto);
     return workspaceCreateResult.parse({ active: toDto(active), workspaces });
   });

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { DEFAULT_PROJECT_STATUS_FIELD, DEFAULT_SYNC_INTERVAL_SEC, formatWorkspaceRepoLine } from "@trail/core";
 import { TrailButton, TrailSelect, trailFieldStyle } from "./design/TrailUi";
+import { formatSyncLabel } from "./sync-label";
 
 const PROJECT_STATUS_FIELD_PRESETS = [
   DEFAULT_PROJECT_STATUS_FIELD,
@@ -66,12 +67,18 @@ export function SettingsView({
   onGithubDisconnect,
   onGithubRefresh,
   onShowOnboarding,
+  onSyncNow,
+  syncing,
+  lastSyncedAt,
 }: {
   workspace: WorkspaceDto | undefined;
   github?: WorkspaceGithubSnapshot;
   onGithubDisconnect?: () => void;
   onGithubRefresh?: () => void;
   onShowOnboarding?: () => void;
+  onSyncNow?: () => void;
+  syncing?: boolean;
+  lastSyncedAt?: string | null;
 }) {
   const [section, setSection] = useState<SettingsSection>("general");
   const [pat, setPat] = useState("");
@@ -392,6 +399,20 @@ export function SettingsView({
                 title="Background sync"
                 lead="Keeps the board cache fresh while Trail is open. Manual Sync now always works."
               >
+                <p className="tr-small tr-mono" style={{ margin: 0 }}>
+                  {syncing ? "Syncing…" : formatSyncLabel(lastSyncedAt)}
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                  {onSyncNow ? (
+                    <TrailButton
+                      variant="secondary"
+                      disabled={syncing || !workspace?.repository || !github?.connected}
+                      onClick={onSyncNow}
+                    >
+                      {syncing ? "Syncing…" : "Sync now"}
+                    </TrailButton>
+                  ) : null}
+                </div>
                 <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
                   <span style={{ fontWeight: 500 }}>Sync interval</span>
                   <TrailSelect

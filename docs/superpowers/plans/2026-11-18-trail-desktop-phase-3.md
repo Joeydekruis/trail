@@ -11,4 +11,4 @@
 - [ ] Worktrees (agent isolation) — stub blijft in UI
 - [ ] OAuth i.p.v. PAT (later)
 
-**Notities:** Background sync draait in main na deferred startup; renderer krijgt `trail.backgroundSync` events voor statusbalk + board refresh.
+**Notities:** Background sync draait in main na deferred startup; renderer krijgt `trail.backgroundSync` events voor statusbalk + board refresh. Interval-wijzigingen en workspace switch herstarten de timer; Settings → GitHub heeft **Sync now** + laatste sync-tijd.
