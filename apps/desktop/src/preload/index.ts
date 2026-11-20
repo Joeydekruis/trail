@@ -108,6 +108,37 @@ export type TrailApi = {
     | { ok: true; syncedAt: string; issueCount: number }
     | { ok: false; message: string }
   >;
+  listWorktrees: (workspaceId?: string) => Promise<{
+    worktrees: import("@trail/ipc").WorktreeDto[];
+    repoRoot: string | null;
+    worktreeRoot: string | null;
+  }>;
+  createWorktree: (input: {
+    workspaceId?: string;
+    issueNumber: number;
+    title?: string;
+  }) => Promise<
+    | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
+    | { ok: false; message: string }
+  >;
+  getRepoRoot: (workspaceId?: string) => Promise<{
+    repoRoot: string | null;
+    worktreeRoot: string | null;
+  }>;
+  setRepoRoot: (input: {
+    workspaceId?: string;
+    repoRoot: string | null;
+    worktreeRoot?: string;
+  }) => Promise<{
+    repoRoot: string | null;
+    worktreeRoot: string;
+    message?: string;
+  }>;
+  pickRepoRoot: () => Promise<
+    | { ok: true; path: string }
+    | { ok: false; cancelled: true }
+    | { ok: false; message: string }
+  >;
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;
   close: () => Promise<void>;
@@ -204,6 +235,34 @@ const trailApi: TrailApi = {
   syncNow: (workspaceId) =>
     ipcRenderer.invoke(PreloadIpcChannels.syncNow, { workspaceId }) as Promise<
       | { ok: true; syncedAt: string; issueCount: number }
+      | { ok: false; message: string }
+    >,
+  listWorktrees: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.worktreeList, { workspaceId }) as Promise<{
+      worktrees: import("@trail/ipc").WorktreeDto[];
+      repoRoot: string | null;
+      worktreeRoot: string | null;
+    }>,
+  createWorktree: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.worktreeCreate, input) as Promise<
+      | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
+      | { ok: false; message: string }
+    >,
+  getRepoRoot: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.workspaceRepoRootGet, { workspaceId }) as Promise<{
+      repoRoot: string | null;
+      worktreeRoot: string | null;
+    }>,
+  setRepoRoot: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.workspaceRepoRootSet, input) as Promise<{
+      repoRoot: string | null;
+      worktreeRoot: string;
+      message?: string;
+    }>,
+  pickRepoRoot: () =>
+    ipcRenderer.invoke(PreloadIpcChannels.workspaceRepoRootPick) as Promise<
+      | { ok: true; path: string }
+      | { ok: false; cancelled: true }
       | { ok: false; message: string }
     >,
   minimize: () => ipcRenderer.invoke(PreloadIpcChannels.windowMinimize) as Promise<void>,

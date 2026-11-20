@@ -7,6 +7,7 @@ import { syncWorkspaceNow } from "./sync-now";
 import { scheduleDeferredStartup } from "./deferred-startup";
 import { registerBoardIpc } from "./board-ipc";
 import { registerIssueIpc } from "./issue-ipc";
+import { registerWorktreeIpc } from "./worktree-ipc";
 import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
 
@@ -109,6 +110,7 @@ void app.whenReady().then(() => {
   registerGitHubIpc();
   registerBoardIpc();
   registerIssueIpc();
+  registerWorktreeIpc();
   createWindow();
 
   app.on("activate", () => {

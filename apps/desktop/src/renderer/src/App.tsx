@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
+import type { WorktreeDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { OnboardingView } from "./OnboardingView";
 import { TrailShell } from "./TrailShell";
 import { isElectronRenderer, waitForTrail } from "./wait-for-trail";
@@ -82,6 +82,37 @@ declare global {
         | { ok: true; syncedAt: string; issueCount: number }
         | { ok: false; message: string }
       >;
+      listWorktrees?: (workspaceId?: string) => Promise<{
+        worktrees: WorktreeDto[];
+        repoRoot: string | null;
+        worktreeRoot: string | null;
+      }>;
+      createWorktree?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+        title?: string;
+      }) => Promise<
+        | { ok: true; worktree: WorktreeDto }
+        | { ok: false; message: string }
+      >;
+      getRepoRoot?: (workspaceId?: string) => Promise<{
+        repoRoot: string | null;
+        worktreeRoot: string | null;
+      }>;
+      setRepoRoot?: (input: {
+        workspaceId?: string;
+        repoRoot: string | null;
+        worktreeRoot?: string;
+      }) => Promise<{
+        repoRoot: string | null;
+        worktreeRoot: string;
+        message?: string;
+      }>;
+      pickRepoRoot?: () => Promise<
+        | { ok: true; path: string }
+        | { ok: false; cancelled: true }
+        | { ok: false; message: string }
+      >;
       minimize?: () => Promise<void>;
       maximize?: () => Promise<void>;
       close?: () => Promise<void>;
@@ -102,6 +133,8 @@ export function App() {
   const [boardRefreshKey, setBoardRefreshKey] = useState(0);
   const [github, setGithub] = useState<WorkspaceGithubSnapshot>({ connected: false });
   const [activeLastSyncedAt, setActiveLastSyncedAt] = useState<string | null>(null);
+  const [worktrees, setWorktrees] = useState<WorktreeDto[]>([]);
+  const [worktreesLive, setWorktreesLive] = useState(false);
   const initialOnboardingGate = useRef(true);
 
   const applyActive = useCallback((active: WorkspaceDto) => {
@@ -208,6 +241,25 @@ export function App() {
 
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
 
+  const refreshWorktrees = useCallback(async () => {
+    const api = window.trail;
+    if (!api?.listWorktrees) {
+      setWorktreesLive(false);
+      return;
+    }
+    setWorktreesLive(true);
+    try {
+      const data = await api.listWorktrees(activeWorkspace?.id);
+      setWorktrees(data.worktrees);
+    } catch {
+      setWorktrees([]);
+    }
+  }, [activeWorkspace?.id]);
+
+  useEffect(() => {
+    void refreshWorktrees();
+  }, [refreshWorktrees]);
+
   const refreshWorkspaces = useCallback(async () => {
     const api = window.trail;
     if (!api) {
@@ -300,8 +352,14 @@ export function App() {
       onGithubDisconnect={() => void onGithubDisconnect()}
       onShowOnboarding={() => setView("onboarding")}
       boardRefreshKey={boardRefreshKey}
-      onIssueCreated={() => onSyncNow()}
+      onIssueCreated={() => {
+        onSyncNow();
+        void refreshWorktrees();
+      }}
       onGithubRefresh={() => void refreshWorkspaces()}
+      worktrees={worktrees}
+      worktreesLive={worktreesLive}
+      onRefreshWorktrees={() => void refreshWorktrees()}
     />
   );
 }

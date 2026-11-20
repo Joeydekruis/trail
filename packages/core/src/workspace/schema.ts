@@ -1,5 +1,6 @@
 import type { SqliteDatabase } from "../db/types.js";
 import { migrateIssueCache } from "../issues/schema.js";
+import { migrateWorktrees } from "../worktree/schema.js";
 import { migrateWorkspaceProductionBranch } from "./migrate.js";
 
 const SCHEMA_SQL = `
@@ -91,6 +92,7 @@ export function migrateAndSeed(db: SqliteDatabase): void {
 
   nextVersion = migrateIssueCache(db, nextVersion);
   nextVersion = migrateWorkspaceProductionBranch(db, nextVersion);
+  nextVersion = migrateWorktrees(db, nextVersion);
 
   const count = (
     db.prepare("SELECT COUNT(*) as count FROM workspaces").get() as {

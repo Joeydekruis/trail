@@ -13,6 +13,8 @@ import { RoadmapView } from "./RoadmapView";
 import { SettingsView } from "./SettingsView";
 import { WorktreeView } from "./WorktreeView";
 import { dotColor, getDashboardFixture, workspaceShortcut } from "./design/fixture";
+import { worktreesToSidebar } from "./worktree-nav";
+import type { WorktreeDto } from "@trail/ipc";
 import type { PaletteItem } from "./design/palette-fixture";
 import {
   shellContentMaxWidth,
@@ -66,6 +68,9 @@ export type TrailShellProps = {
   onShowOnboarding?: () => void;
   boardRefreshKey?: number;
   onIssueCreated?: () => void;
+  worktrees?: WorktreeDto[];
+  worktreesLive?: boolean;
+  onRefreshWorktrees?: () => void;
 };
 
 const MENU = ["File", "Edit", "View", "Go", "Agents", "Help"] as const;
@@ -111,6 +116,9 @@ export function TrailShell({
   onShowOnboarding,
   boardRefreshKey = 0,
   onIssueCreated,
+  worktrees = [],
+  worktreesLive = false,
+  onRefreshWorktrees,
 }: TrailShellProps) {
   const [centerView, setCenterView] = useState<CenterView>("dashboard");
   const [worktreeTabOpen, setWorktreeTabOpen] = useState(true);
@@ -118,7 +126,12 @@ export function TrailShell({
   const [paletteQuery, setPaletteQuery] = useState("");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
-  const fixture = getDashboardFixture(activeWorkspace);
+  const baseFixture = getDashboardFixture(activeWorkspace);
+  const liveNav =
+    worktreesLive && activeWorkspace?.repository
+      ? worktreesToSidebar(activeWorkspace, worktrees)
+      : null;
+  const fixture = liveNav ? { ...baseFixture, ...liveNav } : baseFixture;
   const modKey = platform === "darwin" ? "Cmd" : "Ctrl";
   const wsIndex = workspaces.findIndex((w) => w.id === activeWorkspaceId);
   const onWorktreeSidebar = shellShowsWorktreeSidebar(centerView);

@@ -89,6 +89,10 @@ export function SettingsView({
   const [statusFieldSaved, setStatusFieldSaved] = useState(false);
   const [syncIntervalSec, setSyncIntervalSec] = useState<number>(DEFAULT_SYNC_INTERVAL_SEC);
   const [syncIntervalBusy, setSyncIntervalBusy] = useState(false);
+  const [repoRoot, setRepoRoot] = useState("");
+  const [worktreeRoot, setWorktreeRoot] = useState("");
+  const [repoRootBusy, setRepoRootBusy] = useState(false);
+  const [repoRootError, setRepoRootError] = useState<string | null>(null);
   const name = workspace?.name ?? "Trail";
   const repoLine = workspace
     ? formatWorkspaceRepoLine({
@@ -107,6 +111,64 @@ export function SettingsView({
       setSyncIntervalSec(result.syncIntervalSec);
     });
   }, [section, workspace?.id]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (section !== "general" || !workspace?.id || !api?.getRepoRoot) {
+      return;
+    }
+    void api.getRepoRoot(workspace.id).then((result) => {
+      setRepoRoot(result.repoRoot ?? "");
+      setWorktreeRoot(result.worktreeRoot ?? "");
+    });
+  }, [section, workspace?.id]);
+
+  async function saveRepoRoot(nextRoot: string) {
+    const api = window.trail;
+    if (!api?.setRepoRoot || !workspace?.id || repoRootBusy) {
+      return;
+    }
+    setRepoRootBusy(true);
+    setRepoRootError(null);
+    try {
+      const result = await api.setRepoRoot({
+        workspaceId: workspace.id,
+        repoRoot: nextRoot.trim() === "" ? null : nextRoot.trim(),
+      });
+      setRepoRoot(result.repoRoot ?? "");
+      setWorktreeRoot(result.worktreeRoot);
+      if (result.message) {
+        setRepoRootError(result.message);
+      }
+    } finally {
+      setRepoRootBusy(false);
+    }
+  }
+
+  async function pickRepoRoot() {
+    const api = window.trail;
+    if (!api?.pickRepoRoot || !workspace?.id || repoRootBusy) {
+      return;
+    }
+    setRepoRootBusy(true);
+    setRepoRootError(null);
+    try {
+      const picked = await api.pickRepoRoot();
+      if (!picked.ok) {
+        if ("cancelled" in picked && picked.cancelled) {
+          return;
+        }
+        if ("message" in picked) {
+          setRepoRootError(picked.message);
+        }
+        return;
+      }
+      setRepoRoot(picked.path);
+      await saveRepoRoot(picked.path);
+    } finally {
+      setRepoRootBusy(false);
+    }
+  }
 
   const syncIntervalLabel =
     SYNC_INTERVAL_OPTIONS.find((opt) => opt.value === syncIntervalSec)?.label ??
@@ -302,6 +364,53 @@ export function SettingsView({
                   }}
                 />
               </label>
+              {workspace?.repository ? (
+                <SettingsBlock
+                  title="Local repository"
+                  lead="Git checkout on disk for worktrees and agents. GitHub sync does not clone for you."
+                >
+                  <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 520 }}>
+                    <span style={{ fontWeight: 500 }}>Repository folder</span>
+                    <input
+                      type="text"
+                      value={repoRoot}
+                      onChange={(event) => setRepoRoot(event.target.value)}
+                      placeholder="/Users/you/projects/trail"
+                      style={{
+                        height: 34,
+                        padding: "0 10px",
+                        border: "1px solid var(--line-strong)",
+                        borderRadius: 8,
+                        background: "var(--bg)",
+                        color: "var(--ink)",
+                        font: "inherit",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 12,
+                      }}
+                    />
+                    <span className="tr-small tr-mono" style={{ wordBreak: "break-all" }}>
+                      Worktrees: {worktreeRoot || "—"}
+                    </span>
+                    {repoRootError ? (
+                      <span className="tr-small" style={{ color: "var(--warning)" }}>
+                        {repoRootError}
+                      </span>
+                    ) : null}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      <TrailButton variant="secondary" disabled={repoRootBusy} onClick={() => void pickRepoRoot()}>
+                        Choose folder…
+                      </TrailButton>
+                      <TrailButton
+                        variant="primary"
+                        disabled={repoRootBusy}
+                        onClick={() => void saveRepoRoot(repoRoot)}
+                      >
+                        {repoRootBusy ? "Saving…" : "Save path"}
+                      </TrailButton>
+                    </div>
+                  </label>
+                </SettingsBlock>
+              ) : null}
               {onShowOnboarding ? (
                 <SettingsBlock title="Workspaces">
                   <p className="tr-small" style={{ margin: 0 }}>

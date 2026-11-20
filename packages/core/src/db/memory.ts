@@ -7,7 +7,7 @@ export class MemorySqlite implements SqliteDatabase {
 
   exec(sql: string): void {
     if (sql.includes("CREATE TABLE")) {
-      for (const name of ["schema_version", "workspaces", "app_settings", "issue_cache"]) {
+      for (const name of ["schema_version", "workspaces", "app_settings", "issue_cache", "worktrees"]) {
         if (sql.includes(name) && !this.tables.has(name)) {
           this.tables.set(name, []);
         }
@@ -111,6 +111,24 @@ export class MemorySqlite implements SqliteDatabase {
             rows.filter((r) => r.repository != null),
           );
         }
+        if (sql.includes("INSERT INTO worktrees")) {
+          const row = params[0] as Record<string, unknown>;
+          const rows = self.tables.get("worktrees") ?? [];
+          const mapped = {
+            id: row.id,
+            workspace_id: row.workspaceId,
+            issue_number: row.issueNumber,
+            title: row.title,
+            branch: row.branch,
+            path: row.path,
+            status: row.status,
+            is_remote: row.isRemote,
+            created_at: row.createdAt,
+          };
+          const next = rows.filter((r) => r.id !== mapped.id);
+          next.push(mapped);
+          self.tables.set("worktrees", next);
+        }
         return { changes: 1 };
       },
       get(...params: unknown[]) {
@@ -151,6 +169,13 @@ export class MemorySqlite implements SqliteDatabase {
             .get("issue_cache")
             ?.find((r) => r.workspace_id === params[0] && r.number === params[1]);
         }
+        if (sql.includes("FROM worktrees WHERE workspace_id") && sql.includes("AND issue_number")) {
+          return self.tables
+            .get("worktrees")
+            ?.find(
+              (r) => r.workspace_id === params[0] && r.issue_number === params[1],
+            );
+        }
         if (sql.includes("workspaces WHERE id")) {
           return self.tables.get("workspaces")?.find((r) => r.id === params[0]);
         }
@@ -166,6 +191,11 @@ export class MemorySqlite implements SqliteDatabase {
           return [...(self.tables.get("issue_cache") ?? [])]
             .filter((r) => r.workspace_id === params[0])
             .sort((a, b) => (a.number as number) - (b.number as number));
+        }
+        if (sql.includes("FROM worktrees WHERE workspace_id")) {
+          return [...(self.tables.get("worktrees") ?? [])]
+            .filter((r) => r.workspace_id === params[0])
+            .sort((a, b) => (b.issue_number as number) - (a.issue_number as number));
         }
         if (sql.includes("FROM workspaces ORDER BY")) {
           const rows = [...(self.tables.get("workspaces") ?? [])];

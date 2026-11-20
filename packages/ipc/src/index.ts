@@ -16,6 +16,11 @@ export const IpcChannels = {
   boardMoveIssue: "board.moveIssue",
   issueGet: "issue.get",
   issueCreate: "issue.create",
+  worktreeList: "worktree.list",
+  worktreeCreate: "worktree.create",
+  workspaceRepoRootGet: "workspace.repoRoot.get",
+  workspaceRepoRootSet: "workspace.repoRoot.set",
+  workspaceRepoRootPick: "workspace.repoRoot.pick",
   syncNow: "sync.now",
   windowMinimize: "window.minimize",
   windowMaximize: "window.maximize",
@@ -327,3 +332,95 @@ export const shellOpenExternalPayload = z.object({
 });
 
 export type ShellOpenExternalPayload = z.infer<typeof shellOpenExternalPayload>;
+
+const worktreeStatusDto = z.enum([
+  "queued",
+  "running",
+  "waiting",
+  "review",
+  "merged",
+  "failed",
+  "stopped",
+]);
+
+export const worktreeDto = z.object({
+  id: z.string().min(1),
+  issueNumber: z.number().int().positive(),
+  title: z.string(),
+  branch: z.string().min(1),
+  path: z.string().min(1),
+  status: worktreeStatusDto,
+  isRemote: z.boolean(),
+  createdAt: z.string().min(1),
+});
+
+export type WorktreeDto = z.infer<typeof worktreeDto>;
+
+export const worktreeListPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type WorktreeListPayload = z.infer<typeof worktreeListPayload>;
+
+export const worktreeListResult = z.object({
+  worktrees: z.array(worktreeDto),
+  repoRoot: z.string().nullable(),
+  worktreeRoot: z.string().nullable(),
+});
+
+export type WorktreeListResult = z.infer<typeof worktreeListResult>;
+
+export const worktreeCreatePayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive(),
+  title: z.string().min(1).max(256).optional(),
+});
+
+export type WorktreeCreatePayload = z.infer<typeof worktreeCreatePayload>;
+
+export const worktreeCreateResult = z.union([
+  z.object({
+    ok: z.literal(true),
+    worktree: worktreeDto,
+  }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type WorktreeCreateResult = z.infer<typeof worktreeCreateResult>;
+
+export const workspaceRepoRootGetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type WorkspaceRepoRootGetPayload = z.infer<typeof workspaceRepoRootGetPayload>;
+
+export const workspaceRepoRootGetResult = z.object({
+  repoRoot: z.string().nullable(),
+  worktreeRoot: z.string().nullable(),
+});
+
+export type WorkspaceRepoRootGetResult = z.infer<typeof workspaceRepoRootGetResult>;
+
+export const workspaceRepoRootSetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  repoRoot: z.string().min(1).nullable(),
+  worktreeRoot: z.string().min(1).optional(),
+});
+
+export type WorkspaceRepoRootSetPayload = z.infer<typeof workspaceRepoRootSetPayload>;
+
+export const workspaceRepoRootSetResult = z.object({
+  repoRoot: z.string().nullable(),
+  worktreeRoot: z.string(),
+  message: z.string().optional(),
+});
+
+export type WorkspaceRepoRootSetResult = z.infer<typeof workspaceRepoRootSetResult>;
+
+export const workspaceRepoRootPickResult = z.union([
+  z.object({ ok: z.literal(true), path: z.string().min(1) }),
+  z.object({ ok: z.literal(false), cancelled: z.literal(true) }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type WorkspaceRepoRootPickResult = z.infer<typeof workspaceRepoRootPickResult>;

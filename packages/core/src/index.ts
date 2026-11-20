@@ -50,3 +50,16 @@ export {
 export { issueRecordToDetail, type IssueDetailFromCache } from "./issues/detail.js";
 export { buildBoardSnapshot, type BoardSnapshot } from "./issues/board-snapshot.js";
 export { IssueCacheStore, openIssueCacheStore } from "./issues/store.js";
+export {
+  slugFromIssueTitle,
+  branchNameForIssue,
+  worktreeDirectoryName,
+} from "./worktree/naming.js";
+export type { WorktreeRecord, WorktreeStatus } from "./worktree/types.js";
+export { WORKTREE_STATUSES } from "./worktree/types.js";
+export {
+  workspaceRepoRootKey,
+  workspaceWorktreeRootKey,
+  defaultWorktreeRootForWorkspace,
+} from "./worktree/settings.js";
+export { WorktreeStore, openWorktreeStore, worktreeId } from "./worktree/store.js";

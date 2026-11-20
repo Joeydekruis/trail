@@ -120,6 +120,18 @@ export function NewTaskModal({ open, workspace, modKey, onClose, onCreated }: Ne
         setCreateError(result.message);
         return;
       }
+      if (startWorktree && api.createWorktree) {
+        const wt = await api.createWorktree({
+          workspaceId: workspace.id,
+          issueNumber: result.issueNumber,
+          title: title.trim(),
+        });
+        if (!wt.ok) {
+          setCreateError(`Issue #${result.issueNumber} created, but worktree failed: ${wt.message}`);
+          onCreated?.();
+          return;
+        }
+      }
       onCreated?.();
       onClose();
     } finally {

@@ -4,14 +4,17 @@ import { app } from "electron";
 import {
   MemorySqlite,
   openIssueCacheStore,
+  openWorktreeStore,
   openWorkspaceStore,
   type IssueCacheStore,
   type SqliteDatabase,
+  type WorktreeStore,
   type WorkspaceStore,
 } from "@trail/core";
 
 let store: WorkspaceStore | null = null;
 let issueStore: IssueCacheStore | null = null;
+let worktreeStore: WorktreeStore | null = null;
 
 export function getWorkspaceStore(): WorkspaceStore {
   if (!store) {
@@ -27,9 +30,17 @@ export function getIssueCacheStore(): IssueCacheStore {
   return issueStore;
 }
 
+export function getWorktreeStore(): WorktreeStore {
+  if (!worktreeStore) {
+    throw new Error("Worktree store not initialized");
+  }
+  return worktreeStore;
+}
+
 function openStores(db: SqliteDatabase, label: string): void {
   store = openWorkspaceStore(db);
   issueStore = openIssueCacheStore(db);
+  worktreeStore = openWorktreeStore(db);
   console.info("[trail] workspace cache:", label);
 }
 
