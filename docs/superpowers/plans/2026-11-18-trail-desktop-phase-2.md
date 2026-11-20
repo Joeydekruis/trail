@@ -9,6 +9,6 @@
 - [x] Projects v2 Status-veld → boardkolommen (GraphQL bij sync; veld `Status`)
 - [x] Issue-modal uit cache (titel, status, body, Open on GitHub)
 - [x] Live GitHub comments in modal
-- [ ] Slepen tussen kolommen schrijft naar GitHub
+- [x] Slepen tussen kolommen schrijft naar GitHub
 
 **Notities:** Open issues landen voorlopig in **Backlog**; gesloten in **Done**. Prioriteit uit `priority:*` labels.

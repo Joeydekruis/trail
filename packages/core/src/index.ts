@@ -24,7 +24,11 @@ export {
   type GitHubIssuePayload,
 } from "./issues/github-issue.js";
 export type { BoardColumnId } from "./issues/columns.js";
-export { boardColumnFromProjectStatus } from "./issues/project-status.js";
+export {
+  boardColumnFromProjectStatus,
+  projectStatusNameForColumn,
+  projectStatusOptionIdForColumn,
+} from "./issues/project-status.js";
 export {
   mapGitHubIssueComments,
   formatCommentWhen,

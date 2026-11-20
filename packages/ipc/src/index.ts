@@ -11,6 +11,7 @@ export const IpcChannels = {
   githubListBranches: "github.listBranches",
   githubClearToken: "github.clearToken",
   boardSnapshot: "board.snapshot",
+  boardMoveIssue: "board.moveIssue",
   issueGet: "issue.get",
   syncNow: "sync.now",
   windowMinimize: "window.minimize",
@@ -117,6 +118,31 @@ export const boardSnapshotResult = z.object({
 });
 
 export type BoardSnapshotResult = z.infer<typeof boardSnapshotResult>;
+
+export const boardColumnId = z.enum([
+  "backlog",
+  "todo",
+  "in-progress",
+  "in-review",
+  "done",
+]);
+
+export type BoardColumnIdDto = z.infer<typeof boardColumnId>;
+
+export const boardMoveIssuePayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive(),
+  targetColumn: boardColumnId,
+});
+
+export type BoardMoveIssuePayload = z.infer<typeof boardMoveIssuePayload>;
+
+export const boardMoveIssueResult = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type BoardMoveIssueResult = z.infer<typeof boardMoveIssueResult>;
 
 export type SyncNowResult = z.infer<typeof syncNowResult>;
 

@@ -47,5 +47,8 @@ describe("IssueCacheStore", () => {
     expect(snapshot.openCount).toBe(1);
     expect(snapshot.columns.find((c) => c.id === "backlog")?.cards).toHaveLength(1);
     expect(snapshot.columns.find((c) => c.id === "done")?.cards).toHaveLength(1);
+
+    expect(store.updateBoardColumn("trail", 1, "todo")).toBe(true);
+    expect(store.get("trail", 1)?.boardColumn).toBe("todo");
   });
 });

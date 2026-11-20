@@ -9,6 +9,7 @@ export const PreloadIpcChannels = {
   githubListBranches: "github.listBranches",
   githubClearToken: "github.clearToken",
   boardSnapshot: "board.snapshot",
+  boardMoveIssue: "board.moveIssue",
   issueGet: "issue.get",
   syncNow: "sync.now",
   windowMinimize: "window.minimize",

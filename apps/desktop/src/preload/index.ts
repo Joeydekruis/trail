@@ -55,6 +55,11 @@ export type TrailApi = {
     | { found: true; detail: import("@trail/ipc").IssueDetailDto }
     | { found: false }
   >;
+  moveBoardIssue: (input: {
+    workspaceId?: string;
+    issueNumber: number;
+    targetColumn: import("@trail/ipc").BoardColumnIdDto;
+  }) => Promise<{ ok: true } | { ok: false; message: string }>;
   getBoardSnapshot: (workspaceId?: string) => Promise<{
     source: "cache" | "fixture";
     repository: string | null;
@@ -122,6 +127,10 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.issueGet, input) as Promise<
       | { found: true; detail: import("@trail/ipc").IssueDetailDto }
       | { found: false }
+    >,
+  moveBoardIssue: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.boardMoveIssue, input) as Promise<
+      { ok: true } | { ok: false; message: string }
     >,
   getBoardSnapshot: (workspaceId) =>
     ipcRenderer.invoke(PreloadIpcChannels.boardSnapshot, { workspaceId }) as Promise<{

@@ -2,7 +2,8 @@ import { boardColumnFromProjectStatus, type BoardColumnId } from "@trail/core";
 
 const GITHUB_API = "https://api.github.com/graphql";
 const TRAIL_USER_AGENT = "Trail-Desktop";
-const STATUS_FIELD_NAME = "Status";
+export const GITHUB_PROJECT_STATUS_FIELD = "Status";
+const STATUS_FIELD_NAME = GITHUB_PROJECT_STATUS_FIELD;
 
 type GraphqlIssueRow = {
   number: number;

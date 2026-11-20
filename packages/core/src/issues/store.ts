@@ -82,6 +82,19 @@ export class IssueCacheStore {
     return row ? parseRow(row) : null;
   }
 
+  updateBoardColumn(
+    workspaceId: string,
+    issueNumber: number,
+    boardColumn: BoardColumnId,
+  ): boolean {
+    const result = this.db
+      .prepare(
+        "UPDATE issue_cache SET board_column = ? WHERE workspace_id = ? AND number = ?",
+      )
+      .run(boardColumn, workspaceId, issueNumber);
+    return result.changes > 0;
+  }
+
   countOpen(workspaceId: string): number {
     const row = this.db
       .prepare(

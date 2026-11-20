@@ -43,6 +43,11 @@ declare global {
       }>;
       githubClearToken?: () => Promise<{ cleared: true }>;
       getBoardSnapshot?: (workspaceId?: string) => Promise<import("@trail/ipc").BoardSnapshotResult>;
+      moveBoardIssue?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+        targetColumn: import("@trail/ipc").BoardColumnIdDto;
+      }) => Promise<import("@trail/ipc").BoardMoveIssueResult>;
       getIssueDetail?: (input: {
         workspaceId?: string;
         issueNumber: number;

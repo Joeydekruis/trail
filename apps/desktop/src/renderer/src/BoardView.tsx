@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import type { BoardSnapshotResult } from "@trail/ipc";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { BoardColumnIdDto, BoardSnapshotResult } from "@trail/ipc";
 import type { WorkspaceDto } from "@trail/ipc";
 import {
   getBoardFixture,
@@ -27,6 +27,10 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
   const [autopilot, setAutopilot] = useState(true);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
   const [liveBoard, setLiveBoard] = useState<BoardSnapshotResult | null>(null);
+  const [kanbanColumns, setKanbanColumns] = useState<BoardColumn[] | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
+  const canDrag = liveBoard?.source === "cache" && Boolean(workspace?.repository);
 
   useEffect(() => {
     const api = window.trail;
@@ -35,6 +39,15 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
     }
     void api.getBoardSnapshot(workspace?.id).then(setLiveBoard);
   }, [workspace?.id, syncing]);
+
+  useEffect(() => {
+    if (liveBoard?.source === "cache") {
+      setKanbanColumns(liveBoard.columns as BoardColumn[]);
+      setMoveError(null);
+    } else {
+      setKanbanColumns(null);
+    }
+  }, [liveBoard]);
 
   const boardData = useMemo(() => {
     if (liveBoard?.source === "cache") {
@@ -79,10 +92,66 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
     setIssueDetail(getIssueDetail(card));
   };
   const closeIssue = () => setIssueDetail(null);
+
+  const handleMoveIssue = useCallback(
+    async (issueRef: string, targetColumnId: BoardColumnIdDto) => {
+      const api = window.trail;
+      if (!canDrag || !kanbanColumns || !workspace?.id || !api?.moveBoardIssue) {
+        return;
+      }
+      const match = /^#(\d+)$/.exec(issueRef);
+      const issueNumber = match ? Number.parseInt(match[1], 10) : NaN;
+      if (Number.isNaN(issueNumber)) {
+        return;
+      }
+
+      const prev = kanbanColumns;
+      const next = moveIssueOnBoard(prev, issueRef, targetColumnId);
+      if (!next) {
+        return;
+      }
+
+      setKanbanColumns(next);
+      setMoveError(null);
+      const result = await api.moveBoardIssue({
+        workspaceId: workspace.id,
+        issueNumber,
+        targetColumn: targetColumnId,
+      });
+      if (!result.ok) {
+        setKanbanColumns(prev);
+        setMoveError(result.message);
+        return;
+      }
+      void api.getBoardSnapshot?.(workspace.id).then(setLiveBoard);
+    },
+    [canDrag, kanbanColumns, workspace?.id],
+  );
   const handleOpenWorktree = () => {
     closeIssue();
     onOpenWorktree();
   };
+
+  const kanbanData =
+    kanbanColumns !== null
+      ? {
+          ...boardData,
+          columns: kanbanColumns,
+          listGroups: kanbanColumns.map((column) => ({
+            name: column.name,
+            tone: column.tone,
+            count: column.count,
+            rows: column.cards.map((card) => ({
+              issue: card.issue,
+              title: card.title,
+              adr: "—",
+              pr: "—",
+              syncLabel: "Synced",
+              by: "—",
+            })),
+          })),
+        }
+      : boardData;
 
   return (
     <>
@@ -117,6 +186,19 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
           </TrailButton>
         </div>
       </div>
+
+      {moveError ? (
+        <p
+          className="tr-small"
+          style={{
+            margin: 0,
+            padding: "0 24px",
+            color: "var(--warning)",
+          }}
+        >
+          {moveError}
+        </p>
+      ) : null}
 
       <div
         style={{
@@ -197,9 +279,16 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
       </div>
 
       {boardMode ? (
-        <BoardKanban fixture={boardData} onOpenIssue={openIssue} />
+        <BoardKanban
+          fixture={kanbanData}
+          canDrag={canDrag}
+          dragOverColumnId={dragOverColumnId}
+          onDragHoverColumn={setDragOverColumnId}
+          onMoveIssue={handleMoveIssue}
+          onOpenIssue={openIssue}
+        />
       ) : (
-        <BoardList groups={boardData.listGroups} onOpenRow={(row) => openIssue(listRowToCard(row))} />
+        <BoardList groups={kanbanData.listGroups} onOpenRow={(row) => openIssue(listRowToCard(row))} />
       )}
       <IssueDetailModal
         open={issueDetail !== null}
@@ -224,11 +313,48 @@ function listRowToCard(row: BoardListRow): BoardCard {
   };
 }
 
+function moveIssueOnBoard(
+  columns: BoardColumn[],
+  issueRef: string,
+  targetColumnId: string,
+): BoardColumn[] | null {
+  let moved: BoardCard | undefined;
+  const stripped = columns.map((column) => {
+    const cards = column.cards.filter((card) => {
+      if (card.issue === issueRef) {
+        moved = card;
+        return false;
+      }
+      return true;
+    });
+    return { ...column, cards, count: cards.length };
+  });
+  if (!moved) {
+    return null;
+  }
+  const card = moved;
+  return stripped.map((column) => {
+    if (column.id !== targetColumnId) {
+      return column;
+    }
+    const cards: BoardCard[] = [...column.cards, card];
+    return { ...column, cards, count: cards.length };
+  });
+}
+
 function BoardKanban({
   fixture,
+  canDrag,
+  dragOverColumnId,
+  onDragHoverColumn,
+  onMoveIssue,
   onOpenIssue,
 }: {
   fixture: ReturnType<typeof getBoardFixture>;
+  canDrag: boolean;
+  dragOverColumnId: string | null;
+  onDragHoverColumn: (columnId: string | null) => void;
+  onMoveIssue: (issueRef: string, targetColumnId: BoardColumnIdDto) => void;
   onOpenIssue: (card: BoardCard) => void;
 }) {
   return (
@@ -253,21 +379,73 @@ function BoardKanban({
         }}
       >
         {fixture.columns.map((col) => (
-          <KanbanColumn key={col.id} column={col} onOpenIssue={onOpenIssue} />
+          <KanbanColumn
+            key={col.id}
+            column={col}
+            canDrag={canDrag}
+            dragActive={dragOverColumnId === col.id}
+            onDragHoverColumn={onDragHoverColumn}
+            onMoveIssue={onMoveIssue}
+            onOpenIssue={onOpenIssue}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function KanbanColumn({ column, onOpenIssue }: { column: BoardColumn; onOpenIssue: (card: BoardCard) => void }) {
+function KanbanColumn({
+  column,
+  canDrag,
+  dragActive,
+  onDragHoverColumn,
+  onMoveIssue,
+  onOpenIssue,
+}: {
+  column: BoardColumn;
+  canDrag: boolean;
+  dragActive: boolean;
+  onDragHoverColumn: (columnId: string | null) => void;
+  onMoveIssue: (issueRef: string, targetColumnId: BoardColumnIdDto) => void;
+  onOpenIssue: (card: BoardCard) => void;
+}) {
   const ring =
     column.autopilotHint && column.id === "todo"
       ? { border: "1px solid var(--accent-line)", boxShadow: "inset 0 0 0 1px var(--accent-line)" }
       : { border: "1px solid transparent" };
+  const dropHighlight = dragActive
+    ? { border: "1px solid var(--accent)", boxShadow: "inset 0 0 0 1px var(--accent-line)" }
+    : null;
 
   return (
-    <div className="bd-col" style={{ flex: "0 0 272px", height: "100%", minHeight: 0, borderRadius: 14, ...ring }}>
+    <div
+      className="bd-col"
+      style={{ flex: "0 0 272px", height: "100%", minHeight: 0, borderRadius: 14, ...ring, ...dropHighlight }}
+      onDragOver={(event) => {
+        if (!canDrag) {
+          return;
+        }
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        onDragHoverColumn(column.id);
+      }}
+      onDragLeave={() => {
+        if (dragActive) {
+          onDragHoverColumn(null);
+        }
+      }}
+      onDrop={(event) => {
+        if (!canDrag) {
+          return;
+        }
+        event.preventDefault();
+        onDragHoverColumn(null);
+        const issueRef = event.dataTransfer.getData("text/trail-issue");
+        if (issueRef) {
+          onMoveIssue(issueRef, column.id as BoardColumnIdDto);
+        }
+      }}
+    >
       <div className="tr-board-col">
         <div className="tr-board-head">
           <span className={`tr-sq tr-tone-${column.tone}`} />
@@ -281,7 +459,12 @@ function KanbanColumn({ column, onOpenIssue }: { column: BoardColumn; onOpenIssu
           </span>
         ) : null}
         {column.cards.map((card) => (
-          <BoardCardRow key={card.issue} card={card} onOpenIssue={onOpenIssue} />
+          <BoardCardRow
+            key={card.issue}
+            card={card}
+            draggable={canDrag}
+            onOpenIssue={onOpenIssue}
+          />
         ))}
       </div>
     </div>
@@ -392,7 +575,15 @@ function BoardListGroupBlock({
   );
 }
 
-function BoardCardRow({ card, onOpenIssue }: { card: BoardCard; onOpenIssue: (card: BoardCard) => void }) {
+function BoardCardRow({
+  card,
+  draggable,
+  onOpenIssue,
+}: {
+  card: BoardCard;
+  draggable: boolean;
+  onOpenIssue: (card: BoardCard) => void;
+}) {
   return (
     <>
       {card.orderText ? (
@@ -400,7 +591,18 @@ function BoardCardRow({ card, onOpenIssue }: { card: BoardCard; onOpenIssue: (ca
           {card.orderText}
         </span>
       ) : null}
-      <IssueKanbanCard card={card} onClick={() => onOpenIssue(card)} />
+      <div
+        draggable={draggable}
+        onDragStart={(event) => {
+          if (!draggable) {
+            return;
+          }
+          event.dataTransfer.setData("text/trail-issue", card.issue);
+          event.dataTransfer.effectAllowed = "move";
+        }}
+      >
+        <IssueKanbanCard card={card} onClick={() => onOpenIssue(card)} />
+      </div>
     </>
   );
 }
