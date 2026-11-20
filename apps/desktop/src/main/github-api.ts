@@ -44,6 +44,22 @@ export async function fetchGitHubUser(
   return { ok: true, login: user.login };
 }
 
+export async function fetchGitHubBranches(
+  token: string,
+  owner: string,
+  repo: string,
+): Promise<{ ok: true; branches: string[] } | { ok: false; message: string }> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=100`,
+    { headers: authHeaders(token) },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await parseError(response) };
+  }
+  const rows = (await response.json()) as Array<{ name: string }>;
+  return { ok: true, branches: rows.map((row) => row.name).sort((a, b) => a.localeCompare(b)) };
+}
+
 export async function fetchGitHubRepos(token: string): Promise<
   | {
       ok: true;

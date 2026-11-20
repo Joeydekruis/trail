@@ -8,6 +8,7 @@ export type WorkspaceListResult = {
     shortLabel: string;
     repository: string | null;
     integrationBranch: string;
+    productionBranch: string;
     accent: string;
     accentSoft: string;
     accentLine: string;
@@ -38,12 +39,14 @@ export type TrailApi = {
     repository: string;
     name?: string;
     integrationBranch?: string;
+    productionBranch?: string;
   }) => Promise<WorkspaceSwitchResult>;
   githubStatus: () => Promise<{ connected: boolean; login?: string }>;
   githubSetToken: (
     token: string,
   ) => Promise<{ ok: true; login: string } | { ok: false; message: string }>;
   githubListRepos: () => Promise<{ repos: GithubRepoDto[] }>;
+  githubListBranches: (repository: string) => Promise<{ branches: string[] }>;
   githubClearToken: () => Promise<{ cleared: true }>;
   getIssueDetail: (input: {
     workspaceId?: string;
@@ -105,6 +108,10 @@ const trailApi: TrailApi = {
   githubListRepos: () =>
     ipcRenderer.invoke(PreloadIpcChannels.githubListRepos) as Promise<{
       repos: GithubRepoDto[];
+    }>,
+  githubListBranches: (repository) =>
+    ipcRenderer.invoke(PreloadIpcChannels.githubListBranches, { repository }) as Promise<{
+      branches: string[];
     }>,
   githubClearToken: () =>
     ipcRenderer.invoke(PreloadIpcChannels.githubClearToken) as Promise<{

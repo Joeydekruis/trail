@@ -49,6 +49,7 @@ export class MemorySqlite implements SqliteDatabase {
             short_label: row.shortLabel,
             repository: row.repository,
             integration_branch: row.integrationBranch,
+            production_branch: row.productionBranch ?? "main",
             sort_order: row.sortOrder,
             accent: row.accent,
             accent_soft: row.accentSoft,

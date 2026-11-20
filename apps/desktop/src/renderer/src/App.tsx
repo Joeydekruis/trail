@@ -24,6 +24,7 @@ declare global {
         repository: string;
         name?: string;
         integrationBranch?: string;
+        productionBranch?: string;
       }) => Promise<{
         active: WorkspaceDto;
         workspaces: WorkspaceDto[];
@@ -32,6 +33,7 @@ declare global {
       githubSetToken?: (
         token: string,
       ) => Promise<{ ok: true; login: string } | { ok: false; message: string }>;
+      githubListBranches?: (repository: string) => Promise<{ branches: string[] }>;
       githubListRepos?: () => Promise<{
         repos: Array<{
           fullName: string;

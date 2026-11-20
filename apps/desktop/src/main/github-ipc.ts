@@ -3,13 +3,15 @@ import { APP_SETTING_GITHUB_LOGIN } from "@trail/core";
 import {
   IpcChannels,
   githubClearTokenResult,
+  githubListBranchesPayload,
+  githubListBranchesResult,
   githubListReposResult,
   githubSetTokenPayload,
   githubSetTokenResult,
   githubStatusResult,
 } from "@trail/ipc";
 import { getWorkspaceStore } from "./database";
-import { fetchGitHubRepos, fetchGitHubUser } from "./github-api";
+import { fetchGitHubBranches, fetchGitHubRepos, fetchGitHubUser } from "./github-api";
 import {
   clearGitHubToken,
   readGitHubToken,
@@ -51,6 +53,25 @@ export function registerGitHubIpc(): void {
     clearGitHubToken();
     getWorkspaceStore().deleteAppSetting(APP_SETTING_GITHUB_LOGIN);
     return githubClearTokenResult.parse({ cleared: true });
+  });
+
+  ipcMain.handle(IpcChannels.githubListBranches, async (_event, raw: unknown) => {
+    const { repository } = githubListBranchesPayload.parse(raw);
+    const token = readGitHubToken();
+    if (!token) {
+      return githubListBranchesResult.parse({ branches: [] });
+    }
+    const slash = repository.indexOf("/");
+    if (slash <= 0) {
+      return githubListBranchesResult.parse({ branches: [] });
+    }
+    const owner = repository.slice(0, slash);
+    const repo = repository.slice(slash + 1);
+    const result = await fetchGitHubBranches(token, owner, repo);
+    if (!result.ok) {
+      return githubListBranchesResult.parse({ branches: [] });
+    }
+    return githubListBranchesResult.parse({ branches: result.branches });
   });
 
   ipcMain.handle(IpcChannels.githubListRepos, async () => {

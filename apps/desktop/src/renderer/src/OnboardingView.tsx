@@ -1,6 +1,28 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { TrailLogo } from "./design/TrailIcons";
-import { TrailButton, TrailChip } from "./design/TrailUi";
+import { TrailButton, TrailChip, TrailSelect, trailFieldStyle } from "./design/TrailUi";
+
+const FALLBACK_BRANCHES = ["development", "develop", "staging", "main", "master"] as const;
+
+function pickIntegrationBranch(branches: string[]): string {
+  const prefer = ["development", "develop", "staging"];
+  for (const name of prefer) {
+    if (branches.includes(name)) {
+      return name;
+    }
+  }
+  return branches[0] ?? "development";
+}
+
+function pickProductionBranch(branches: string[], integration: string): string {
+  const prefer = ["main", "master", "production"];
+  for (const name of prefer) {
+    if (branches.includes(name) && name !== integration) {
+      return name;
+    }
+  }
+  return branches.find((name) => name !== integration) ?? branches[0] ?? "main";
+}
 
 const STEPS = ["Connect GitHub", "Choose a repository", "Set up the repository"] as const;
 
@@ -36,6 +58,9 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
   const [repos, setRepos] = useState(DEMO_REPOS);
   const [reposLoading, setReposLoading] = useState(false);
   const [integrationBranch, setIntegrationBranch] = useState("development");
+  const [productionBranch, setProductionBranch] = useState("main");
+  const [branchOptions, setBranchOptions] = useState<string[]>([...FALLBACK_BRANCHES]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
   const [finishBusy, setFinishBusy] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
 
@@ -67,6 +92,29 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
       })
       .finally(() => setReposLoading(false));
   }, [step, githubLogin]);
+
+  useEffect(() => {
+    const api = window.trail;
+    const repo = repos[selectedRepo];
+    if (step !== 1 || !githubLogin || !repo) {
+      return;
+    }
+    if (!api?.githubListBranches) {
+      setBranchOptions([...FALLBACK_BRANCHES]);
+      return;
+    }
+    setBranchesLoading(true);
+    void api
+      .githubListBranches(repo.fullName)
+      .then((result) => {
+        const branches = result.branches.length > 0 ? result.branches : [...FALLBACK_BRANCHES];
+        setBranchOptions(branches);
+        const integration = pickIntegrationBranch(branches);
+        setIntegrationBranch(integration);
+        setProductionBranch(pickProductionBranch(branches, integration));
+      })
+      .finally(() => setBranchesLoading(false));
+  }, [step, githubLogin, selectedRepo, repos]);
 
   const githubReady = Boolean(githubLogin);
 
@@ -104,6 +152,7 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
       await api.createWorkspace({
         repository: repo.fullName,
         integrationBranch,
+        productionBranch,
       });
       await onComplete();
     } catch (error) {
@@ -145,6 +194,10 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
           onSelect={setSelectedRepo}
           integrationBranch={integrationBranch}
           onIntegrationBranchChange={setIntegrationBranch}
+          productionBranch={productionBranch}
+          onProductionBranchChange={setProductionBranch}
+          branchOptions={branchOptions}
+          branchesLoading={branchesLoading}
         />
       ) : null}
       {step === 2 ? (
@@ -289,15 +342,8 @@ function StepConnectGitHub({
                 value={pat}
                 onChange={(event) => onPatChange(event.target.value)}
                 autoComplete="off"
-                style={{
-                  height: 36,
-                  padding: "0 10px",
-                  border: "1px solid var(--line-strong)",
-                  borderRadius: 8,
-                  background: "var(--bg)",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 12,
-                }}
+                className="trail-secret-input"
+                style={trailFieldStyle}
               />
               {patError ? (
                 <span className="tr-small" style={{ color: "var(--warning)" }}>
@@ -329,6 +375,10 @@ function StepChooseRepo({
   onSelect,
   integrationBranch,
   onIntegrationBranchChange,
+  productionBranch,
+  onProductionBranchChange,
+  branchOptions,
+  branchesLoading,
 }: {
   repos: RepoOption[];
   loading: boolean;
@@ -336,6 +386,10 @@ function StepChooseRepo({
   onSelect: (i: number) => void;
   integrationBranch: string;
   onIntegrationBranchChange: (value: string) => void;
+  productionBranch: string;
+  onProductionBranchChange: (value: string) => void;
+  branchOptions: string[];
+  branchesLoading: boolean;
 }) {
   return (
     <OnboardingStep title="Choose a repository" lead="Each repository becomes one workspace. You can add more later.">
@@ -381,9 +435,13 @@ function StepChooseRepo({
           </button>
         ))}
       </div>
+      {branchesLoading ? <p className="tr-small">Loading branches…</p> : null}
       <BranchFields
         integrationBranch={integrationBranch}
         onIntegrationBranchChange={onIntegrationBranchChange}
+        productionBranch={productionBranch}
+        onProductionBranchChange={onProductionBranchChange}
+        branchOptions={branchOptions}
       />
     </OnboardingStep>
   );
@@ -500,42 +558,39 @@ function PanelRows({ rows }: { rows: { title: string; sub: string }[] }) {
 function BranchFields({
   integrationBranch,
   onIntegrationBranchChange,
+  productionBranch,
+  onProductionBranchChange,
+  branchOptions,
 }: {
   integrationBranch: string;
   onIntegrationBranchChange: (value: string) => void;
+  productionBranch: string;
+  onProductionBranchChange: (value: string) => void;
+  branchOptions: string[];
 }) {
+  const integrationOptions =
+    branchOptions.includes(integrationBranch) ? branchOptions : [integrationBranch, ...branchOptions];
+  const productionOptions =
+    branchOptions.includes(productionBranch) ? branchOptions : [productionBranch, ...branchOptions];
+
   return (
     <div style={{ display: "flex", gap: 12 }}>
       <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="tr-small">Integration branch</span>
-        <input
+        <TrailSelect
+          aria-label="Integration branch"
           value={integrationBranch}
-          onChange={(event) => onIntegrationBranchChange(event.target.value)}
-          style={{
-            height: 32,
-            padding: "0 10px",
-            border: "1px solid var(--line-strong)",
-            borderRadius: 8,
-            background: "var(--bg)",
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-          }}
+          options={integrationOptions}
+          onChange={onIntegrationBranchChange}
         />
       </label>
       <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="tr-small">Production branch</span>
-        <input
-          readOnly
-          defaultValue="main"
-          style={{
-            height: 32,
-            padding: "0 10px",
-            border: "1px solid var(--line-strong)",
-            borderRadius: 8,
-            background: "var(--bg)",
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-          }}
+        <TrailSelect
+          aria-label="Production branch"
+          value={productionBranch}
+          options={productionOptions}
+          onChange={onProductionBranchChange}
         />
       </label>
     </div>

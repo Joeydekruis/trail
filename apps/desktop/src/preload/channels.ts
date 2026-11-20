@@ -6,6 +6,7 @@ export const PreloadIpcChannels = {
   githubStatus: "github.status",
   githubSetToken: "github.setToken",
   githubListRepos: "github.listRepos",
+  githubListBranches: "github.listBranches",
   githubClearToken: "github.clearToken",
   boardSnapshot: "board.snapshot",
   issueGet: "issue.get",

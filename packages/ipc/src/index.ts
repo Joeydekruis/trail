@@ -8,6 +8,7 @@ export const IpcChannels = {
   githubStatus: "github.status",
   githubSetToken: "github.setToken",
   githubListRepos: "github.listRepos",
+  githubListBranches: "github.listBranches",
   githubClearToken: "github.clearToken",
   boardSnapshot: "board.snapshot",
   issueGet: "issue.get",
@@ -32,6 +33,7 @@ export const workspaceDto = z.object({
   shortLabel: z.string().min(1),
   repository: z.string().nullable(),
   integrationBranch: z.string().min(1),
+  productionBranch: z.string().min(1),
   accent: z.string().min(1),
   accentSoft: z.string().min(1),
   accentLine: z.string().min(1),
@@ -132,6 +134,7 @@ export const workspaceCreatePayload = z.object({
   repository: repositoryFullName,
   name: z.string().min(1).optional(),
   integrationBranch: z.string().min(1).optional(),
+  productionBranch: z.string().min(1).optional(),
 });
 
 export type WorkspaceCreatePayload = z.infer<typeof workspaceCreatePayload>;
@@ -173,6 +176,18 @@ export const githubListReposResult = z.object({
 });
 
 export type GithubListReposResult = z.infer<typeof githubListReposResult>;
+
+export const githubListBranchesPayload = z.object({
+  repository: repositoryFullName,
+});
+
+export type GithubListBranchesPayload = z.infer<typeof githubListBranchesPayload>;
+
+export const githubListBranchesResult = z.object({
+  branches: z.array(z.string().min(1)),
+});
+
+export type GithubListBranchesResult = z.infer<typeof githubListBranchesResult>;
 
 export const issueGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

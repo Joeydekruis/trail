@@ -32,6 +32,7 @@ describe("workspaceListResult", () => {
           shortLabel: "T",
           repository: null,
           integrationBranch: "development",
+          productionBranch: "main",
           accent: "#4af7a3",
           accentSoft: "#0f2219",
           accentLine: "#1c4733",

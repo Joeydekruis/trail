@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { BoardCard } from "./board-fixture";
 
 type Tone = "mint" | "amber" | "blue" | "violet" | "red" | "gray" | "claude";
@@ -143,6 +143,56 @@ export function SelectButton({ label }: { label: string }) {
     <button type="button" className="tr-select titlebar-no-drag">
       {label}
     </button>
+  );
+}
+
+/** Dark-surface field styles for inputs and selects in onboarding/settings. */
+export const trailFieldStyle: CSSProperties = {
+  height: 34,
+  padding: "0 10px",
+  border: "1px solid var(--line-strong)",
+  borderRadius: 8,
+  background: "var(--surface-card)",
+  color: "var(--ink)",
+  WebkitTextFillColor: "var(--ink)",
+  caretColor: "var(--ink)",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+export function TrailSelect({
+  value,
+  options,
+  onChange,
+  disabled,
+  id,
+  "aria-label": ariaLabel,
+}: {
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  id?: string;
+  "aria-label"?: string;
+}) {
+  return (
+    <select
+      id={id}
+      aria-label={ariaLabel}
+      className="titlebar-no-drag"
+      disabled={disabled}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      style={trailFieldStyle}
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
   );
 }
 

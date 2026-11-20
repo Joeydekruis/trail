@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { formatWorkspaceRepoLine } from "@trail/core";
-import { TrailButton } from "./design/TrailUi";
+import { TrailButton, trailFieldStyle } from "./design/TrailUi";
 
 function SettingsBlock({
   title,
@@ -181,6 +181,44 @@ export function SettingsView({
                   }}
                 />
               </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 400 }}>
+                <span style={{ fontWeight: 500 }}>Integration branch</span>
+                <input
+                  type="text"
+                  readOnly
+                  value={workspace?.integrationBranch ?? "development"}
+                  style={{
+                    height: 34,
+                    padding: "0 10px",
+                    border: "1px solid var(--line-strong)",
+                    borderRadius: 8,
+                    background: "var(--bg)",
+                    color: "var(--ink)",
+                    font: "inherit",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 12,
+                  }}
+                />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 400 }}>
+                <span style={{ fontWeight: 500 }}>Production branch</span>
+                <input
+                  type="text"
+                  readOnly
+                  value={workspace?.productionBranch ?? "main"}
+                  style={{
+                    height: 34,
+                    padding: "0 10px",
+                    border: "1px solid var(--line-strong)",
+                    borderRadius: 8,
+                    background: "var(--bg)",
+                    color: "var(--ink)",
+                    font: "inherit",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 12,
+                  }}
+                />
+              </label>
               {onShowOnboarding ? (
                 <SettingsBlock title="Workspaces">
                   <p className="tr-small" style={{ margin: 0 }}>
@@ -228,15 +266,8 @@ export function SettingsView({
                     value={pat}
                     onChange={(event) => setPat(event.target.value)}
                     autoComplete="off"
-                    style={{
-                      height: 36,
-                      padding: "0 10px",
-                      border: "1px solid var(--line-strong)",
-                      borderRadius: 8,
-                      background: "var(--bg)",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 12,
-                    }}
+                    className="trail-secret-input"
+                    style={trailFieldStyle}
                   />
                   {patError ? (
                     <span className="tr-small" style={{ color: "var(--warning)" }}>

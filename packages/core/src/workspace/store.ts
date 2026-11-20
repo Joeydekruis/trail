@@ -13,6 +13,7 @@ export type WorkspaceCreateInput = {
   repository: string;
   name?: string;
   integrationBranch?: string;
+  productionBranch?: string;
 };
 
 const ACTIVE_KEY = "active_workspace_id";
@@ -23,6 +24,7 @@ type WorkspaceRow = {
   short_label: string;
   repository: string | null;
   integration_branch: string;
+  production_branch: string;
   sort_order: number;
   accent: string;
   accent_soft: string;
@@ -37,6 +39,7 @@ function mapRow(row: WorkspaceRow): WorkspaceRecord {
     shortLabel: row.short_label,
     repository: row.repository,
     integrationBranch: row.integration_branch,
+    productionBranch: row.production_branch ?? "main",
     sortOrder: row.sort_order,
     accent: row.accent,
     accentSoft: row.accent_soft,
@@ -143,6 +146,7 @@ export class WorkspaceStore {
     const id = workspaceIdFromRepository(repository);
     const name = input.name?.trim() || workspaceNameFromRepository(repository);
     const integrationBranch = input.integrationBranch?.trim() || "development";
+    const productionBranch = input.productionBranch?.trim() || "main";
     const shortLabel = shortLabelFromName(name);
 
     const existing = this.db.prepare("SELECT 1 FROM workspaces WHERE id = ?").get(id);
@@ -152,10 +156,10 @@ export class WorkspaceStore {
 
     const insert = this.db.prepare(`
       INSERT INTO workspaces (
-        id, name, short_label, repository, integration_branch, sort_order,
+        id, name, short_label, repository, integration_branch, production_branch, sort_order,
         accent, accent_soft, accent_line, on_accent
       ) VALUES (
-        @id, @name, @shortLabel, @repository, @integrationBranch, @sortOrder,
+        @id, @name, @shortLabel, @repository, @integrationBranch, @productionBranch, @sortOrder,
         @accent, @accentSoft, @accentLine, @onAccent
       )
     `);
@@ -184,6 +188,7 @@ export class WorkspaceStore {
         shortLabel,
         repository,
         integrationBranch,
+        productionBranch,
         sortOrder,
         accent: accent.accent,
         accentSoft: accent.accentSoft,

@@ -29,6 +29,7 @@ describe("WorkspaceStore.create", () => {
       integrationBranch: "development",
     });
 
+    expect(created.productionBranch).toBe("main");
     expect(created.repository).toBe("joeydekrujs/trail");
     expect(created.id).toBe("joeydekrujs-trail");
     expect(created.name).toBe("Trail");

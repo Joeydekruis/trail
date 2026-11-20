@@ -19,6 +19,7 @@ function toDto(record: WorkspaceRecord): WorkspaceDto {
     shortLabel: record.shortLabel,
     repository: record.repository,
     integrationBranch: record.integrationBranch,
+    productionBranch: record.productionBranch,
     accent: record.accent,
     accentSoft: record.accentSoft,
     accentLine: record.accentLine,

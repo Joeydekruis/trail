@@ -1,5 +1,6 @@
 import type { SqliteDatabase } from "../db/types.js";
 import { migrateIssueCache } from "../issues/schema.js";
+import { migrateWorkspaceProductionBranch } from "./migrate.js";
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -12,6 +13,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
   short_label TEXT NOT NULL,
   repository TEXT,
   integration_branch TEXT NOT NULL DEFAULT 'development',
+  production_branch TEXT NOT NULL DEFAULT 'main',
   sort_order INTEGER NOT NULL DEFAULT 0,
   accent TEXT NOT NULL,
   accent_soft TEXT NOT NULL,
@@ -33,6 +35,7 @@ const DEMO_WORKSPACES = [
     shortLabel: "T",
     repository: null,
     integrationBranch: "development",
+    productionBranch: "main",
     sortOrder: 0,
     accent: "#4af7a3",
     accentSoft: "#0f2219",
@@ -45,6 +48,7 @@ const DEMO_WORKSPACES = [
     shortLabel: "L",
     repository: null,
     integrationBranch: "development",
+    productionBranch: "main",
     sortOrder: 1,
     accent: "#b26bff",
     accentSoft: "#1b1230",
@@ -57,6 +61,7 @@ const DEMO_WORKSPACES = [
     shortLabel: "D",
     repository: null,
     integrationBranch: "development",
+    productionBranch: "main",
     sortOrder: 2,
     accent: "#3dd6f5",
     accentSoft: "#0e2229",
@@ -85,6 +90,7 @@ export function migrateAndSeed(db: SqliteDatabase): void {
   }
 
   nextVersion = migrateIssueCache(db, nextVersion);
+  nextVersion = migrateWorkspaceProductionBranch(db, nextVersion);
 
   const count = (
     db.prepare("SELECT COUNT(*) as count FROM workspaces").get() as {
@@ -95,10 +101,10 @@ export function migrateAndSeed(db: SqliteDatabase): void {
   if (count === 0) {
     const insert = db.prepare(`
       INSERT INTO workspaces (
-        id, name, short_label, repository, integration_branch, sort_order,
+        id, name, short_label, repository, integration_branch, production_branch, sort_order,
         accent, accent_soft, accent_line, on_accent
       ) VALUES (
-        @id, @name, @shortLabel, @repository, @integrationBranch, @sortOrder,
+        @id, @name, @shortLabel, @repository, @integrationBranch, @productionBranch, @sortOrder,
         @accent, @accentSoft, @accentLine, @onAccent
       )
     `);
