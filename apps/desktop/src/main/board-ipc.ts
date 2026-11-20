@@ -8,8 +8,10 @@ import {
   IpcChannels,
 } from "@trail/ipc";
 import { getIssueCacheStore, getWorkspaceStore } from "./database";
+import { setGitHubIssueState } from "./github-api";
 import { updateIssueProjectStatus } from "./github-project-update";
 import { readGitHubToken } from "./github-token-store";
+import { readWorkspaceProjectStatusField } from "./workspace-github-settings";
 
 function parseRepository(fullName: string): { owner: string; repo: string } | null {
   const slash = fullName.indexOf("/");
@@ -75,18 +77,40 @@ export function registerBoardIpc(): void {
       return boardMoveIssueResult.parse({ ok: false, message: "Invalid repository on workspace" });
     }
 
+    const statusField = readWorkspaceProjectStatusField(workspaces, id);
     const updated = await updateIssueProjectStatus(
       token,
       parts.owner,
       parts.repo,
       issueNumber,
       targetColumn as BoardColumnId,
+      statusField,
     );
     if (!updated.ok) {
       return boardMoveIssueResult.parse({ ok: false, message: updated.message });
     }
 
-    const saved = issues.updateBoardColumn(id, issueNumber, targetColumn as BoardColumnId);
+    let nextState = cached.state;
+    if (targetColumn === "done" && cached.state === "open") {
+      const closed = await setGitHubIssueState(token, parts.owner, parts.repo, issueNumber, "closed");
+      if (!closed.ok) {
+        return boardMoveIssueResult.parse({ ok: false, message: closed.message });
+      }
+      nextState = "closed";
+    } else if (targetColumn !== "done" && cached.state === "closed") {
+      const reopened = await setGitHubIssueState(token, parts.owner, parts.repo, issueNumber, "open");
+      if (!reopened.ok) {
+        return boardMoveIssueResult.parse({ ok: false, message: reopened.message });
+      }
+      nextState = "open";
+    }
+
+    const saved = issues.updateBoardColumn(
+      id,
+      issueNumber,
+      targetColumn as BoardColumnId,
+      nextState,
+    );
     if (!saved) {
       return boardMoveIssueResult.parse({ ok: false, message: "Could not update local cache" });
     }

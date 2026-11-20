@@ -3,6 +3,7 @@ import { fetchGitHubUser } from "./github-api";
 import { fetchWorkspaceIssues } from "./github-issues";
 import { fetchIssueBoardColumns } from "./github-project-status";
 import { readGitHubToken } from "./github-token-store";
+import { readWorkspaceProjectStatusField } from "./workspace-github-settings";
 
 const GITHUB_API = "https://api.github.com";
 const TRAIL_USER_AGENT = "Trail-Desktop";
@@ -69,7 +70,8 @@ export async function syncWorkspaceNow(
     return { ok: false, message: fetched.message };
   }
 
-  const columns = await fetchIssueBoardColumns(token, owner, repo);
+  const statusField = readWorkspaceProjectStatusField(store, id);
+  const columns = await fetchIssueBoardColumns(token, owner, repo, statusField);
   const issues = fetched.issues.map((issue) => {
     if (!columns.ok) {
       return issue;

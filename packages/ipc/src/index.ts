@@ -10,6 +10,8 @@ export const IpcChannels = {
   githubListRepos: "github.listRepos",
   githubListBranches: "github.listBranches",
   githubClearToken: "github.clearToken",
+  githubBoardMappingGet: "github.boardMapping.get",
+  githubBoardMappingSet: "github.boardMapping.set",
   boardSnapshot: "board.snapshot",
   boardMoveIssue: "board.moveIssue",
   issueGet: "issue.get",
@@ -215,6 +217,31 @@ export const githubListBranchesResult = z.object({
 });
 
 export type GithubListBranchesResult = z.infer<typeof githubListBranchesResult>;
+
+export const githubBoardMappingGetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type GithubBoardMappingGetPayload = z.infer<typeof githubBoardMappingGetPayload>;
+
+export const githubBoardMappingGetResult = z.object({
+  projectStatusField: z.string().min(1),
+});
+
+export type GithubBoardMappingGetResult = z.infer<typeof githubBoardMappingGetResult>;
+
+export const githubBoardMappingSetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  projectStatusField: z.string().min(1).max(64),
+});
+
+export type GithubBoardMappingSetPayload = z.infer<typeof githubBoardMappingSetPayload>;
+
+export const githubBoardMappingSetResult = z.object({
+  projectStatusField: z.string().min(1),
+});
+
+export type GithubBoardMappingSetResult = z.infer<typeof githubBoardMappingSetResult>;
 
 export const issueGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

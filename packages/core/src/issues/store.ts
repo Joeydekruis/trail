@@ -86,7 +86,16 @@ export class IssueCacheStore {
     workspaceId: string,
     issueNumber: number,
     boardColumn: BoardColumnId,
+    state?: string,
   ): boolean {
+    if (state !== undefined) {
+      const result = this.db
+        .prepare(
+          "UPDATE issue_cache SET board_column = ?, state = ? WHERE workspace_id = ? AND number = ?",
+        )
+        .run(boardColumn, state, workspaceId, issueNumber);
+      return result.changes > 0;
+    }
     const result = this.db
       .prepare(
         "UPDATE issue_cache SET board_column = ? WHERE workspace_id = ? AND number = ?",

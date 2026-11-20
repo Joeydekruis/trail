@@ -2,8 +2,6 @@ import { boardColumnFromProjectStatus, type BoardColumnId } from "@trail/core";
 
 const GITHUB_API = "https://api.github.com/graphql";
 const TRAIL_USER_AGENT = "Trail-Desktop";
-export const GITHUB_PROJECT_STATUS_FIELD = "Status";
-const STATUS_FIELD_NAME = GITHUB_PROJECT_STATUS_FIELD;
 
 type GraphqlIssueRow = {
   number: number;
@@ -60,10 +58,11 @@ const ISSUES_QUERY = `
   }
 `;
 
-function readStatusFromIssue(issue: GraphqlIssueRow): string | null {
+function readStatusFromIssue(issue: GraphqlIssueRow, statusFieldName: string): string | null {
+  const want = statusFieldName.trim().toLowerCase();
   for (const item of issue.projectItems.nodes) {
     for (const field of item.fieldValues.nodes) {
-      if (field.field?.name?.toLowerCase() === STATUS_FIELD_NAME.toLowerCase() && field.name) {
+      if (field.field?.name?.toLowerCase() === want && field.name) {
         return field.name;
       }
     }
@@ -75,6 +74,7 @@ export async function fetchIssueBoardColumns(
   token: string,
   owner: string,
   repo: string,
+  statusFieldName: string,
 ): Promise<{ ok: true; byIssue: Map<number, BoardColumnId> } | { ok: false; message: string }> {
   const byIssue = new Map<number, BoardColumnId>();
   let cursor: string | null = null;
@@ -113,7 +113,7 @@ export async function fetchIssueBoardColumns(
         byIssue.set(issue.number, "done");
         continue;
       }
-      const status = readStatusFromIssue(issue);
+      const status = readStatusFromIssue(issue, statusFieldName);
       const column = status ? boardColumnFromProjectStatus(status) : null;
       if (column) {
         byIssue.set(issue.number, column);

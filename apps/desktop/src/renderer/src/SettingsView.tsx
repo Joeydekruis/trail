@@ -1,7 +1,13 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
-import { formatWorkspaceRepoLine } from "@trail/core";
-import { TrailButton, trailFieldStyle } from "./design/TrailUi";
+import { DEFAULT_PROJECT_STATUS_FIELD, formatWorkspaceRepoLine } from "@trail/core";
+import { TrailButton, TrailSelect, trailFieldStyle } from "./design/TrailUi";
+
+const PROJECT_STATUS_FIELD_PRESETS = [
+  DEFAULT_PROJECT_STATUS_FIELD,
+  "State",
+  "Column",
+] as const;
 
 function SettingsBlock({
   title,
@@ -63,6 +69,9 @@ export function SettingsView({
   const [pat, setPat] = useState("");
   const [patBusy, setPatBusy] = useState(false);
   const [patError, setPatError] = useState<string | null>(null);
+  const [statusField, setStatusField] = useState<string>(DEFAULT_PROJECT_STATUS_FIELD);
+  const [statusFieldBusy, setStatusFieldBusy] = useState(false);
+  const [statusFieldSaved, setStatusFieldSaved] = useState(false);
   const name = workspace?.name ?? "Trail";
   const repoLine = workspace
     ? formatWorkspaceRepoLine({
@@ -70,6 +79,41 @@ export function SettingsView({
         integrationBranch: workspace.integrationBranch,
       })
     : "No repo linked";
+
+  useEffect(() => {
+    const api = window.trail;
+    if (section !== "github" || !workspace?.id || !api?.getGithubBoardMapping) {
+      return;
+    }
+    void api.getGithubBoardMapping(workspace.id).then((result) => {
+      setStatusField(result.projectStatusField);
+    });
+  }, [section, workspace?.id]);
+
+  const statusFieldOptions = PROJECT_STATUS_FIELD_PRESETS.includes(
+    statusField as (typeof PROJECT_STATUS_FIELD_PRESETS)[number],
+  )
+    ? [...PROJECT_STATUS_FIELD_PRESETS]
+    : [...PROJECT_STATUS_FIELD_PRESETS, statusField];
+
+  async function saveStatusField(next: string) {
+    const api = window.trail;
+    if (!api?.setGithubBoardMapping || !workspace?.id || statusFieldBusy) {
+      return;
+    }
+    setStatusFieldBusy(true);
+    setStatusFieldSaved(false);
+    try {
+      const result = await api.setGithubBoardMapping({
+        workspaceId: workspace.id,
+        projectStatusField: next,
+      });
+      setStatusField(result.projectStatusField);
+      setStatusFieldSaved(true);
+    } finally {
+      setStatusFieldBusy(false);
+    }
+  }
 
   async function reconnectWithPat() {
     const api = window.trail;
@@ -283,6 +327,33 @@ export function SettingsView({
                       {patBusy ? "Saving…" : "Save token"}
                     </TrailButton>
                   </span>
+                </label>
+              </SettingsBlock>
+              <SettingsBlock
+                title="Board mapping"
+                lead="Single-select field on GitHub Projects v2 that drives kanban columns during sync and drag."
+              >
+                <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
+                  <span style={{ fontWeight: 500 }}>Projects status field</span>
+                  <TrailSelect
+                    aria-label="Projects status field"
+                    value={statusField}
+                    options={[...statusFieldOptions]}
+                    disabled={statusFieldBusy || !workspace?.repository}
+                    onChange={(value) => {
+                      setStatusField(value);
+                      void saveStatusField(value);
+                    }}
+                  />
+                  {!workspace?.repository ? (
+                    <span className="tr-small">Link a repository to configure board mapping.</span>
+                  ) : statusFieldSaved ? (
+                    <span className="tr-small">Saved. Run Sync now on the board to refresh columns.</span>
+                  ) : (
+                    <span className="tr-small">
+                      Options should match your project (e.g. Backlog, Todo, In progress).
+                    </span>
+                  )}
                 </label>
               </SettingsBlock>
             </div>

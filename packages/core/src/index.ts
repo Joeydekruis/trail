@@ -15,7 +15,10 @@ export {
 } from "./workspace/repository.js";
 export {
   APP_SETTING_GITHUB_LOGIN,
+  DEFAULT_PROJECT_STATUS_FIELD,
+  resolveProjectStatusField,
   workspaceLastSyncKey,
+  workspaceProjectStatusFieldKey,
 } from "./workspace/settings.js";
 export type { IssueCacheRecord } from "./issues/types.js";
 export {

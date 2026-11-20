@@ -4,6 +4,10 @@ import {
   IpcChannels,
   githubClearTokenResult,
   githubListBranchesPayload,
+  githubBoardMappingGetPayload,
+  githubBoardMappingGetResult,
+  githubBoardMappingSetPayload,
+  githubBoardMappingSetResult,
   githubListBranchesResult,
   githubListReposResult,
   githubSetTokenPayload,
@@ -11,6 +15,10 @@ import {
   githubStatusResult,
 } from "@trail/ipc";
 import { getWorkspaceStore } from "./database";
+import {
+  readWorkspaceProjectStatusField,
+  writeWorkspaceProjectStatusField,
+} from "./workspace-github-settings";
 import { fetchGitHubBranches, fetchGitHubRepos, fetchGitHubUser } from "./github-api";
 import {
   clearGitHubToken,
@@ -84,5 +92,24 @@ export function registerGitHubIpc(): void {
       return githubListReposResult.parse({ repos: [] });
     }
     return githubListReposResult.parse({ repos: result.repos });
+  });
+
+  ipcMain.handle(IpcChannels.githubBoardMappingGet, (_event, raw: unknown) => {
+    const { workspaceId } = githubBoardMappingGetPayload.parse(raw ?? {});
+    const store = getWorkspaceStore();
+    const id = workspaceId ?? store.getActiveId();
+    return githubBoardMappingGetResult.parse({
+      projectStatusField: readWorkspaceProjectStatusField(store, id),
+    });
+  });
+
+  ipcMain.handle(IpcChannels.githubBoardMappingSet, (_event, raw: unknown) => {
+    const { workspaceId, projectStatusField } = githubBoardMappingSetPayload.parse(raw);
+    const store = getWorkspaceStore();
+    const id = workspaceId ?? store.getActiveId();
+    writeWorkspaceProjectStatusField(store, id, projectStatusField);
+    return githubBoardMappingSetResult.parse({
+      projectStatusField: readWorkspaceProjectStatusField(store, id),
+    });
   });
 }

@@ -12,3 +12,8 @@
 - [x] Slepen tussen kolommen schrijft naar GitHub
 
 **Notities:** Open issues landen voorlopig in **Backlog**; gesloten in **Done**. Prioriteit uit `priority:*` labels.
+
+**Follow-up (in PR):**
+
+- [x] Instelbare Projects **Status**-veldnaam per workspace (Settings → GitHub)
+- [x] Slepen naar **Done** sluit issue; van Done weg heropent

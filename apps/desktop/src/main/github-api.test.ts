@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchGitHubBranches, fetchGitHubIssueComments } from "./github-api";
+import { fetchGitHubBranches, fetchGitHubIssueComments, setGitHubIssueState } from "./github-api";
 
 describe("fetchGitHubBranches", () => {
   beforeEach(() => {
@@ -44,6 +44,15 @@ describe("fetchGitHubBranches", () => {
       expect(result.comments).toHaveLength(1);
       expect(result.comments[0]?.body).toBe("Ship it");
     }
+  });
+
+  it("patches issue state", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ state: "closed" }), { status: 200 })),
+    );
+    const result = await setGitHubIssueState("token", "acme", "widget", 3, "closed");
+    expect(result).toEqual({ ok: true });
   });
 
   it("surfaces API errors", async () => {

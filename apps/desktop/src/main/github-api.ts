@@ -109,6 +109,27 @@ export async function fetchGitHubIssueComments(
   return { ok: true, comments };
 }
 
+export async function setGitHubIssueState(
+  token: string,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  state: "open" | "closed",
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}`,
+    {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify({ state }),
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await parseError(response) };
+  }
+  return { ok: true };
+}
+
 export async function fetchGitHubRepos(token: string): Promise<
   | {
       ok: true;

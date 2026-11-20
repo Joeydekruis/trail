@@ -2,7 +2,6 @@ import {
   projectStatusOptionIdForColumn,
   type BoardColumnId,
 } from "@trail/core";
-import { GITHUB_PROJECT_STATUS_FIELD } from "./github-project-status";
 
 const GITHUB_API = "https://api.github.com/graphql";
 const TRAIL_USER_AGENT = "Trail-Desktop";
@@ -143,6 +142,7 @@ export async function updateIssueProjectStatus(
   repo: string,
   issueNumber: number,
   targetColumn: BoardColumnId,
+  statusFieldName: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const itemResult = await loadProjectItem(token, owner, repo, issueNumber);
   if (!itemResult.ok) {
@@ -160,11 +160,10 @@ export async function updateIssueProjectStatus(
   }
 
   const fields = fieldResult.data?.node?.fields?.nodes ?? [];
-  const statusField = fields.find(
-    (field) => field.name?.trim().toLowerCase() === GITHUB_PROJECT_STATUS_FIELD.toLowerCase(),
-  );
+  const wantField = statusFieldName.trim().toLowerCase();
+  const statusField = fields.find((field) => field.name?.trim().toLowerCase() === wantField);
   if (!statusField?.id || !statusField.options?.length) {
-    return { ok: false, message: `Project has no "${GITHUB_PROJECT_STATUS_FIELD}" field` };
+    return { ok: false, message: `Project has no "${statusFieldName}" field` };
   }
 
   const optionId = projectStatusOptionIdForColumn(targetColumn, statusField.options);

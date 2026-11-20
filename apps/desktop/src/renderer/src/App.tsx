@@ -42,6 +42,11 @@ declare global {
         }>;
       }>;
       githubClearToken?: () => Promise<{ cleared: true }>;
+      getGithubBoardMapping?: (workspaceId?: string) => Promise<{ projectStatusField: string }>;
+      setGithubBoardMapping?: (input: {
+        workspaceId?: string;
+        projectStatusField: string;
+      }) => Promise<{ projectStatusField: string }>;
       getBoardSnapshot?: (workspaceId?: string) => Promise<import("@trail/ipc").BoardSnapshotResult>;
       moveBoardIssue?: (input: {
         workspaceId?: string;

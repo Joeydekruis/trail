@@ -19,6 +19,19 @@ export class MemorySqlite implements SqliteDatabase {
     const self = this;
     return {
       run(...params: unknown[]) {
+        if (sql.includes("UPDATE issue_cache SET board_column = ?, state = ?")) {
+          const [boardColumn, state, workspaceId, number] = params;
+          const rows = self.tables.get("issue_cache") ?? [];
+          const target = rows.find(
+            (r) => r.workspace_id === workspaceId && r.number === number,
+          );
+          if (target) {
+            target.board_column = boardColumn;
+            target.state = state;
+            return { changes: 1 };
+          }
+          return { changes: 0 };
+        }
         if (sql.includes("UPDATE issue_cache SET board_column")) {
           const [boardColumn, workspaceId, number] = params;
           const rows = self.tables.get("issue_cache") ?? [];
