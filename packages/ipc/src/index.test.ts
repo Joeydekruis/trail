@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { workspaceListResult, workspaceSwitchPayload } from "./index.js";
+import {
+  githubSetTokenPayload,
+  workspaceCreatePayload,
+  workspaceListResult,
+  workspaceSwitchPayload,
+} from "./index.js";
 
 describe("workspaceSwitchPayload", () => {
   it("accepts a workspace id", () => {
@@ -17,6 +22,9 @@ describe("workspaceListResult", () => {
   it("accepts a workspace list snapshot", () => {
     const parsed = workspaceListResult.parse({
       activeWorkspaceId: "trail",
+      needsOnboarding: false,
+      github: { connected: true, login: "you" },
+      activeLastSyncedAt: null,
       workspaces: [
         {
           id: "trail",
@@ -32,5 +40,25 @@ describe("workspaceListResult", () => {
       ],
     });
     expect(parsed.activeWorkspaceId).toBe("trail");
+  });
+});
+
+describe("workspaceCreatePayload", () => {
+  it("accepts owner/repo", () => {
+    expect(
+      workspaceCreatePayload.parse({
+        repository: "acme/widget",
+        integrationBranch: "main",
+      }),
+    ).toEqual({
+      repository: "acme/widget",
+      integrationBranch: "main",
+    });
+  });
+});
+
+describe("githubSetTokenPayload", () => {
+  it("requires a non-empty token", () => {
+    expect(() => githubSetTokenPayload.parse({ token: "" })).toThrow();
   });
 });

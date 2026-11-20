@@ -1,9 +1,13 @@
 import { existsSync } from "node:fs";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
-import { IpcChannels, syncNowPayload } from "@trail/ipc";
-import { initDatabase } from "./database";
+import { IpcChannels, shellOpenExternalPayload, syncNowPayload, syncNowResult } from "@trail/ipc";
+import { getIssueCacheStore, getWorkspaceStore, initDatabase } from "./database";
+import { syncWorkspaceNow } from "./sync-now";
 import { scheduleDeferredStartup } from "./deferred-startup";
+import { registerBoardIpc } from "./board-ipc";
+import { registerIssueIpc } from "./issue-ipc";
+import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
 
 const MIN_WIDTH = 1180;
@@ -64,9 +68,19 @@ function createWindow(): void {
   }
 }
 
-ipcMain.handle(IpcChannels.syncNow, (_event, raw: unknown) => {
-  syncNowPayload.parse(raw);
-  return { ok: true as const };
+ipcMain.handle(IpcChannels.shellOpenExternal, (_event, raw: unknown) => {
+  const { url } = shellOpenExternalPayload.parse(raw);
+  void shell.openExternal(url);
+});
+
+ipcMain.handle(IpcChannels.syncNow, async (_event, raw: unknown) => {
+  const { workspaceId } = syncNowPayload.parse(raw);
+  const result = await syncWorkspaceNow(
+    getWorkspaceStore(),
+    getIssueCacheStore(),
+    workspaceId,
+  );
+  return syncNowResult.parse(result);
 });
 
 ipcMain.handle(IpcChannels.windowMinimize, (event) => {
@@ -92,6 +106,9 @@ ipcMain.handle(IpcChannels.windowClose, (event) => {
 void app.whenReady().then(() => {
   initDatabase();
   registerWorkspaceIpc();
+  registerGitHubIpc();
+  registerBoardIpc();
+  registerIssueIpc();
   createWindow();
 
   app.on("activate", () => {

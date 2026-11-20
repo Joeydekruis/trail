@@ -21,7 +21,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
-      - run: npm ci
+      - run: npm run bootstrap:desktop
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
@@ -36,7 +36,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - run: npm run bootstrap:desktop
       - run: npm run build --workspace=@trail/ipc
       - run: npm run build --workspace=@trail/core
       - name: Desktop production build + bundle stats

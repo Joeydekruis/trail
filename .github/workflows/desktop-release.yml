@@ -23,7 +23,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - run: npm run bootstrap:desktop
       - run: npm run build --workspace=@trail/ipc
       - run: npm run build --workspace=@trail/core
       - run: npm run build --workspace=@trail/desktop
@@ -60,7 +60,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - run: npm run bootstrap:desktop
       - run: npm run build --workspace=@trail/ipc
       - run: npm run build --workspace=@trail/core
       - run: npm run build --workspace=@trail/desktop

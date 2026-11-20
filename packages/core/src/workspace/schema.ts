@@ -1,4 +1,5 @@
 import type { SqliteDatabase } from "../db/types.js";
+import { migrateIssueCache } from "../issues/schema.js";
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -76,10 +77,14 @@ export function migrateAndSeed(db: SqliteDatabase): void {
         .get() as { version: number } | undefined
     )?.version ?? 0;
 
-  if (version < 1) {
+  let nextVersion = version;
+  if (nextVersion < 1) {
     db.prepare("DELETE FROM schema_version").run();
     db.prepare("INSERT INTO schema_version (version) VALUES (1)").run();
+    nextVersion = 1;
   }
+
+  nextVersion = migrateIssueCache(db, nextVersion);
 
   const count = (
     db.prepare("SELECT COUNT(*) as count FROM workspaces").get() as {

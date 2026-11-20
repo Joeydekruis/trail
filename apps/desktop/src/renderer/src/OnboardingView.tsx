@@ -1,17 +1,23 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { TrailLogo } from "./design/TrailIcons";
 import { TrailButton, TrailChip } from "./design/TrailUi";
 
 const STEPS = ["Connect GitHub", "Choose a repository", "Set up the repository"] as const;
 
-const REPOS = [
-  { name: "joeydekruijs/trail", desc: "Trail desktop — 12 open issues" },
-  { name: "joeydekruijs/loupe", desc: "Loupe — 4 open issues" },
-  { name: "joeydekruijs/dockyrd", desc: "Dockyrd — 2 open issues" },
+type RepoOption = {
+  fullName: string;
+  description: string | null;
+  openIssuesCount: number;
+};
+
+const DEMO_REPOS: RepoOption[] = [
+  { fullName: "joeydekruijs/trail", description: "Trail desktop", openIssuesCount: 12 },
+  { fullName: "joeydekruijs/loupe", description: "Loupe", openIssuesCount: 4 },
+  { fullName: "joeydekruijs/dockyrd", description: "Dockyrd", openIssuesCount: 2 },
 ];
 
 type OnboardingViewProps = {
-  onComplete: () => void;
+  onComplete: () => void | Promise<void>;
   onBack?: () => void;
 };
 
@@ -22,6 +28,90 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
   const [createLabels, setCreateLabels] = useState(true);
   const [createFolders, setCreateFolders] = useState(true);
   const [useProject, setUseProject] = useState(true);
+  const [githubLogin, setGithubLogin] = useState<string | null>(null);
+  const [patOpen, setPatOpen] = useState(false);
+  const [pat, setPat] = useState("");
+  const [patBusy, setPatBusy] = useState(false);
+  const [patError, setPatError] = useState<string | null>(null);
+  const [repos, setRepos] = useState(DEMO_REPOS);
+  const [reposLoading, setReposLoading] = useState(false);
+  const [integrationBranch, setIntegrationBranch] = useState("development");
+  const [finishBusy, setFinishBusy] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.githubStatus) {
+      return;
+    }
+    void api.githubStatus().then((status) => {
+      if (status.connected && status.login) {
+        setGithubLogin(status.login);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (step !== 1 || !githubLogin || !api?.githubListRepos) {
+      return;
+    }
+    setReposLoading(true);
+    void api
+      .githubListRepos()
+      .then((result) => {
+        if (result.repos.length > 0) {
+          setRepos(result.repos);
+          setSelectedRepo(0);
+        }
+      })
+      .finally(() => setReposLoading(false));
+  }, [step, githubLogin]);
+
+  const githubReady = Boolean(githubLogin);
+
+  async function connectWithPat() {
+    const api = window.trail;
+    if (!api?.githubSetToken || patBusy) {
+      return;
+    }
+    setPatBusy(true);
+    setPatError(null);
+    try {
+      const result = await api.githubSetToken(pat);
+      if (!result.ok) {
+        setPatError(result.message);
+        return;
+      }
+      setGithubLogin(result.login);
+      setPatOpen(false);
+      setPat("");
+    } finally {
+      setPatBusy(false);
+    }
+  }
+
+  async function openWorkspace() {
+    const api = window.trail;
+    const repo = repos[selectedRepo];
+    if (!api?.createWorkspace || !repo) {
+      await onComplete();
+      return;
+    }
+    setFinishBusy(true);
+    setFinishError(null);
+    try {
+      await api.createWorkspace({
+        repository: repo.fullName,
+        integrationBranch,
+      });
+      await onComplete();
+    } catch (error) {
+      setFinishError(error instanceof Error ? error.message : "Could not create workspace");
+    } finally {
+      setFinishBusy(false);
+    }
+  }
 
   return (
     <div style={{ width: "100%", maxWidth: 640, display: "flex", flexDirection: "column", gap: 28 }}>
@@ -35,9 +125,27 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
 
       <StepRail active={step} />
 
-      {step === 0 ? <StepConnectGitHub /> : null}
+      {step === 0 ? (
+        <StepConnectGitHub
+          login={githubLogin}
+          patOpen={patOpen}
+          pat={pat}
+          patError={patError}
+          patBusy={patBusy}
+          onPatOpen={() => setPatOpen(true)}
+          onPatChange={setPat}
+          onPatConnect={() => void connectWithPat()}
+        />
+      ) : null}
       {step === 1 ? (
-        <StepChooseRepo selected={selectedRepo} onSelect={setSelectedRepo} />
+        <StepChooseRepo
+          repos={repos}
+          loading={reposLoading}
+          selected={selectedRepo}
+          onSelect={setSelectedRepo}
+          integrationBranch={integrationBranch}
+          onIntegrationBranchChange={setIntegrationBranch}
+        />
       ) : null}
       {step === 2 ? (
         <StepSetupRepo
@@ -71,13 +179,22 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
           </TrailButton>
         ) : null}
         <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
+          {finishError ? (
+            <span className="tr-small" style={{ color: "var(--warning)" }}>
+              {finishError}
+            </span>
+          ) : null}
           {step < 2 ? (
-            <TrailButton variant="primary" onClick={() => setStep((s) => s + 1)}>
+            <TrailButton
+              variant="primary"
+              disabled={(step === 0 && !githubReady) || (step === 1 && repos.length === 0)}
+              onClick={() => setStep((s) => s + 1)}
+            >
               Continue
             </TrailButton>
           ) : (
-            <TrailButton variant="primary" onClick={onComplete}>
-              Open workspace
+            <TrailButton variant="primary" disabled={finishBusy} onClick={() => void openWorkspace()}>
+              {finishBusy ? "Creating…" : "Open workspace"}
             </TrailButton>
           )}
         </span>
@@ -120,7 +237,25 @@ function StepRail({ active }: { active: number }) {
   );
 }
 
-function StepConnectGitHub() {
+function StepConnectGitHub({
+  login,
+  patOpen,
+  pat,
+  patError,
+  patBusy,
+  onPatOpen,
+  onPatChange,
+  onPatConnect,
+}: {
+  login: string | null;
+  patOpen: boolean;
+  pat: string;
+  patError: string | null;
+  patBusy: boolean;
+  onPatOpen: () => void;
+  onPatChange: (value: string) => void;
+  onPatConnect: () => void;
+}) {
   const rows = [
     { title: "Issues and Projects", sub: "Read and write, so cards can move on both sides." },
     { title: "Pull requests", sub: "Agents open draft pull requests for you to review." },
@@ -132,25 +267,83 @@ function StepConnectGitHub() {
       lead="Trail keeps its tasks, decisions and docs in your repository, so you see the same things on any computer."
     >
       <PanelRows rows={rows} />
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <TrailButton variant="primary" type="button">
-          Sign in with GitHub
-        </TrailButton>
-        <TrailButton variant="secondary" type="button">
-          Use a personal access token
-        </TrailButton>
-      </div>
+      {login ? (
+        <p className="tr-small" style={{ margin: 0 }}>
+          Connected as <span className="tr-mono">@{login}</span>
+        </p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <TrailButton variant="secondary" type="button" disabled>
+              Sign in with GitHub (soon)
+            </TrailButton>
+            <TrailButton variant="secondary" type="button" onClick={onPatOpen}>
+              Use a personal access token
+            </TrailButton>
+          </div>
+          {patOpen ? (
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <span className="tr-small">Personal access token (repo scope)</span>
+              <input
+                type="password"
+                value={pat}
+                onChange={(event) => onPatChange(event.target.value)}
+                autoComplete="off"
+                style={{
+                  height: 36,
+                  padding: "0 10px",
+                  border: "1px solid var(--line-strong)",
+                  borderRadius: 8,
+                  background: "var(--bg)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                }}
+              />
+              {patError ? (
+                <span className="tr-small" style={{ color: "var(--warning)" }}>
+                  {patError}
+                </span>
+              ) : null}
+              <span>
+                <TrailButton
+                  variant="primary"
+                  type="button"
+                  disabled={patBusy || pat.trim() === ""}
+                  onClick={onPatConnect}
+                >
+                  {patBusy ? "Connecting…" : "Connect"}
+                </TrailButton>
+              </span>
+            </label>
+          ) : null}
+        </div>
+      )}
     </OnboardingStep>
   );
 }
 
-function StepChooseRepo({ selected, onSelect }: { selected: number; onSelect: (i: number) => void }) {
+function StepChooseRepo({
+  repos,
+  loading,
+  selected,
+  onSelect,
+  integrationBranch,
+  onIntegrationBranchChange,
+}: {
+  repos: RepoOption[];
+  loading: boolean;
+  selected: number;
+  onSelect: (i: number) => void;
+  integrationBranch: string;
+  onIntegrationBranchChange: (value: string) => void;
+}) {
   return (
     <OnboardingStep title="Choose a repository" lead="Each repository becomes one workspace. You can add more later.">
+      {loading ? <p className="tr-small">Loading repositories…</p> : null}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {REPOS.map((r, i) => (
+        {repos.map((r, i) => (
           <button
-            key={r.name}
+            key={r.fullName}
             type="button"
             aria-pressed={selected === i}
             onClick={() => onSelect(i)}
@@ -179,14 +372,19 @@ function StepChooseRepo({ selected, onSelect }: { selected: number; onSelect: (i
             />
             <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
               <span className="tr-mono" style={{ fontSize: 13 }}>
-                {r.name}
+                {r.fullName}
               </span>
-              <span className="tr-small">{r.desc}</span>
+              <span className="tr-small">
+                {r.description?.trim() || "No description"} — {r.openIssuesCount} open issues
+              </span>
             </span>
           </button>
         ))}
       </div>
-      <BranchFields />
+      <BranchFields
+        integrationBranch={integrationBranch}
+        onIntegrationBranchChange={onIntegrationBranchChange}
+      />
     </OnboardingStep>
   );
 }
@@ -299,14 +497,20 @@ function PanelRows({ rows }: { rows: { title: string; sub: string }[] }) {
   );
 }
 
-function BranchFields() {
+function BranchFields({
+  integrationBranch,
+  onIntegrationBranchChange,
+}: {
+  integrationBranch: string;
+  onIntegrationBranchChange: (value: string) => void;
+}) {
   return (
     <div style={{ display: "flex", gap: 12 }}>
       <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
         <span className="tr-small">Integration branch</span>
         <input
-          readOnly
-          defaultValue="development"
+          value={integrationBranch}
+          onChange={(event) => onIntegrationBranchChange(event.target.value)}
           style={{
             height: 32,
             padding: "0 10px",

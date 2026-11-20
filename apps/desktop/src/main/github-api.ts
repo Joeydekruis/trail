@@ -1,0 +1,74 @@
+const GITHUB_API = "https://api.github.com";
+const TRAIL_USER_AGENT = "Trail-Desktop";
+
+type GitHubUser = { login: string };
+
+type GitHubRepo = {
+  full_name: string;
+  description: string | null;
+  open_issues_count: number;
+};
+
+function authHeaders(token: string): HeadersInit {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "User-Agent": TRAIL_USER_AGENT,
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
+
+async function parseError(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { message?: string };
+    if (body.message) {
+      return body.message;
+    }
+  } catch {
+    // ignore
+  }
+  return `GitHub API error (${response.status})`;
+}
+
+export async function fetchGitHubUser(
+  token: string,
+): Promise<{ ok: true; login: string } | { ok: false; message: string }> {
+  const response = await fetch(`${GITHUB_API}/user`, { headers: authHeaders(token) });
+  if (!response.ok) {
+    return { ok: false, message: await parseError(response) };
+  }
+  const user = (await response.json()) as GitHubUser;
+  if (!user.login) {
+    return { ok: false, message: "GitHub returned an empty user" };
+  }
+  return { ok: true, login: user.login };
+}
+
+export async function fetchGitHubRepos(token: string): Promise<
+  | {
+      ok: true;
+      repos: Array<{
+        fullName: string;
+        description: string | null;
+        openIssuesCount: number;
+      }>;
+    }
+  | { ok: false; message: string }
+> {
+  const response = await fetch(
+    `${GITHUB_API}/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member`,
+    { headers: authHeaders(token) },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await parseError(response) };
+  }
+  const rows = (await response.json()) as GitHubRepo[];
+  return {
+    ok: true,
+    repos: rows.map((row) => ({
+      fullName: row.full_name,
+      description: row.description,
+      openIssuesCount: row.open_issues_count,
+    })),
+  };
+}

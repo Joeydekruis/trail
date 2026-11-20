@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import type { WorkspaceDto } from "@trail/ipc";
+import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
+import { formatWorkspaceRepoLine } from "@trail/core";
 import { TrailButton } from "./design/TrailUi";
 
 function SettingsBlock({
@@ -47,13 +48,48 @@ type SettingsSection = (typeof SECTIONS)[number]["id"];
 
 export function SettingsView({
   workspace,
+  github,
+  onGithubDisconnect,
+  onGithubRefresh,
   onShowOnboarding,
 }: {
   workspace: WorkspaceDto | undefined;
+  github?: WorkspaceGithubSnapshot;
+  onGithubDisconnect?: () => void;
+  onGithubRefresh?: () => void;
   onShowOnboarding?: () => void;
 }) {
   const [section, setSection] = useState<SettingsSection>("general");
+  const [pat, setPat] = useState("");
+  const [patBusy, setPatBusy] = useState(false);
+  const [patError, setPatError] = useState<string | null>(null);
   const name = workspace?.name ?? "Trail";
+  const repoLine = workspace
+    ? formatWorkspaceRepoLine({
+        repository: workspace.repository,
+        integrationBranch: workspace.integrationBranch,
+      })
+    : "No repo linked";
+
+  async function reconnectWithPat() {
+    const api = window.trail;
+    if (!api?.githubSetToken || patBusy) {
+      return;
+    }
+    setPatBusy(true);
+    setPatError(null);
+    try {
+      const result = await api.githubSetToken(pat);
+      if (!result.ok) {
+        setPatError(result.message);
+        return;
+      }
+      setPat("");
+      onGithubRefresh?.();
+    } finally {
+      setPatBusy(false);
+    }
+  }
 
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
@@ -106,7 +142,7 @@ export function SettingsView({
               <div>
                 <h2 style={{ margin: 0, fontSize: 14, lineHeight: "20px", fontWeight: 600 }}>General</h2>
                 <p className="tr-small" style={{ marginTop: 6 }}>
-                  Workspace name and repo paths shown in the shell.
+                  Workspace name and linked GitHub repository.
                 </p>
               </div>
               <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 400 }}>
@@ -127,11 +163,11 @@ export function SettingsView({
                 />
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 400 }}>
-                <span style={{ fontWeight: 500 }}>Local repo folder</span>
+                <span style={{ fontWeight: 500 }}>GitHub repository</span>
                 <input
                   type="text"
                   readOnly
-                  value="~/Documents/Github/trail"
+                  value={repoLine}
                   style={{
                     height: 34,
                     padding: "0 10px",
@@ -145,9 +181,6 @@ export function SettingsView({
                   }}
                 />
               </label>
-              <TrailButton variant="primary" disabled>
-                Save changes
-              </TrailButton>
               {onShowOnboarding ? (
                 <SettingsBlock title="Workspaces">
                   <p className="tr-small" style={{ margin: 0 }}>
@@ -161,18 +194,66 @@ export function SettingsView({
             </div>
           ) : section === "github" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <SettingsBlock title="GitHub connection" lead="Trail uses OAuth or a personal access token with repo scope.">
-                <TrailButton variant="secondary" disabled>
-                  Reconnect GitHub
-                </TrailButton>
+              <SettingsBlock
+                title="GitHub connection"
+                lead="Trail uses a personal access token with repo scope (OAuth coming later)."
+              >
+                {github?.connected ? (
+                  <p className="tr-small" style={{ margin: 0 }}>
+                    Connected as <span className="tr-mono">@{github.login ?? "unknown"}</span>
+                  </p>
+                ) : (
+                  <p className="tr-small" style={{ margin: 0 }}>
+                    Not connected. Add a token or run setup.
+                  </p>
+                )}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {onGithubDisconnect && github?.connected ? (
+                    <TrailButton variant="secondary" onClick={onGithubDisconnect}>
+                      Disconnect
+                    </TrailButton>
+                  ) : null}
+                  {onShowOnboarding ? (
+                    <TrailButton variant="secondary" onClick={onShowOnboarding}>
+                      Run setup wizard…
+                    </TrailButton>
+                  ) : null}
+                </div>
               </SettingsBlock>
-              {onShowOnboarding ? (
-                <SettingsBlock title="New workspace">
-                  <TrailButton variant="secondary" onClick={onShowOnboarding}>
-                    Run setup wizard…
-                  </TrailButton>
-                </SettingsBlock>
-              ) : null}
+              <SettingsBlock title="Personal access token">
+                <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
+                  <span className="tr-small">Paste a new token to connect or rotate credentials</span>
+                  <input
+                    type="password"
+                    value={pat}
+                    onChange={(event) => setPat(event.target.value)}
+                    autoComplete="off"
+                    style={{
+                      height: 36,
+                      padding: "0 10px",
+                      border: "1px solid var(--line-strong)",
+                      borderRadius: 8,
+                      background: "var(--bg)",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 12,
+                    }}
+                  />
+                  {patError ? (
+                    <span className="tr-small" style={{ color: "var(--warning)" }}>
+                      {patError}
+                    </span>
+                  ) : null}
+                  <span>
+                    <TrailButton
+                      variant="primary"
+                      disabled={patBusy || pat.trim() === ""}
+                      onClick={() => void reconnectWithPat()}
+                    >
+                      {patBusy ? "Saving…" : "Save token"}
+                    </TrailButton>
+                  </span>
+                </label>
+              </SettingsBlock>
             </div>
           ) : (
             <p className="tr-small" style={{ paddingTop: 8 }}>

@@ -5,5 +5,26 @@ export const TRAIL_CORE_VERSION = "0.0.0" as const;
 export type { SqliteDatabase, SqliteStatement } from "./db/types.js";
 export type { WorkspaceAccent, WorkspaceRecord } from "./workspace/types.js";
 export { WorkspaceStore, openWorkspaceStore } from "./workspace/store.js";
-export { openInMemoryWorkspaceStore } from "./db/memory.js";
+export { MemorySqlite, openInMemoryWorkspaceStore } from "./db/memory.js";
 export { formatWorkspaceRepoLine } from "./workspace/format.js";
+export type { WorkspaceCreateInput } from "./workspace/store.js";
+export {
+  workspaceIdFromRepository,
+  workspaceNameFromRepository,
+  shortLabelFromName,
+} from "./workspace/repository.js";
+export {
+  APP_SETTING_GITHUB_LOGIN,
+  workspaceLastSyncKey,
+} from "./workspace/settings.js";
+export type { IssueCacheRecord } from "./issues/types.js";
+export {
+  mapGitHubIssueToCache,
+  isPullRequestIssue,
+  type GitHubIssuePayload,
+} from "./issues/github-issue.js";
+export type { BoardColumnId } from "./issues/columns.js";
+export { boardColumnFromProjectStatus } from "./issues/project-status.js";
+export { issueRecordToDetail, type IssueDetailFromCache } from "./issues/detail.js";
+export { buildBoardSnapshot, type BoardSnapshot } from "./issues/board-snapshot.js";
+export { IssueCacheStore, openIssueCacheStore } from "./issues/store.js";

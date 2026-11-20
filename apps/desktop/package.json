@@ -15,7 +15,8 @@
     "dist": "electron-builder --config electron-builder.yml",
     "dist:dir": "electron-builder --config electron-builder.yml --dir",
     "test": "node --test scripts/installer-budget.test.mjs",
-    "verify:sqlite": "electron scripts/sqlite-smoke.cjs"
+    "verify:sqlite": "electron scripts/sqlite-smoke.cjs",
+    "rebuild:native": "npx @electron/rebuild -w better-sqlite3 -f"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1"

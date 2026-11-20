@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { BoardSnapshotResult } from "@trail/ipc";
 import type { WorkspaceDto } from "@trail/ipc";
 import {
   getBoardFixture,
@@ -25,8 +26,58 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
   const [boardMode, setBoardMode] = useState(true);
   const [autopilot, setAutopilot] = useState(true);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
+  const [liveBoard, setLiveBoard] = useState<BoardSnapshotResult | null>(null);
 
-  const openIssue = (card: BoardCard) => setIssueDetail(getIssueDetail(card));
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.getBoardSnapshot) {
+      return;
+    }
+    void api.getBoardSnapshot(workspace?.id).then(setLiveBoard);
+  }, [workspace?.id, syncing]);
+
+  const boardData = useMemo(() => {
+    if (liveBoard?.source === "cache") {
+      const listGroups: BoardListGroup[] = liveBoard.columns.map((column) => ({
+        name: column.name,
+        tone: column.tone,
+        count: column.count,
+        rows: column.cards.map((card) => ({
+          issue: card.issue,
+          title: card.title,
+          adr: "—",
+          pr: "—",
+          syncLabel: "Synced",
+          by: "—",
+        })),
+      }));
+      return {
+        repo: liveBoard.repository ?? workspace?.repository ?? fixture.repo,
+        milestone: "GitHub",
+        openCount: liveBoard.openCount,
+        columns: liveBoard.columns as BoardColumn[],
+        listGroups,
+      };
+    }
+    return fixture;
+  }, [fixture, liveBoard, workspace?.repository]);
+
+  const openIssue = (card: BoardCard) => {
+    const match = /^#(\d+)$/.exec(card.issue);
+    const issueNumber = match ? Number.parseInt(match[1], 10) : NaN;
+    const api = window.trail;
+    if (api?.getIssueDetail && workspace?.repository && !Number.isNaN(issueNumber)) {
+      void api.getIssueDetail({ workspaceId: workspace.id, issueNumber }).then((result) => {
+        if (result.found) {
+          setIssueDetail(result.detail as IssueDetail);
+          return;
+        }
+        setIssueDetail(getIssueDetail(card));
+      });
+      return;
+    }
+    setIssueDetail(getIssueDetail(card));
+  };
   const closeIssue = () => setIssueDetail(null);
   const handleOpenWorktree = () => {
     closeIssue();
@@ -54,7 +105,7 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
             Board
           </h1>
           <span className="tr-small">
-            {fixture.repo} · {fixture.milestone} · {fixture.openCount} open issues
+            {boardData.repo} · {boardData.milestone} · {boardData.openCount} open issues
           </span>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -146,9 +197,9 @@ export function BoardView({ workspace, onSyncNow, syncing, onNewTask, modKey, on
       </div>
 
       {boardMode ? (
-        <BoardKanban fixture={fixture} onOpenIssue={openIssue} />
+        <BoardKanban fixture={boardData} onOpenIssue={openIssue} />
       ) : (
-        <BoardList groups={fixture.listGroups} onOpenRow={(row) => openIssue(listRowToCard(row))} />
+        <BoardList groups={boardData.listGroups} onOpenRow={(row) => openIssue(listRowToCard(row))} />
       )}
       <IssueDetailModal
         open={issueDetail !== null}

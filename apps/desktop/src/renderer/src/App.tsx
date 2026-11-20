@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import type { WorkspaceDto } from "@trail/ipc";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { OnboardingView } from "./OnboardingView";
 import { TrailShell } from "./TrailShell";
 import { isElectronRenderer, waitForTrail } from "./wait-for-trail";
@@ -12,12 +12,46 @@ declare global {
       listWorkspaces: () => Promise<{
         workspaces: WorkspaceDto[];
         activeWorkspaceId: string;
+        needsOnboarding: boolean;
+        github: WorkspaceGithubSnapshot;
+        activeLastSyncedAt: string | null;
       }>;
       switchWorkspace: (workspaceId: string) => Promise<{
         active: WorkspaceDto;
         workspaces: WorkspaceDto[];
       }>;
-      syncNow: (workspaceId?: string) => Promise<void>;
+      createWorkspace?: (input: {
+        repository: string;
+        name?: string;
+        integrationBranch?: string;
+      }) => Promise<{
+        active: WorkspaceDto;
+        workspaces: WorkspaceDto[];
+      }>;
+      githubStatus?: () => Promise<{ connected: boolean; login?: string }>;
+      githubSetToken?: (
+        token: string,
+      ) => Promise<{ ok: true; login: string } | { ok: false; message: string }>;
+      githubListRepos?: () => Promise<{
+        repos: Array<{
+          fullName: string;
+          description: string | null;
+          openIssuesCount: number;
+        }>;
+      }>;
+      githubClearToken?: () => Promise<{ cleared: true }>;
+      getBoardSnapshot?: (workspaceId?: string) => Promise<import("@trail/ipc").BoardSnapshotResult>;
+      getIssueDetail?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+      }) => Promise<import("@trail/ipc").IssueGetResult>;
+      openExternal?: (url: string) => Promise<void>;
+      syncNow: (
+        workspaceId?: string,
+      ) => Promise<
+        | { ok: true; syncedAt: string; issueCount: number }
+        | { ok: false; message: string }
+      >;
       minimize?: () => Promise<void>;
       maximize?: () => Promise<void>;
       close?: () => Promise<void>;
@@ -34,6 +68,10 @@ export function App() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [github, setGithub] = useState<WorkspaceGithubSnapshot>({ connected: false });
+  const [activeLastSyncedAt, setActiveLastSyncedAt] = useState<string | null>(null);
+  const initialOnboardingGate = useRef(true);
 
   const applyActive = useCallback((active: WorkspaceDto) => {
     setActiveWorkspaceId(active.id);
@@ -49,6 +87,33 @@ export function App() {
       const result = await api.switchWorkspace(workspaceId);
       setWorkspaces(result.workspaces);
       applyActive(result.active);
+      const snapshot = await api.listWorkspaces();
+      setGithub(snapshot.github);
+      setActiveLastSyncedAt(snapshot.activeLastSyncedAt);
+    },
+    [applyActive],
+  );
+
+  const applyWorkspaceSnapshot = useCallback(
+    (data: {
+      workspaces: WorkspaceDto[];
+      activeWorkspaceId: string;
+      needsOnboarding: boolean;
+      github: WorkspaceGithubSnapshot;
+      activeLastSyncedAt: string | null;
+    }) => {
+      setWorkspaces(data.workspaces);
+      setGithub(data.github);
+      setActiveLastSyncedAt(data.activeLastSyncedAt);
+      const active =
+        data.workspaces.find((w) => w.id === data.activeWorkspaceId) ?? data.workspaces[0];
+      if (active) {
+        applyActive(active);
+      }
+      if (initialOnboardingGate.current && data.needsOnboarding) {
+        setView("onboarding");
+        initialOnboardingGate.current = false;
+      }
     },
     [applyActive],
   );
@@ -77,13 +142,7 @@ export function App() {
           if (cancelled) {
             return;
           }
-          setWorkspaces(data.workspaces);
-          const active =
-            data.workspaces.find((w) => w.id === data.activeWorkspaceId) ??
-            data.workspaces[0];
-          if (active) {
-            applyActive(active);
-          }
+          applyWorkspaceSnapshot(data);
         })
         .catch((err: unknown) => {
           if (!cancelled) {
@@ -94,7 +153,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [applyActive]);
+  }, [applyWorkspaceSnapshot]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -118,22 +177,56 @@ export function App() {
 
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
 
+  const refreshWorkspaces = useCallback(async () => {
+    const api = window.trail;
+    if (!api) {
+      return;
+    }
+    const data = await api.listWorkspaces();
+    applyWorkspaceSnapshot(data);
+  }, [applyWorkspaceSnapshot]);
+
+  const onGithubDisconnect = useCallback(async () => {
+    const api = window.trail;
+    if (!api?.githubClearToken) {
+      return;
+    }
+    await api.githubClearToken();
+    await refreshWorkspaces();
+  }, [refreshWorkspaces]);
+
   const onSyncNow = useCallback(() => {
     const api = window.trail;
     if (!api || syncing) {
       return;
     }
     setSyncing(true);
+    setSyncError(null);
     void api
       .syncNow(activeWorkspace?.id)
-      .catch(() => undefined)
+      .then((result) => {
+        if (result.ok) {
+          setActiveLastSyncedAt(result.syncedAt);
+          return;
+        }
+        setSyncError(result.message);
+      })
+      .catch((error: unknown) => {
+        setSyncError(error instanceof Error ? error.message : "Sync failed");
+      })
       .finally(() => setSyncing(false));
   }, [activeWorkspace?.id, syncing]);
 
   if (view === "onboarding") {
     return (
       <div className="trail-app trail-app--solo">
-        <OnboardingView onComplete={() => setView("dashboard")} onBack={() => setView("dashboard")} />
+        <OnboardingView
+          onComplete={async () => {
+            await refreshWorkspaces();
+            setView("dashboard");
+          }}
+          onBack={() => setView("dashboard")}
+        />
       </div>
     );
   }
@@ -155,7 +248,12 @@ export function App() {
       onSwitchWorkspace={(id) => void switchWorkspace(id)}
       onSyncNow={onSyncNow}
       syncing={syncing}
+      syncError={syncError}
+      lastSyncedAt={activeLastSyncedAt}
+      github={github}
+      onGithubDisconnect={() => void onGithubDisconnect()}
       onShowOnboarding={() => setView("onboarding")}
+      onGithubRefresh={() => void refreshWorkspaces()}
     />
   );
 }

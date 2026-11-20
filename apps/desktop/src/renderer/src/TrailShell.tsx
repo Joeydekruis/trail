@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import type { WorkspaceDto } from "@trail/ipc";
+import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
+import { formatSyncLabel } from "./sync-label";
 import { CommandPalette } from "./CommandPalette";
 import { NewTaskModal } from "./NewTaskModal";
 import { IssueDetailModal } from "./IssueDetailModal";
@@ -57,6 +58,11 @@ export type TrailShellProps = {
   onSwitchWorkspace: (id: string) => void;
   onSyncNow: () => void;
   syncing: boolean;
+  syncError?: string | null;
+  lastSyncedAt?: string | null;
+  github?: WorkspaceGithubSnapshot;
+  onGithubDisconnect?: () => void;
+  onGithubRefresh?: () => void;
   onShowOnboarding?: () => void;
 };
 
@@ -95,6 +101,11 @@ export function TrailShell({
   onSwitchWorkspace,
   onSyncNow,
   syncing,
+  syncError,
+  lastSyncedAt,
+  github,
+  onGithubDisconnect,
+  onGithubRefresh,
   onShowOnboarding,
 }: TrailShellProps) {
   const [centerView, setCenterView] = useState<CenterView>("dashboard");
@@ -544,6 +555,9 @@ export function TrailShell({
             activeWorkspace={activeWorkspace}
             onSyncNow={onSyncNow}
             syncing={syncing}
+            github={github}
+            onGithubDisconnect={onGithubDisconnect}
+            onGithubRefresh={onGithubRefresh}
             onNewTask={() => setNewTaskOpen(true)}
             modKey={modKey}
             onOpenWorktree={openWorktree}
@@ -600,16 +614,19 @@ export function TrailShell({
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <IconBranch />
           <span className="tr-mono" style={{ fontSize: 11 }}>
-            development
+            {activeWorkspace?.integrationBranch ?? "development"}
           </span>
         </span>
-        <SyncStatus state="synced" label="Synced 2 min ago" />
+        <SyncStatus
+          state={syncError ? "conflict" : syncing ? "syncing" : "synced"}
+          label={syncing ? "Syncing…" : syncError ?? formatSyncLabel(lastSyncedAt)}
+        />
         <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6 }}>
           <span className="tr-dot" style={{ color: "var(--mint)" }} />
           {fixture.runText}
         </span>
         <span>{fixture.tool}</span>
-        <span>GitHub connected</span>
+        <span>{github?.connected ? `GitHub · @${github.login ?? "connected"}` : "GitHub not connected"}</span>
       </footer>
       <CommandPalette
         open={paletteOpen}
@@ -791,6 +808,9 @@ function ShellMain({
   activeWorkspace,
   onSyncNow,
   syncing,
+  github,
+  onGithubDisconnect,
+  onGithubRefresh,
   onNewTask,
   modKey,
   onOpenWorktree,
@@ -803,6 +823,9 @@ function ShellMain({
   activeWorkspace: WorkspaceDto | undefined;
   onSyncNow: () => void;
   syncing: boolean;
+  github?: WorkspaceGithubSnapshot;
+  onGithubDisconnect?: () => void;
+  onGithubRefresh?: () => void;
   onNewTask: () => void;
   modKey: string;
   onOpenWorktree: () => void;
@@ -840,7 +863,13 @@ function ShellMain({
   if (centerView === "settings") {
     return (
       <div style={{ flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <SettingsView workspace={activeWorkspace} onShowOnboarding={onShowOnboarding} />
+        <SettingsView
+          workspace={activeWorkspace}
+          github={github}
+          onGithubDisconnect={onGithubDisconnect}
+          onGithubRefresh={onGithubRefresh}
+          onShowOnboarding={onShowOnboarding}
+        />
       </div>
     );
   }
