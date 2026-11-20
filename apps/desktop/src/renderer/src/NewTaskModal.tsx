@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { draftIssueFromPrompt, type IssueChatDraft } from "@trail/core";
+import { draftIssueFromPrompt, type IssueChatDraft } from "@trail/core/client";
 import type { WorkspaceDto } from "@trail/ipc";
 import { IconClose } from "./design/TrailIcons";
 import { SelectButton, TrailButton, TrailChip } from "./design/TrailUi";

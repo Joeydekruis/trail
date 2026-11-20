@@ -14,6 +14,7 @@
 | Design reference | [design/desktop-dashboard/v1.html](design/desktop-dashboard/v1.html) |
 | Dev | Node **22** (see `.nvmrc`), then `npm run bootstrap:desktop` and `npm run desktop:dev` |
 | Verify locally | `npm test` and `npm run typecheck` before you commit (no CI workflow in this repo yet) |
+| Blank window? | Renderer must use `@trail/core/client`; rebuild with `npm run build --workspace=@trail/core` then restart `npm run desktop:dev` |
 
 **Windows:** Sluit Trail/Electron vóór `npm ci` (anders `EBUSY` op `electron/dist/*`). Gebruik **`npm run bootstrap:desktop`** i.p.v. kale `npm ci` — `better-sqlite3` faalt vaak op Node 25 zonder MSVC; `--ignore-scripts` + `desktop:postinstall` werkt wel.
 

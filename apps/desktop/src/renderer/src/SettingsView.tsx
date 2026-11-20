@@ -1,6 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { AgentBackendStatusDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
-import { DEFAULT_PROJECT_STATUS_FIELD, DEFAULT_SYNC_INTERVAL_SEC, formatWorkspaceRepoLine } from "@trail/core";
+import {
+  DEFAULT_PROJECT_STATUS_FIELD,
+  DEFAULT_SYNC_INTERVAL_SEC,
+  formatWorkspaceRepoLine,
+} from "@trail/core/client";
 import { TrailButton, TrailSelect, trailFieldStyle } from "./design/TrailUi";
 import { formatSyncLabel } from "./sync-label";
 
