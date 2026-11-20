@@ -18,6 +18,7 @@ export const IpcChannels = {
   issueCreate: "issue.create",
   worktreeList: "worktree.list",
   worktreeCreate: "worktree.create",
+  worktreeSetStatus: "worktree.setStatus",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -401,6 +402,24 @@ export const worktreeCreateResult = z.union([
 ]);
 
 export type WorktreeCreateResult = z.infer<typeof worktreeCreateResult>;
+
+export const worktreeSetStatusPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive(),
+  status: worktreeStatusDto,
+});
+
+export type WorktreeSetStatusPayload = z.infer<typeof worktreeSetStatusPayload>;
+
+export const worktreeSetStatusResult = z.union([
+  z.object({
+    ok: z.literal(true),
+    worktree: worktreeDto,
+  }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type WorktreeSetStatusResult = z.infer<typeof worktreeSetStatusResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

@@ -16,6 +16,7 @@ export const PreloadIpcChannels = {
   issueCreate: "issue.create",
   worktreeList: "worktree.list",
   worktreeCreate: "worktree.create",
+  worktreeSetStatus: "worktree.setStatus",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",

@@ -8,7 +8,7 @@
 - [x] Settings → GitHub: sync-interval + board mapping
 - [x] New task (form) → **Create on GitHub** (REST issue + type/priority labels)
 - [x] New task chat → local draft heuristics + approve + Create on GitHub
-- [x] Worktrees — `git worktree add`, SQLite registry, sidebar uit cache (agents/runner nog open)
+- [x] Worktrees — `git worktree add`, SQLite registry, sidebar + tab; onboarding/Settings repo path; stub **Start run** → status `running` (echte agent-runner nog open)
 - [ ] OAuth i.p.v. PAT (later)
 
 **Notities:** Background sync draait in main na deferred startup; renderer krijgt `trail.backgroundSync` events voor statusbalk + board refresh. Interval-wijzigingen en workspace switch herstarten de timer; Settings → GitHub heeft **Sync now** + laatste sync-tijd.

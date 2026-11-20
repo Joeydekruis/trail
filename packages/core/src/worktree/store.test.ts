@@ -23,4 +23,24 @@ describe("WorktreeStore", () => {
     expect(store.listByWorkspace("trail")).toHaveLength(1);
     expect(store.listByWorkspace("loupe")).toHaveLength(0);
   });
+
+  it("updates status on an existing worktree", () => {
+    const db = new MemorySqlite();
+    migrateAndSeed(db);
+    const store = openWorktreeStore(db);
+    const now = new Date().toISOString();
+    store.upsert({
+      id: worktreeId("trail", 7),
+      workspaceId: "trail",
+      issueNumber: 7,
+      title: "Task",
+      branch: "agent/7-task",
+      path: "/tmp/7",
+      status: "queued",
+      isRemote: false,
+      createdAt: now,
+    });
+    const updated = store.updateStatus("trail", 7, "running");
+    expect(updated?.status).toBe("running");
+  });
 });

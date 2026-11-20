@@ -12,9 +12,16 @@ type PreviewDraft = { n: number; x: number; y: number; el: string };
 type WorktreeViewProps = {
   context?: WorktreeSessionContext | null;
   onOpenIssue?: (issue: string, title: string) => void;
+  onStartAgentRun?: () => void;
+  startRunBusy?: boolean;
 };
 
-export function WorktreeView({ context, onOpenIssue }: WorktreeViewProps) {
+export function WorktreeView({
+  context,
+  onOpenIssue,
+  onStartAgentRun,
+  startRunBusy = false,
+}: WorktreeViewProps) {
   if (!context) {
     return (
       <div
@@ -33,15 +40,26 @@ export function WorktreeView({ context, onOpenIssue }: WorktreeViewProps) {
       </div>
     );
   }
-  return <WorktreeViewBody context={context} onOpenIssue={onOpenIssue} />;
+  return (
+    <WorktreeViewBody
+      context={context}
+      onOpenIssue={onOpenIssue}
+      onStartAgentRun={onStartAgentRun}
+      startRunBusy={startRunBusy}
+    />
+  );
 }
 
 function WorktreeViewBody({
   context,
   onOpenIssue,
+  onStartAgentRun,
+  startRunBusy,
 }: {
   context: WorktreeSessionContext;
   onOpenIssue?: (issue: string, title: string) => void;
+  onStartAgentRun?: () => void;
+  startRunBusy?: boolean;
 }) {
   const fixture = getWorktreeFixture();
   const [detailsOpen, setDetailsOpen] = useState(true);
@@ -139,6 +157,15 @@ function WorktreeViewBody({
           >
             Open folder
           </TrailButton>
+          {onStartAgentRun && context.status !== "running" ? (
+            <TrailButton
+              variant="primary"
+              disabled={startRunBusy}
+              onClick={onStartAgentRun}
+            >
+              {startRunBusy ? "Starting…" : "Start run"}
+            </TrailButton>
+          ) : null}
           <ViewModeToggle mode={mode} onChange={setViewMode} />
           <TrailButton variant="secondary">Open in Cursor</TrailButton>
           <TrailButton variant="secondary">Open pull request</TrailButton>

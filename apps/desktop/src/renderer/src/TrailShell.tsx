@@ -75,6 +75,7 @@ export type TrailShellProps = {
   onIssueCreated?: () => void;
   worktrees?: WorktreeDto[];
   worktreesLive?: boolean;
+  localRepoRoot?: string | null;
   onRefreshWorktrees?: () => void;
 };
 
@@ -123,6 +124,7 @@ export function TrailShell({
   onIssueCreated,
   worktrees = [],
   worktreesLive = false,
+  localRepoRoot = null,
   onRefreshWorktrees,
 }: TrailShellProps) {
   const [centerView, setCenterView] = useState<CenterView>("dashboard");
@@ -132,7 +134,12 @@ export function TrailShell({
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
   const [issueWorktreeBusy, setIssueWorktreeBusy] = useState(false);
+  const [startRunBusy, setStartRunBusy] = useState(false);
   const [selectedWorktreeIssue, setSelectedWorktreeIssue] = useState<number | null>(null);
+  const showRepoRootNudge =
+    Boolean(activeWorkspace?.repository) &&
+    Boolean(github?.connected) &&
+    !localRepoRoot?.trim();
   const baseFixture = getDashboardFixture(activeWorkspace);
   const liveNav =
     worktreesLive && activeWorkspace?.repository
@@ -223,6 +230,29 @@ export function TrailShell({
       openWorktree(issueNumber);
     } finally {
       setIssueWorktreeBusy(false);
+    }
+  };
+
+  const handleStartAgentRun = async () => {
+    if (!activeWorkspace?.id || selectedWorktreeIssue === null) {
+      return;
+    }
+    const api = window.trail;
+    if (!api?.setWorktreeStatus || startRunBusy) {
+      return;
+    }
+    setStartRunBusy(true);
+    try {
+      const result = await api.setWorktreeStatus({
+        workspaceId: activeWorkspace.id,
+        issueNumber: selectedWorktreeIssue,
+        status: "running",
+      });
+      if (result.ok) {
+        onRefreshWorktrees?.();
+      }
+    } finally {
+      setStartRunBusy(false);
     }
   };
 
@@ -637,6 +667,29 @@ export function TrailShell({
           aria-label="Workspace"
           style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", background: "var(--bg)" }}
         >
+          {showRepoRootNudge ? (
+            <div
+              style={{
+                flex: "0 0 auto",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 16px",
+                borderBottom: "1px solid var(--line)",
+                background: "var(--surface-raised)",
+                fontSize: 12,
+                color: "var(--ink-soft)",
+              }}
+            >
+              <span>
+                Link a local git checkout to create worktrees and run agents.
+              </span>
+              <TrailButton variant="secondary" onClick={() => setCenterView("settings")}>
+                Open Settings
+              </TrailButton>
+            </div>
+          ) : null}
           <TabBar
             centerView={centerView}
             worktreeTabOpen={worktreeTabOpen}
@@ -668,6 +721,8 @@ export function TrailShell({
             onShowOnboarding={onShowOnboarding}
             onOpenIssue={openIssue}
             activeWorktreeSession={activeWorktreeSession}
+            onStartAgentRun={() => void handleStartAgentRun()}
+            startRunBusy={startRunBusy}
           />
           {onComposer ? <TrailComposer modKey={modKey} maxWidth={shellContentMaxWidth("dashboard")} /> : null}
         </section>
@@ -938,6 +993,8 @@ function ShellMain({
   onShowOnboarding,
   onOpenIssue,
   activeWorktreeSession,
+  onStartAgentRun,
+  startRunBusy,
 }: {
   centerView: CenterView;
   setCenterView: (view: CenterView) => void;
@@ -958,11 +1015,18 @@ function ShellMain({
   onShowOnboarding?: () => void;
   onOpenIssue: (issue: string, title: string) => void;
   activeWorktreeSession: import("./worktree-session").WorktreeSessionContext | null;
+  onStartAgentRun?: () => void;
+  startRunBusy?: boolean;
 }) {
   if (centerView === "worktree") {
     return (
       <div style={{ flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <WorktreeView context={activeWorktreeSession} onOpenIssue={onOpenIssue} />
+        <WorktreeView
+          context={activeWorktreeSession}
+          onOpenIssue={onOpenIssue}
+          onStartAgentRun={onStartAgentRun}
+          startRunBusy={startRunBusy}
+        />
       </div>
     );
   }

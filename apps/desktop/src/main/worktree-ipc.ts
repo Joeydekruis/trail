@@ -6,6 +6,8 @@ import {
   worktreeCreateResult,
   worktreeListPayload,
   worktreeListResult,
+  worktreeSetStatusPayload,
+  worktreeSetStatusResult,
   workspaceRepoRootGetPayload,
   workspaceRepoRootGetResult,
   workspaceRepoRootPickResult,
@@ -53,6 +55,27 @@ export function registerWorktreeIpc(): void {
       worktrees,
       repoRoot: readWorkspaceRepoRoot(workspaceStore, workspaceId),
       worktreeRoot: readWorkspaceWorktreeRoot(workspaceStore, workspaceId),
+    });
+  });
+
+  ipcMain.handle(IpcChannels.worktreeSetStatus, (_event, raw: unknown) => {
+    const payload = worktreeSetStatusPayload.parse(raw);
+    const workspaceId = resolveWorkspaceId(payload.workspaceId);
+    const store = getWorktreeStore();
+    const updated = store.updateStatus(
+      workspaceId,
+      payload.issueNumber,
+      payload.status,
+    );
+    if (!updated) {
+      return worktreeSetStatusResult.parse({
+        ok: false,
+        message: "Worktree not found",
+      });
+    }
+    return worktreeSetStatusResult.parse({
+      ok: true,
+      worktree: toDto(updated),
     });
   });
 

@@ -65,6 +65,8 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
   const [branchesError, setBranchesError] = useState<string | null>(null);
   const [finishBusy, setFinishBusy] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
+  const [localRepoRoot, setLocalRepoRoot] = useState("");
+  const [repoRootError, setRepoRootError] = useState<string | null>(null);
 
   useEffect(() => {
     const api = window.trail;
@@ -207,6 +209,25 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
     }
   }
 
+  async function pickLocalRepoRoot() {
+    const api = window.trail;
+    if (!api?.pickRepoRoot) {
+      return;
+    }
+    setRepoRootError(null);
+    const picked = await api.pickRepoRoot();
+    if (!picked.ok) {
+      if ("cancelled" in picked && picked.cancelled) {
+        return;
+      }
+      if ("message" in picked) {
+        setRepoRootError(picked.message);
+      }
+      return;
+    }
+    setLocalRepoRoot(picked.path);
+  }
+
   async function openWorkspace() {
     const api = window.trail;
     const repo = repos[selectedRepo];
@@ -222,6 +243,12 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
         integrationBranch,
         productionBranch,
       });
+      if (localRepoRoot.trim() && api.setRepoRoot) {
+        const saved = await api.setRepoRoot({ repoRoot: localRepoRoot.trim() });
+        if (saved.message) {
+          setRepoRootError(saved.message);
+        }
+      }
       await onComplete();
     } catch (error) {
       setFinishError(error instanceof Error ? error.message : "Could not create workspace");
@@ -279,6 +306,10 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
           onCreateLabels={() => setCreateLabels((v) => !v)}
           onCreateFolders={() => setCreateFolders((v) => !v)}
           onUseProject={() => setUseProject((v) => !v)}
+          localRepoRoot={localRepoRoot}
+          repoRootError={repoRootError}
+          onLocalRepoRootChange={setLocalRepoRoot}
+          onPickRepoRoot={() => void pickLocalRepoRoot()}
         />
       ) : null}
 
@@ -537,6 +568,10 @@ function StepSetupRepo({
   onCreateLabels,
   onCreateFolders,
   onUseProject,
+  localRepoRoot,
+  repoRootError,
+  onLocalRepoRootChange,
+  onPickRepoRoot,
 }: {
   importDocs: boolean;
   createLabels: boolean;
@@ -546,6 +581,10 @@ function StepSetupRepo({
   onCreateLabels: () => void;
   onCreateFolders: () => void;
   onUseProject: () => void;
+  localRepoRoot: string;
+  repoRootError: string | null;
+  onLocalRepoRootChange: (value: string) => void;
+  onPickRepoRoot: () => void;
 }) {
   return (
     <OnboardingStep
@@ -556,6 +595,49 @@ function StepSetupRepo({
         </>
       }
     >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: "12px 14px",
+          border: "1px solid var(--line-strong)",
+          borderRadius: 12,
+          background: "var(--surface-card)",
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: 13 }}>Local git checkout</span>
+        <span className="tr-small">
+          Required for worktrees. GitHub sync does not clone the repo for you.
+        </span>
+        <input
+          type="text"
+          value={localRepoRoot}
+          onChange={(event) => onLocalRepoRootChange(event.target.value)}
+          placeholder="/Users/you/projects/my-app"
+          style={{
+            height: 34,
+            padding: "0 10px",
+            border: "1px solid var(--line-strong)",
+            borderRadius: 8,
+            background: "var(--bg)",
+            color: "var(--ink)",
+            font: "inherit",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+          }}
+        />
+        {repoRootError ? (
+          <span className="tr-small" style={{ color: "var(--warning)" }}>
+            {repoRootError}
+          </span>
+        ) : null}
+        <span>
+          <TrailButton variant="secondary" onClick={onPickRepoRoot}>
+            Choose folder…
+          </TrailButton>
+        </span>
+      </div>
       <div style={{ padding: "4px 16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}>
         <SetupToggle
           title="Import the docs folder"

@@ -52,6 +52,20 @@ export class WorktreeStore {
     return row ? mapRow(row) : null;
   }
 
+  updateStatus(
+    workspaceId: string,
+    issueNumber: number,
+    status: WorktreeStatus,
+  ): WorktreeRecord | null {
+    const current = this.get(workspaceId, issueNumber);
+    if (!current) {
+      return null;
+    }
+    const next = { ...current, status };
+    this.upsert(next);
+    return next;
+  }
+
   upsert(record: WorktreeRecord): void {
     this.db
       .prepare(

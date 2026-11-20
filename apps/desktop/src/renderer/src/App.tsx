@@ -96,6 +96,14 @@ declare global {
         | { ok: true; worktree: WorktreeDto }
         | { ok: false; message: string }
       >;
+      setWorktreeStatus?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+        status: WorktreeDto["status"];
+      }) => Promise<
+        | { ok: true; worktree: WorktreeDto }
+        | { ok: false; message: string }
+      >;
       getRepoRoot?: (workspaceId?: string) => Promise<{
         repoRoot: string | null;
         worktreeRoot: string | null;
@@ -136,6 +144,7 @@ export function App() {
   const [activeLastSyncedAt, setActiveLastSyncedAt] = useState<string | null>(null);
   const [worktrees, setWorktrees] = useState<WorktreeDto[]>([]);
   const [worktreesLive, setWorktreesLive] = useState(false);
+  const [localRepoRoot, setLocalRepoRoot] = useState<string | null>(null);
   const initialOnboardingGate = useRef(true);
 
   const applyActive = useCallback((active: WorkspaceDto) => {
@@ -252,6 +261,7 @@ export function App() {
     try {
       const data = await api.listWorktrees(activeWorkspace?.id);
       setWorktrees(data.worktrees);
+      setLocalRepoRoot(data.repoRoot);
     } catch {
       setWorktrees([]);
     }
@@ -360,6 +370,7 @@ export function App() {
       onGithubRefresh={() => void refreshWorkspaces()}
       worktrees={worktrees}
       worktreesLive={worktreesLive}
+      localRepoRoot={localRepoRoot}
       onRefreshWorktrees={() => void refreshWorktrees()}
     />
   );

@@ -121,6 +121,14 @@ export type TrailApi = {
     | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
     | { ok: false; message: string }
   >;
+  setWorktreeStatus: (input: {
+    workspaceId?: string;
+    issueNumber: number;
+    status: import("@trail/ipc").WorktreeDto["status"];
+  }) => Promise<
+    | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
+    | { ok: false; message: string }
+  >;
   getRepoRoot: (workspaceId?: string) => Promise<{
     repoRoot: string | null;
     worktreeRoot: string | null;
@@ -246,6 +254,11 @@ const trailApi: TrailApi = {
     }>,
   createWorktree: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.worktreeCreate, input) as Promise<
+      | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
+      | { ok: false; message: string }
+    >,
+  setWorktreeStatus: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.worktreeSetStatus, input) as Promise<
       | { ok: true; worktree: import("@trail/ipc").WorktreeDto }
       | { ok: false; message: string }
     >,
