@@ -143,6 +143,7 @@ export type TrailApi = {
   maximize: () => Promise<void>;
   close: () => Promise<void>;
   openExternal: (url: string) => Promise<void>;
+  openPath: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
 };
 
 const trailApi: TrailApi = {
@@ -270,6 +271,10 @@ const trailApi: TrailApi = {
   close: () => ipcRenderer.invoke(PreloadIpcChannels.windowClose) as Promise<void>,
   openExternal: (url) =>
     ipcRenderer.invoke(PreloadIpcChannels.shellOpenExternal, { url }) as Promise<void>,
+  openPath: (path) =>
+    ipcRenderer.invoke(PreloadIpcChannels.shellOpenPath, { path }) as Promise<
+      { ok: true } | { ok: false; message: string }
+    >,
 };
 
 try {

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { BoardColumnIdDto, BoardSnapshotResult } from "@trail/ipc";
-import type { WorkspaceDto } from "@trail/ipc";
+import type { BoardColumnIdDto, BoardSnapshotResult, WorktreeDto, WorkspaceDto } from "@trail/ipc";
 import {
   getBoardFixture,
   type BoardCard,
@@ -11,6 +10,7 @@ import {
 import { getIssueDetail, type IssueDetail } from "./design/issue-detail-fixture";
 import { FilterPill, IssueKanbanCard, SelectButton, SyncStatus, TrailButton } from "./design/TrailUi";
 import { IssueDetailModal } from "./IssueDetailModal";
+import { issueNumberFromRef, worktreeCtaForIssue } from "./worktree-session";
 
 type BoardViewProps = {
   workspace: WorkspaceDto | undefined;
@@ -19,7 +19,9 @@ type BoardViewProps = {
   boardRefreshKey?: number;
   onNewTask: () => void;
   modKey: string;
-  onOpenWorktree: () => void;
+  worktrees: WorktreeDto[];
+  onOpenWorktree: (issueNumber: number) => void;
+  onRefreshWorktrees?: () => void;
 };
 
 export function BoardView({
@@ -29,7 +31,9 @@ export function BoardView({
   boardRefreshKey = 0,
   onNewTask,
   modKey,
+  worktrees,
   onOpenWorktree,
+  onRefreshWorktrees,
 }: BoardViewProps) {
   const fixture = getBoardFixture(workspace);
   const [boardMode, setBoardMode] = useState(true);
@@ -38,6 +42,8 @@ export function BoardView({
   const [liveBoard, setLiveBoard] = useState<BoardSnapshotResult | null>(null);
   const [kanbanColumns, setKanbanColumns] = useState<BoardColumn[] | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [worktreeBusy, setWorktreeBusy] = useState(false);
+  const [worktreeError, setWorktreeError] = useState<string | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
   const canDrag = liveBoard?.source === "cache" && Boolean(workspace?.repository);
 
@@ -91,7 +97,15 @@ export function BoardView({
     if (api?.getIssueDetail && workspace?.repository && !Number.isNaN(issueNumber)) {
       void api.getIssueDetail({ workspaceId: workspace.id, issueNumber }).then((result) => {
         if (result.found) {
-          setIssueDetail(result.detail as IssueDetail);
+          const detail = result.detail as IssueDetail;
+          const issueNumber = issueNumberFromRef(detail.issue);
+          setIssueDetail({
+            ...detail,
+            cta:
+              issueNumber !== null
+                ? worktreeCtaForIssue(worktrees, issueNumber)
+                : detail.cta,
+          });
           return;
         }
         setIssueDetail(getIssueDetail(card));
@@ -136,9 +150,44 @@ export function BoardView({
     },
     [canDrag, kanbanColumns, workspace?.id],
   );
-  const handleOpenWorktree = () => {
-    closeIssue();
-    onOpenWorktree();
+  const handleWorktreeAction = async () => {
+    if (!issueDetail || !workspace?.id) {
+      return;
+    }
+    const issueNumber = issueNumberFromRef(issueDetail.issue);
+    if (issueNumber === null) {
+      return;
+    }
+    const existing = worktrees.some((wt) => wt.issueNumber === issueNumber);
+    if (existing) {
+      closeIssue();
+      onOpenWorktree(issueNumber);
+      return;
+    }
+    const api = window.trail;
+    if (!api?.createWorktree) {
+      closeIssue();
+      onOpenWorktree(issueNumber);
+      return;
+    }
+    setWorktreeBusy(true);
+    setWorktreeError(null);
+    try {
+      const result = await api.createWorktree({
+        workspaceId: workspace.id,
+        issueNumber,
+        title: issueDetail.title,
+      });
+      if (!result.ok) {
+        setWorktreeError(result.message);
+        return;
+      }
+      onRefreshWorktrees?.();
+      closeIssue();
+      onOpenWorktree(issueNumber);
+    } finally {
+      setWorktreeBusy(false);
+    }
   };
 
   const kanbanData =
@@ -287,6 +336,11 @@ export function BoardView({
         </span>
       </div>
 
+      {worktreeError ? (
+        <p className="tr-small" style={{ color: "var(--warning)", padding: "0 24px 8px", margin: 0 }}>
+          {worktreeError}
+        </p>
+      ) : null}
       {boardMode ? (
         <BoardKanban
           fixture={kanbanData}
@@ -304,7 +358,8 @@ export function BoardView({
         detail={issueDetail}
         modKey={modKey}
         onClose={closeIssue}
-        onOpenWorktree={handleOpenWorktree}
+        onOpenWorktree={() => void handleWorktreeAction()}
+        worktreeActionBusy={worktreeBusy}
       />
     </>
   );

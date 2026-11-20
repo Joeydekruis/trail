@@ -1,6 +1,7 @@
 import { useMemo, useState, type MouseEvent } from "react";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
 import { SelectButton, SyncStatus, TrailAvatar, TrailButton, TrailChip, TrailPanel, TrailProgressBar } from "./design/TrailUi";
+import type { WorktreeSessionContext } from "./worktree-session";
 
 const PREVIEW_URL = "localhost:3000/sign-in";
 const INITIAL_PINS = [{ n: 1, x: 72, y: 63 }];
@@ -9,10 +10,39 @@ type PreviewPin = { n: number; x: number; y: number };
 type PreviewDraft = { n: number; x: number; y: number; el: string };
 
 type WorktreeViewProps = {
+  context?: WorktreeSessionContext | null;
   onOpenIssue?: (issue: string, title: string) => void;
 };
 
-export function WorktreeView({ onOpenIssue }: WorktreeViewProps) {
+export function WorktreeView({ context, onOpenIssue }: WorktreeViewProps) {
+  if (!context) {
+    return (
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 32,
+        }}
+      >
+        <p className="tr-small" style={{ maxWidth: 420, textAlign: "center", margin: 0 }}>
+          Select a worktree in the sidebar, or choose <strong>Start in worktree</strong> on a board card.
+        </p>
+      </div>
+    );
+  }
+  return <WorktreeViewBody context={context} onOpenIssue={onOpenIssue} />;
+}
+
+function WorktreeViewBody({
+  context,
+  onOpenIssue,
+}: {
+  context: WorktreeSessionContext;
+  onOpenIssue?: (issue: string, title: string) => void;
+}) {
   const fixture = getWorktreeFixture();
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [mode, setMode] = useState<"chat" | "preview">("chat");
@@ -22,7 +52,25 @@ export function WorktreeView({ onOpenIssue }: WorktreeViewProps) {
   const [draftText, setDraftText] = useState("");
   const [extraMessages, setExtraMessages] = useState<ChatLine[]>([]);
 
-  const messages = useMemo(() => [...fixture.messages, ...extraMessages], [fixture.messages, extraMessages]);
+  const seededMessages = useMemo<ChatLine[]>(() => {
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    return [
+      {
+        who: "Trail",
+        initials: "TR",
+        tone: "mint",
+        time,
+        body: "This worktree is on disk. Agent chat and preview attach here in a later batch.",
+        monoLines: [context.branch, context.path],
+      },
+    ];
+  }, [context.branch, context.path]);
+
+  const messages = useMemo(
+    () => [...seededMessages, ...extraMessages],
+    [seededMessages, extraMessages],
+  );
 
   const setViewMode = (next: "chat" | "preview") => {
     setMode(next);
@@ -78,13 +126,19 @@ export function WorktreeView({ onOpenIssue }: WorktreeViewProps) {
         }}
       >
         <h1 style={{ margin: 0, fontSize: 15, lineHeight: "22px", fontWeight: 600 }}>
-          <span className="tr-mono tr-faint">{fixture.issue}</span> {fixture.title}
+          <span className="tr-mono tr-faint">{context.issueRef}</span> {context.title}
         </h1>
-        <TrailChip tone="mint">{fixture.statusChip}</TrailChip>
+        <TrailChip tone="mint">{context.statusLabel}</TrailChip>
         <span className="tr-mono tr-faint" style={{ fontSize: 12 }}>
-          {fixture.meta}
+          {context.branch}
         </span>
         <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <TrailButton
+            variant="secondary"
+            onClick={() => void window.trail?.openPath?.(context.path)}
+          >
+            Open folder
+          </TrailButton>
           <ViewModeToggle mode={mode} onChange={setViewMode} />
           <TrailButton variant="secondary">Open in Cursor</TrailButton>
           <TrailButton variant="secondary">Open pull request</TrailButton>

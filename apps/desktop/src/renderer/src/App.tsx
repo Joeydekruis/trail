@@ -76,6 +76,7 @@ declare global {
         issueNumber: number;
       }) => Promise<import("@trail/ipc").IssueGetResult>;
       openExternal?: (url: string) => Promise<void>;
+      openPath?: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
       syncNow: (
         workspaceId?: string,
       ) => Promise<

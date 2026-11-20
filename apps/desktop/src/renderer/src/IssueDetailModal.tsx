@@ -9,9 +9,19 @@ type IssueDetailModalProps = {
   modKey: string;
   onClose: () => void;
   onOpenWorktree?: () => void;
+  worktreeActionLabel?: string;
+  worktreeActionBusy?: boolean;
 };
 
-export function IssueDetailModal({ open, detail, modKey, onClose, onOpenWorktree }: IssueDetailModalProps) {
+export function IssueDetailModal({
+  open,
+  detail,
+  modKey,
+  onClose,
+  onOpenWorktree,
+  worktreeActionLabel,
+  worktreeActionBusy = false,
+}: IssueDetailModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -92,12 +102,10 @@ export function IssueDetailModal({ open, detail, modKey, onClose, onOpenWorktree
             </TrailButton>
             <TrailButton
               variant="primary"
-              onClick={() => {
-                onOpenWorktree?.();
-                onClose();
-              }}
+              disabled={worktreeActionBusy}
+              onClick={() => void onOpenWorktree?.()}
             >
-              {detail.cta}
+              {worktreeActionBusy ? "Working…" : worktreeActionLabel ?? detail.cta}
             </TrailButton>
           </span>
           <button

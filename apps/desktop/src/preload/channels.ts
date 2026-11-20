@@ -24,4 +24,5 @@ export const PreloadIpcChannels = {
   windowMaximize: "window.maximize",
   windowClose: "window.close",
   shellOpenExternal: "shell.openExternal",
+  shellOpenPath: "shell.openPath",
 } as const;

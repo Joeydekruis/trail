@@ -1,7 +1,14 @@
 import { existsSync } from "node:fs";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
-import { IpcChannels, shellOpenExternalPayload, syncNowPayload, syncNowResult } from "@trail/ipc";
+import {
+  IpcChannels,
+  shellOpenExternalPayload,
+  shellOpenPathPayload,
+  shellOpenPathResult,
+  syncNowPayload,
+  syncNowResult,
+} from "@trail/ipc";
 import { getIssueCacheStore, getWorkspaceStore, initDatabase } from "./database";
 import { syncWorkspaceNow } from "./sync-now";
 import { scheduleDeferredStartup } from "./deferred-startup";
@@ -72,6 +79,15 @@ function createWindow(): void {
 ipcMain.handle(IpcChannels.shellOpenExternal, (_event, raw: unknown) => {
   const { url } = shellOpenExternalPayload.parse(raw);
   void shell.openExternal(url);
+});
+
+ipcMain.handle(IpcChannels.shellOpenPath, (_event, raw: unknown) => {
+  const { path } = shellOpenPathPayload.parse(raw);
+  const error = shell.openPath(path);
+  if (error) {
+    return shellOpenPathResult.parse({ ok: false, message: error });
+  }
+  return shellOpenPathResult.parse({ ok: true });
 });
 
 ipcMain.handle(IpcChannels.syncNow, async (_event, raw: unknown) => {

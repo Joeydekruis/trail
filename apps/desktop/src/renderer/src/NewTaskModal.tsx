@@ -5,6 +5,7 @@ import { IconClose } from "./design/TrailIcons";
 import { SelectButton, TrailButton, TrailChip } from "./design/TrailUi";
 
 type NewTaskModalProps = {
+  onOpenWorktree?: (issueNumber: number) => void;
   open: boolean;
   workspace: WorkspaceDto | undefined;
   modKey: string;
@@ -31,7 +32,14 @@ const PRIO_OPTIONS: Array<{ id: PriorityId; label: string; dot: string }> = [
   { id: "high", label: "High", dot: "var(--amber)" },
 ];
 
-export function NewTaskModal({ open, workspace, modKey, onClose, onCreated }: NewTaskModalProps) {
+export function NewTaskModal({
+  open,
+  workspace,
+  modKey,
+  onClose,
+  onCreated,
+  onOpenWorktree,
+}: NewTaskModalProps) {
   const [mode, setMode] = useState<Mode>("chat");
   const [chatInput, setChatInput] = useState("");
   const [chatDraft, setChatDraft] = useState<IssueChatDraft | null>(null);
@@ -131,6 +139,7 @@ export function NewTaskModal({ open, workspace, modKey, onClose, onCreated }: Ne
           onCreated?.();
           return;
         }
+        onOpenWorktree?.(result.issueNumber);
       }
       onCreated?.();
       onClose();

@@ -26,6 +26,7 @@ export const IpcChannels = {
   windowMaximize: "window.maximize",
   windowClose: "window.close",
   shellOpenExternal: "shell.openExternal",
+  shellOpenPath: "shell.openPath",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -332,6 +333,19 @@ export const shellOpenExternalPayload = z.object({
 });
 
 export type ShellOpenExternalPayload = z.infer<typeof shellOpenExternalPayload>;
+
+export const shellOpenPathPayload = z.object({
+  path: z.string().min(1),
+});
+
+export type ShellOpenPathPayload = z.infer<typeof shellOpenPathPayload>;
+
+export const shellOpenPathResult = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type ShellOpenPathResult = z.infer<typeof shellOpenPathResult>;
 
 const worktreeStatusDto = z.enum([
   "queued",

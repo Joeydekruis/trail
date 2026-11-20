@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { formatSyncLabel } from "./sync-label";
 import { CommandPalette } from "./CommandPalette";
@@ -14,6 +14,11 @@ import { SettingsView } from "./SettingsView";
 import { WorktreeView } from "./WorktreeView";
 import { dotColor, getDashboardFixture, workspaceShortcut } from "./design/fixture";
 import { worktreesToSidebar } from "./worktree-nav";
+import {
+  issueNumberFromRef,
+  worktreeCtaForIssue,
+  worktreeToSession,
+} from "./worktree-session";
 import type { WorktreeDto } from "@trail/ipc";
 import type { PaletteItem } from "./design/palette-fixture";
 import {
@@ -126,6 +131,8 @@ export function TrailShell({
   const [paletteQuery, setPaletteQuery] = useState("");
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
+  const [issueWorktreeBusy, setIssueWorktreeBusy] = useState(false);
+  const [selectedWorktreeIssue, setSelectedWorktreeIssue] = useState<number | null>(null);
   const baseFixture = getDashboardFixture(activeWorkspace);
   const liveNav =
     worktreesLive && activeWorkspace?.repository
@@ -138,20 +145,85 @@ export function TrailShell({
   const onInspector = shellShowsInspector(centerView);
   const onComposer = shellShowsComposer(centerView);
 
-  const openWorktree = () => {
+  const activeWorktree = useMemo(
+    () =>
+      selectedWorktreeIssue !== null
+        ? worktrees.find((wt) => wt.issueNumber === selectedWorktreeIssue) ?? null
+        : null,
+    [selectedWorktreeIssue, worktrees],
+  );
+  const activeWorktreeSession = useMemo(
+    () => (activeWorktree ? worktreeToSession(activeWorktree) : null),
+    [activeWorktree],
+  );
+  const worktreeTabLabel = activeWorktreeSession
+    ? `${activeWorktreeSession.issueRef} ${activeWorktreeSession.title}`
+    : "Worktree";
+
+  const openWorktree = (issueNumber?: number) => {
+    if (issueNumber !== undefined) {
+      setSelectedWorktreeIssue(issueNumber);
+    }
     setWorktreeTabOpen(true);
     setCenterView("worktree");
   };
 
   const openIssue = (issue: string, title: string) => {
+    const api = window.trail;
+    const issueNumber = issueNumberFromRef(issue);
+    if (api?.getIssueDetail && activeWorkspace?.repository && issueNumber !== null) {
+      void api.getIssueDetail({ workspaceId: activeWorkspace.id, issueNumber }).then((result) => {
+        if (result.found) {
+          setIssueDetail({
+            ...(result.detail as IssueDetail),
+            cta: worktreeCtaForIssue(worktrees, issueNumber),
+          });
+          return;
+        }
+        setIssueDetail(getIssueDetailByRef(issue, title));
+      });
+      return;
+    }
     setIssueDetail(getIssueDetailByRef(issue, title));
   };
 
   const closeIssue = () => setIssueDetail(null);
 
-  const openWorktreeFromIssue = () => {
-    closeIssue();
-    openWorktree();
+  const handleIssueWorktreeAction = async () => {
+    if (!issueDetail || !activeWorkspace?.id) {
+      return;
+    }
+    const issueNumber = issueNumberFromRef(issueDetail.issue);
+    if (issueNumber === null) {
+      return;
+    }
+    if (worktrees.some((wt) => wt.issueNumber === issueNumber)) {
+      closeIssue();
+      openWorktree(issueNumber);
+      return;
+    }
+    const api = window.trail;
+    if (!api?.createWorktree) {
+      closeIssue();
+      openWorktree(issueNumber);
+      return;
+    }
+    setIssueWorktreeBusy(true);
+    try {
+      const result = await api.createWorktree({
+        workspaceId: activeWorkspace.id,
+        issueNumber,
+        title: issueDetail.title,
+      });
+      if (!result.ok) {
+        return;
+      }
+      onRefreshWorktrees?.();
+      closeIssue();
+      openWorktree(issueNumber);
+    } finally {
+      setIssueWorktreeBusy(false);
+    }
   };
 
   const handlePalettePick = (item: PaletteItem) => {
@@ -161,13 +233,21 @@ export function TrailShell({
     if (t.type === "view") {
       setCenterView(t.view);
     } else if (t.type === "worktree") {
-      openWorktree();
+      openWorktree(selectedWorktreeIssue ?? undefined);
     } else if (t.type === "sync") {
       onSyncNow();
     } else if (t.type === "new-task") {
       setNewTaskOpen(true);
     }
   };
+
+  useEffect(() => {
+    if (centerView !== "worktree" || selectedWorktreeIssue !== null || worktrees.length === 0) {
+      return;
+    }
+    const local = worktrees.find((wt) => !wt.isRemote && wt.status !== "merged") ?? worktrees[0];
+    setSelectedWorktreeIssue(local.issueNumber);
+  }, [centerView, selectedWorktreeIssue, worktrees]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -508,6 +588,7 @@ export function TrailShell({
               title="Worktrees"
               count={fixture.nLocal}
               rows={fixture.local}
+              activeIssueNumber={selectedWorktreeIssue}
               onOpenWorktree={openWorktree}
               onOpenIssue={openIssue}
             />
@@ -516,6 +597,7 @@ export function TrailShell({
               count={fixture.nRemote}
               rows={fixture.remote}
               topPad={16}
+              activeIssueNumber={selectedWorktreeIssue}
               onOpenWorktree={openWorktree}
               onOpenIssue={openIssue}
             />
@@ -559,7 +641,8 @@ export function TrailShell({
             centerView={centerView}
             worktreeTabOpen={worktreeTabOpen}
             onSelectView={setCenterView}
-            onOpenWorktree={openWorktree}
+            worktreeTabLabel={worktreeTabLabel}
+            onOpenWorktree={() => openWorktree(selectedWorktreeIssue ?? undefined)}
             onCloseWorktreeTab={() => {
               setWorktreeTabOpen(false);
               if (centerView === "worktree") setCenterView("dashboard");
@@ -579,9 +662,12 @@ export function TrailShell({
             onGithubRefresh={onGithubRefresh}
             onNewTask={() => setNewTaskOpen(true)}
             modKey={modKey}
+            worktrees={worktrees}
             onOpenWorktree={openWorktree}
+            onRefreshWorktrees={onRefreshWorktrees}
             onShowOnboarding={onShowOnboarding}
             onOpenIssue={openIssue}
+            activeWorktreeSession={activeWorktreeSession}
           />
           {onComposer ? <TrailComposer modKey={modKey} maxWidth={shellContentMaxWidth("dashboard")} /> : null}
         </section>
@@ -660,13 +746,15 @@ export function TrailShell({
         modKey={modKey}
         onClose={() => setNewTaskOpen(false)}
         onCreated={onIssueCreated}
+        onOpenWorktree={openWorktree}
       />
       <IssueDetailModal
         open={issueDetail !== null}
         detail={issueDetail}
         modKey={modKey}
         onClose={closeIssue}
-        onOpenWorktree={openWorktreeFromIssue}
+        onOpenWorktree={() => void handleIssueWorktreeAction()}
+        worktreeActionBusy={issueWorktreeBusy}
       />
     </div>
   );
@@ -710,6 +798,7 @@ function SidebarSection({
   count,
   rows,
   topPad = 14,
+  activeIssueNumber,
   onOpenWorktree,
   onOpenIssue,
 }: {
@@ -717,7 +806,8 @@ function SidebarSection({
   count: number;
   rows: { title: string; sub: string; dot: import("./design/fixture").WtDot }[];
   topPad?: number;
-  onOpenWorktree?: () => void;
+  activeIssueNumber?: number | null;
+  onOpenWorktree?: (issueNumber: number) => void;
   onOpenIssue?: (issue: string, title: string) => void;
 }) {
   return (
@@ -760,23 +850,28 @@ function SidebarSection({
         ) : null}
       </div>
       <nav aria-label={title} style={{ padding: "0 8px 12px", display: "flex", flexDirection: "column", gap: 1 }}>
-        {rows.map((row) => (
+        {rows.map((row) => {
+          const parsed = row.title.startsWith("#") ? parseIssueTitleLine(row.title) : null;
+          const rowIssueNumber = parsed ? issueNumberFromRef(parsed.issue) : null;
+          const rowActive = rowIssueNumber !== null && rowIssueNumber === activeIssueNumber;
+          return (
           <a
             key={row.title}
             href="#worktree"
             onClick={(e) => {
               e.preventDefault();
-              if (!row.title.startsWith("#")) {
+              if (!parsed) {
                 return;
               }
-              const parsed = parseIssueTitleLine(row.title);
-              if (e.shiftKey && parsed) {
+              if (e.shiftKey) {
                 onOpenIssue?.(parsed.issue, parsed.title);
                 return;
               }
-              onOpenWorktree?.();
+              if (rowIssueNumber !== null) {
+                onOpenWorktree?.(rowIssueNumber);
+              }
             }}
-            title={row.title.startsWith("#") ? "Open worktree · Shift+click for issue details" : undefined}
+            title={parsed ? "Open worktree · Shift+click for issue details" : undefined}
             style={{
               display: "flex",
               alignItems: "center",
@@ -784,8 +879,9 @@ function SidebarSection({
               padding: "5px 8px",
               borderRadius: 6,
               textDecoration: "none",
-              background: row.dot === "running" ? "var(--surface-hover)" : "transparent",
-              color: row.dot === "running" ? "var(--ink)" : "var(--ink-muted)",
+              background:
+                rowActive || row.dot === "running" ? "var(--surface-hover)" : "transparent",
+              color: rowActive || row.dot === "running" ? "var(--ink)" : "var(--ink-muted)",
             }}
           >
             <span className="tr-dot" style={{ color: dotColor(row.dot), flex: "0 0 auto" }} />
@@ -815,7 +911,8 @@ function SidebarSection({
               </span>
             </span>
           </a>
-        ))}
+        );
+        })}
       </nav>
     </>
   );
@@ -835,9 +932,12 @@ function ShellMain({
   onGithubRefresh,
   onNewTask,
   modKey,
+  worktrees,
   onOpenWorktree,
+  onRefreshWorktrees,
   onShowOnboarding,
   onOpenIssue,
+  activeWorktreeSession,
 }: {
   centerView: CenterView;
   setCenterView: (view: CenterView) => void;
@@ -852,14 +952,17 @@ function ShellMain({
   onGithubRefresh?: () => void;
   onNewTask: () => void;
   modKey: string;
-  onOpenWorktree: () => void;
+  worktrees: WorktreeDto[];
+  onOpenWorktree: (issueNumber: number) => void;
+  onRefreshWorktrees?: () => void;
   onShowOnboarding?: () => void;
   onOpenIssue: (issue: string, title: string) => void;
+  activeWorktreeSession: import("./worktree-session").WorktreeSessionContext | null;
 }) {
   if (centerView === "worktree") {
     return (
       <div style={{ flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <WorktreeView onOpenIssue={onOpenIssue} />
+        <WorktreeView context={activeWorktreeSession} onOpenIssue={onOpenIssue} />
       </div>
     );
   }
@@ -873,7 +976,9 @@ function ShellMain({
           boardRefreshKey={boardRefreshKey}
           onNewTask={onNewTask}
           modKey={modKey}
+          worktrees={worktrees}
           onOpenWorktree={onOpenWorktree}
+          onRefreshWorktrees={onRefreshWorktrees}
         />
       </div>
     );
@@ -943,12 +1048,14 @@ function ShellMain({
 function TabBar({
   centerView,
   worktreeTabOpen,
+  worktreeTabLabel,
   onSelectView,
   onOpenWorktree,
   onCloseWorktreeTab,
 }: {
   centerView: CenterView;
   worktreeTabOpen: boolean;
+  worktreeTabLabel: string;
   onSelectView: (view: CenterView) => void;
   onOpenWorktree: () => void;
   onCloseWorktreeTab: () => void;
@@ -1036,7 +1143,7 @@ function TabBar({
               cursor: "pointer",
             }}
           >
-            #42 Fix redirect
+            {worktreeTabLabel}
           </button>
           <button
             type="button"
