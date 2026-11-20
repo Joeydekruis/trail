@@ -46,7 +46,7 @@ export type TrailApi = {
     token: string,
   ) => Promise<{ ok: true; login: string } | { ok: false; message: string }>;
   githubListRepos: () => Promise<{ repos: GithubRepoDto[] }>;
-  githubListBranches: (repository: string) => Promise<{ branches: string[] }>;
+  githubListBranches: (repository: string) => Promise<{ branches: string[]; error?: string }>;
   githubClearToken: () => Promise<{ cleared: true }>;
   getIssueDetail: (input: {
     workspaceId?: string;
@@ -112,6 +112,7 @@ const trailApi: TrailApi = {
   githubListBranches: (repository) =>
     ipcRenderer.invoke(PreloadIpcChannels.githubListBranches, { repository }) as Promise<{
       branches: string[];
+      error?: string;
     }>,
   githubClearToken: () =>
     ipcRenderer.invoke(PreloadIpcChannels.githubClearToken) as Promise<{

@@ -1,4 +1,5 @@
 import { BOARD_COLUMN_META } from "./columns.js";
+import type { IssueDetailComment } from "./comments.js";
 import { priorityDisplay } from "./priority.js";
 import type { IssueCacheRecord } from "./types.js";
 
@@ -17,7 +18,7 @@ export type IssueDetailFromCache = {
   desc: string;
   steps: Array<{ text: string; done: boolean }>;
   nComments: number;
-  comments: [];
+  comments: IssueDetailComment[];
   activity: [];
   cta: string;
   htmlUrl: string;
@@ -44,7 +45,11 @@ function labelTone(name: string): "blue" | "mint" | "gray" {
   return "gray";
 }
 
-export function issueRecordToDetail(record: IssueCacheRecord): IssueDetailFromCache {
+export function issueRecordToDetail(
+  record: IssueCacheRecord,
+  options?: { comments?: IssueDetailComment[] },
+): IssueDetailFromCache {
+  const comments = options?.comments ?? [];
   const column = BOARD_COLUMN_META[record.boardColumn];
   const display = priorityDisplay(record.priority);
   const description = record.body?.trim() || "No description on GitHub.";
@@ -62,8 +67,8 @@ export function issueRecordToDetail(record: IssueCacheRecord): IssueDetailFromCa
     syncLabel: "Synced",
     desc: description,
     steps: [],
-    nComments: 0,
-    comments: [],
+    nComments: comments.length,
+    comments,
     activity: [],
     cta: "Start in worktree",
     htmlUrl: record.htmlUrl,

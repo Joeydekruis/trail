@@ -55,12 +55,14 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
   const [pat, setPat] = useState("");
   const [patBusy, setPatBusy] = useState(false);
   const [patError, setPatError] = useState<string | null>(null);
-  const [repos, setRepos] = useState(DEMO_REPOS);
+  const [repos, setRepos] = useState<RepoOption[]>([]);
   const [reposLoading, setReposLoading] = useState(false);
+  const [reposLoaded, setReposLoaded] = useState(false);
   const [integrationBranch, setIntegrationBranch] = useState("development");
   const [productionBranch, setProductionBranch] = useState("main");
-  const [branchOptions, setBranchOptions] = useState<string[]>([...FALLBACK_BRANCHES]);
+  const [branchOptions, setBranchOptions] = useState<string[]>([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
+  const [branchesError, setBranchesError] = useState<string | null>(null);
   const [finishBusy, setFinishBusy] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
 
@@ -78,43 +80,109 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
 
   useEffect(() => {
     const api = window.trail;
-    if (step !== 1 || !githubLogin || !api?.githubListRepos) {
+    if (step !== 1) {
       return;
     }
+    if (!githubLogin) {
+      setRepos(DEMO_REPOS);
+      setReposLoaded(true);
+      setReposLoading(false);
+      const demoBranches = [...FALLBACK_BRANCHES];
+      setBranchOptions(demoBranches);
+      setBranchesError(null);
+      const integration = pickIntegrationBranch(demoBranches);
+      setIntegrationBranch(integration);
+      setProductionBranch(pickProductionBranch(demoBranches, integration));
+      return;
+    }
+    if (!api?.githubListRepos) {
+      setRepos(DEMO_REPOS);
+      setReposLoaded(true);
+      setBranchOptions([...FALLBACK_BRANCHES]);
+      return;
+    }
+
+    let cancelled = false;
     setReposLoading(true);
+    setReposLoaded(false);
+    setRepos([]);
+    setSelectedRepo(0);
+    setBranchOptions([]);
+    setBranchesError(null);
+
     void api
       .githubListRepos()
       .then((result) => {
+        if (cancelled) {
+          return;
+        }
         if (result.repos.length > 0) {
           setRepos(result.repos);
           setSelectedRepo(0);
+        } else {
+          setRepos([]);
         }
+        setReposLoaded(true);
       })
-      .finally(() => setReposLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setReposLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [step, githubLogin]);
 
   useEffect(() => {
     const api = window.trail;
     const repo = repos[selectedRepo];
-    if (step !== 1 || !githubLogin || !repo) {
+    if (step !== 1 || !githubLogin || !reposLoaded || reposLoading || !repo) {
       return;
     }
     if (!api?.githubListBranches) {
       setBranchOptions([...FALLBACK_BRANCHES]);
       return;
     }
+
+    let cancelled = false;
     setBranchesLoading(true);
+    setBranchesError(null);
+
     void api
       .githubListBranches(repo.fullName)
       .then((result) => {
-        const branches = result.branches.length > 0 ? result.branches : [...FALLBACK_BRANCHES];
-        setBranchOptions(branches);
-        const integration = pickIntegrationBranch(branches);
+        if (cancelled) {
+          return;
+        }
+        if (result.branches.length === 0) {
+          setBranchOptions([]);
+          setBranchesError(result.error ?? "No branches found for this repository.");
+          return;
+        }
+        setBranchOptions(result.branches);
+        const integration = pickIntegrationBranch(result.branches);
         setIntegrationBranch(integration);
-        setProductionBranch(pickProductionBranch(branches, integration));
+        setProductionBranch(pickProductionBranch(result.branches, integration));
       })
-      .finally(() => setBranchesLoading(false));
-  }, [step, githubLogin, selectedRepo, repos]);
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+        setBranchOptions([]);
+        setBranchesError(error instanceof Error ? error.message : "Could not load branches");
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setBranchesLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [step, githubLogin, selectedRepo, repos, reposLoaded, reposLoading]);
 
   const githubReady = Boolean(githubLogin);
 
@@ -198,6 +266,7 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
           onProductionBranchChange={setProductionBranch}
           branchOptions={branchOptions}
           branchesLoading={branchesLoading}
+          branchesError={branchesError}
         />
       ) : null}
       {step === 2 ? (
@@ -240,7 +309,11 @@ export function OnboardingView({ onComplete, onBack }: OnboardingViewProps) {
           {step < 2 ? (
             <TrailButton
               variant="primary"
-              disabled={(step === 0 && !githubReady) || (step === 1 && repos.length === 0)}
+              disabled={
+                (step === 0 && !githubReady) ||
+                (step === 1 &&
+                  (repos.length === 0 || branchesLoading || branchOptions.length === 0))
+              }
               onClick={() => setStep((s) => s + 1)}
             >
               Continue
@@ -379,6 +452,7 @@ function StepChooseRepo({
   onProductionBranchChange,
   branchOptions,
   branchesLoading,
+  branchesError,
 }: {
   repos: RepoOption[];
   loading: boolean;
@@ -390,6 +464,7 @@ function StepChooseRepo({
   onProductionBranchChange: (value: string) => void;
   branchOptions: string[];
   branchesLoading: boolean;
+  branchesError: string | null;
 }) {
   return (
     <OnboardingStep title="Choose a repository" lead="Each repository becomes one workspace. You can add more later.">
@@ -436,12 +511,18 @@ function StepChooseRepo({
         ))}
       </div>
       {branchesLoading ? <p className="tr-small">Loading branches…</p> : null}
+      {branchesError && !branchesLoading ? (
+        <p className="tr-small" style={{ color: "var(--warning)" }}>
+          {branchesError}
+        </p>
+      ) : null}
       <BranchFields
         integrationBranch={integrationBranch}
         onIntegrationBranchChange={onIntegrationBranchChange}
         productionBranch={productionBranch}
         onProductionBranchChange={onProductionBranchChange}
         branchOptions={branchOptions}
+        disabled={branchesLoading || branchOptions.length === 0}
       />
     </OnboardingStep>
   );
@@ -561,12 +642,14 @@ function BranchFields({
   productionBranch,
   onProductionBranchChange,
   branchOptions,
+  disabled,
 }: {
   integrationBranch: string;
   onIntegrationBranchChange: (value: string) => void;
   productionBranch: string;
   onProductionBranchChange: (value: string) => void;
   branchOptions: string[];
+  disabled?: boolean;
 }) {
   const integrationOptions =
     branchOptions.includes(integrationBranch) ? branchOptions : [integrationBranch, ...branchOptions];
@@ -582,6 +665,7 @@ function BranchFields({
           value={integrationBranch}
           options={integrationOptions}
           onChange={onIntegrationBranchChange}
+          disabled={disabled}
         />
       </label>
       <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -591,6 +675,7 @@ function BranchFields({
           value={productionBranch}
           options={productionOptions}
           onChange={onProductionBranchChange}
+          disabled={disabled}
         />
       </label>
     </div>

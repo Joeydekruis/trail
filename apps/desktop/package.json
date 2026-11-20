@@ -14,7 +14,7 @@
     "size-limit": "size-limit --config size-limit.config.js",
     "dist": "electron-builder --config electron-builder.yml",
     "dist:dir": "electron-builder --config electron-builder.yml --dir",
-    "test": "node --test scripts/installer-budget.test.mjs",
+    "test": "node --test scripts/installer-budget.test.mjs && vitest run",
     "verify:sqlite": "electron scripts/sqlite-smoke.cjs",
     "rebuild:native": "npx @electron/rebuild -w better-sqlite3 -f"
   },
@@ -22,15 +22,15 @@
     "better-sqlite3": "^11.8.1"
   },
   "devDependencies": {
+    "@electron/fuses": "^1.8.0",
+    "@size-limit/file": "^11.2.0",
     "@trail/core": "*",
     "@trail/ipc": "*",
     "@trail/tokens": "*",
-    "@electron/fuses": "^1.8.0",
-    "@size-limit/file": "^11.2.0",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
-    "@types/better-sqlite3": "^7.6.12",
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",
     "electron": "33.2.1",
@@ -42,6 +42,7 @@
     "rollup-plugin-visualizer": "^5.14.0",
     "size-limit": "^11.2.0",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^3.2.7"
   }
 }

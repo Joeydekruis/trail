@@ -69,7 +69,7 @@ export function registerGitHubIpc(): void {
     const repo = repository.slice(slash + 1);
     const result = await fetchGitHubBranches(token, owner, repo);
     if (!result.ok) {
-      return githubListBranchesResult.parse({ branches: [] });
+      return githubListBranchesResult.parse({ branches: [], error: result.message });
     }
     return githubListBranchesResult.parse({ branches: result.branches });
   });

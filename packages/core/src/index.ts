@@ -25,6 +25,12 @@ export {
 } from "./issues/github-issue.js";
 export type { BoardColumnId } from "./issues/columns.js";
 export { boardColumnFromProjectStatus } from "./issues/project-status.js";
+export {
+  mapGitHubIssueComments,
+  formatCommentWhen,
+  type IssueDetailComment,
+  type GitHubIssueCommentRow,
+} from "./issues/comments.js";
 export { issueRecordToDetail, type IssueDetailFromCache } from "./issues/detail.js";
 export { buildBoardSnapshot, type BoardSnapshot } from "./issues/board-snapshot.js";
 export { IssueCacheStore, openIssueCacheStore } from "./issues/store.js";

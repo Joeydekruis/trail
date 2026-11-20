@@ -185,6 +185,7 @@ export type GithubListBranchesPayload = z.infer<typeof githubListBranchesPayload
 
 export const githubListBranchesResult = z.object({
   branches: z.array(z.string().min(1)),
+  error: z.string().optional(),
 });
 
 export type GithubListBranchesResult = z.infer<typeof githubListBranchesResult>;
@@ -199,6 +200,14 @@ export type IssueGetPayload = z.infer<typeof issueGetPayload>;
 const issueDetailLabel = z.object({
   text: z.string(),
   tone: z.enum(["blue", "mint", "gray"]),
+});
+
+const issueDetailComment = z.object({
+  who: z.string(),
+  initials: z.string(),
+  tone: z.enum(["mint", "blue"]),
+  when: z.string(),
+  text: z.string(),
 });
 
 export const issueDetailDto = z.object({
@@ -216,7 +225,7 @@ export const issueDetailDto = z.object({
   desc: z.string(),
   steps: z.array(z.object({ text: z.string(), done: z.boolean() })),
   nComments: z.number().int().nonnegative(),
-  comments: z.array(z.unknown()),
+  comments: z.array(issueDetailComment),
   activity: z.array(z.unknown()),
   cta: z.string(),
   htmlUrl: z.string().url(),

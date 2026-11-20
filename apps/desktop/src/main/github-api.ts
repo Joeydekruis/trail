@@ -49,15 +49,64 @@ export async function fetchGitHubBranches(
   owner: string,
   repo: string,
 ): Promise<{ ok: true; branches: string[] } | { ok: false; message: string }> {
-  const response = await fetch(
-    `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=100`,
-    { headers: authHeaders(token) },
-  );
-  if (!response.ok) {
-    return { ok: false, message: await parseError(response) };
+  const names: string[] = [];
+  let page = 1;
+
+  for (;;) {
+    const response = await fetch(
+      `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=100&page=${page}`,
+      { headers: authHeaders(token) },
+    );
+    if (!response.ok) {
+      return { ok: false, message: await parseError(response) };
+    }
+    const rows = (await response.json()) as Array<{ name: string }>;
+    for (const row of rows) {
+      if (row.name) {
+        names.push(row.name);
+      }
+    }
+    if (rows.length < 100) {
+      break;
+    }
+    page += 1;
   }
-  const rows = (await response.json()) as Array<{ name: string }>;
-  return { ok: true, branches: rows.map((row) => row.name).sort((a, b) => a.localeCompare(b)) };
+
+  return { ok: true, branches: [...new Set(names)].sort((a, b) => a.localeCompare(b)) };
+}
+
+type GitHubIssueComment = {
+  user: { login: string } | null;
+  body: string;
+  created_at: string;
+};
+
+export async function fetchGitHubIssueComments(
+  token: string,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+): Promise<{ ok: true; comments: GitHubIssueComment[] } | { ok: false; message: string }> {
+  const comments: GitHubIssueComment[] = [];
+  let page = 1;
+
+  for (;;) {
+    const response = await fetch(
+      `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}/comments?per_page=100&page=${page}`,
+      { headers: authHeaders(token) },
+    );
+    if (!response.ok) {
+      return { ok: false, message: await parseError(response) };
+    }
+    const rows = (await response.json()) as GitHubIssueComment[];
+    comments.push(...rows);
+    if (rows.length < 100) {
+      break;
+    }
+    page += 1;
+  }
+
+  return { ok: true, comments };
 }
 
 export async function fetchGitHubRepos(token: string): Promise<

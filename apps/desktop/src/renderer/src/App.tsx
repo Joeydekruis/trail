@@ -33,7 +33,7 @@ declare global {
       githubSetToken?: (
         token: string,
       ) => Promise<{ ok: true; login: string } | { ok: false; message: string }>;
-      githubListBranches?: (repository: string) => Promise<{ branches: string[] }>;
+      githubListBranches?: (repository: string) => Promise<{ branches: string[]; error?: string }>;
       githubListRepos?: () => Promise<{
         repos: Array<{
           fullName: string;
