@@ -15,6 +15,7 @@ export const IpcChannels = {
   boardSnapshot: "board.snapshot",
   boardMoveIssue: "board.moveIssue",
   issueGet: "issue.get",
+  issueCreate: "issue.create",
   syncNow: "sync.now",
   windowMinimize: "window.minimize",
   windowMaximize: "window.maximize",
@@ -245,6 +246,31 @@ export const githubBoardMappingSetResult = z.object({
 });
 
 export type GithubBoardMappingSetResult = z.infer<typeof githubBoardMappingSetResult>;
+
+const newIssueType = z.enum(["feature", "bug", "chore", "docs"]);
+const newIssuePriority = z.enum(["urgent", "high", "medium", "low"]);
+
+export const issueCreatePayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  title: z.string().min(1).max(256),
+  body: z.string().max(65_536),
+  type: newIssueType,
+  priority: newIssuePriority,
+  agentReady: z.boolean().optional(),
+});
+
+export type IssueCreatePayload = z.infer<typeof issueCreatePayload>;
+
+export const issueCreateResult = z.union([
+  z.object({
+    ok: z.literal(true),
+    issueNumber: z.number().int().positive(),
+    htmlUrl: z.string().url(),
+  }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type IssueCreateResult = z.infer<typeof issueCreateResult>;
 
 export const issueGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

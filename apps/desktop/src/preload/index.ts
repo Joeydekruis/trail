@@ -60,6 +60,17 @@ export type TrailApi = {
   onBackgroundSync: (
     listener: (payload: { workspaceId: string; syncedAt: string; issueCount: number }) => void,
   ) => () => void;
+  createIssue: (input: {
+    workspaceId?: string;
+    title: string;
+    body: string;
+    type: import("@trail/ipc").IssueCreatePayload["type"];
+    priority: import("@trail/ipc").IssueCreatePayload["priority"];
+    agentReady?: boolean;
+  }) => Promise<
+    | { ok: true; issueNumber: number; htmlUrl: string }
+    | { ok: false; message: string }
+  >;
   getIssueDetail: (input: {
     workspaceId?: string;
     issueNumber: number;
@@ -156,6 +167,11 @@ const trailApi: TrailApi = {
     ipcRenderer.on(channel, handler);
     return () => ipcRenderer.removeListener(channel, handler);
   },
+  createIssue: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.issueCreate, input) as Promise<
+      | { ok: true; issueNumber: number; htmlUrl: string }
+      | { ok: false; message: string }
+    >,
   getIssueDetail: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.issueGet, input) as Promise<
       | { found: true; detail: import("@trail/ipc").IssueDetailDto }

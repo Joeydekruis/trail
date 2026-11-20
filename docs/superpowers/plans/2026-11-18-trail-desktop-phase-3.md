@@ -6,7 +6,8 @@
 
 - [x] Background sync voor actieve workspace (instelbaar interval, default 60s)
 - [x] Settings → GitHub: sync-interval + board mapping
-- [ ] New task → draft + **Create on GitHub** (REST issue + priority labels)
+- [x] New task (form) → **Create on GitHub** (REST issue + type/priority labels)
+- [ ] New task chat draft (still mock)
 - [ ] Worktrees (agent isolation) — stub blijft in UI
 - [ ] OAuth i.p.v. PAT (later)
 

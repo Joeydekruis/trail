@@ -60,6 +60,17 @@ declare global {
         issueNumber: number;
         targetColumn: import("@trail/ipc").BoardColumnIdDto;
       }) => Promise<import("@trail/ipc").BoardMoveIssueResult>;
+      createIssue?: (input: {
+        workspaceId?: string;
+        title: string;
+        body: string;
+        type: "feature" | "bug" | "chore" | "docs";
+        priority: "urgent" | "high" | "medium" | "low";
+        agentReady?: boolean;
+      }) => Promise<
+        | { ok: true; issueNumber: number; htmlUrl: string }
+        | { ok: false; message: string }
+      >;
       getIssueDetail?: (input: {
         workspaceId?: string;
         issueNumber: number;
@@ -289,6 +300,7 @@ export function App() {
       onGithubDisconnect={() => void onGithubDisconnect()}
       onShowOnboarding={() => setView("onboarding")}
       boardRefreshKey={boardRefreshKey}
+      onIssueCreated={() => onSyncNow()}
       onGithubRefresh={() => void refreshWorkspaces()}
     />
   );

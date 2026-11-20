@@ -65,6 +65,7 @@ export type TrailShellProps = {
   onGithubRefresh?: () => void;
   onShowOnboarding?: () => void;
   boardRefreshKey?: number;
+  onIssueCreated?: () => void;
 };
 
 const MENU = ["File", "Edit", "View", "Go", "Agents", "Help"] as const;
@@ -109,6 +110,7 @@ export function TrailShell({
   onGithubRefresh,
   onShowOnboarding,
   boardRefreshKey = 0,
+  onIssueCreated,
 }: TrailShellProps) {
   const [centerView, setCenterView] = useState<CenterView>("dashboard");
   const [worktreeTabOpen, setWorktreeTabOpen] = useState(true);
@@ -643,6 +645,7 @@ export function TrailShell({
         workspace={activeWorkspace}
         modKey={modKey}
         onClose={() => setNewTaskOpen(false)}
+        onCreated={onIssueCreated}
       />
       <IssueDetailModal
         open={issueDetail !== null}

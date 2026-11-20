@@ -13,6 +13,7 @@ export const PreloadIpcChannels = {
   boardSnapshot: "board.snapshot",
   boardMoveIssue: "board.moveIssue",
   issueGet: "issue.get",
+  issueCreate: "issue.create",
   syncNow: "sync.now",
   windowMinimize: "window.minimize",
   windowMaximize: "window.maximize",

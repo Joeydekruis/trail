@@ -25,6 +25,11 @@ export {
 } from "./workspace/settings.js";
 export type { IssueCacheRecord } from "./issues/types.js";
 export {
+  labelsForNewIssue,
+  type NewIssuePriority,
+  type NewIssueType,
+} from "./issues/create-labels.js";
+export {
   mapGitHubIssueToCache,
   isPullRequestIssue,
   type GitHubIssuePayload,

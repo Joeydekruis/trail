@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchGitHubBranches, fetchGitHubIssueComments, setGitHubIssueState } from "./github-api";
+import {
+  createGitHubIssue,
+  fetchGitHubBranches,
+  fetchGitHubIssueComments,
+  setGitHubIssueState,
+} from "./github-api";
 
 describe("fetchGitHubBranches", () => {
   beforeEach(() => {
@@ -44,6 +49,23 @@ describe("fetchGitHubBranches", () => {
       expect(result.comments).toHaveLength(1);
       expect(result.comments[0]?.body).toBe("Ship it");
     }
+  });
+
+  it("creates a GitHub issue", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ number: 99, html_url: "https://github.com/acme/widget/issues/99" }), {
+          status: 201,
+        }),
+      ),
+    );
+    const result = await createGitHubIssue("token", "acme", "widget", {
+      title: "New task",
+      body: "Details",
+      labels: ["feature", "priority:medium"],
+    });
+    expect(result).toEqual({ ok: true, number: 99, htmlUrl: "https://github.com/acme/widget/issues/99" });
   });
 
   it("patches issue state", async () => {
