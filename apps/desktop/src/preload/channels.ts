@@ -26,6 +26,8 @@ export const PreloadIpcChannels = {
   previewNavigate: "preview.navigate",
   previewCommentMode: "preview.commentMode",
   previewPinSubmit: "preview.pinSubmit",
+  designList: "design.list",
+  designPreviewUrl: "design.previewUrl",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",

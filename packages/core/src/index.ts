@@ -74,3 +74,8 @@ export {
 export { cssPathForElement, xpathForElement } from "./preview/dom-anchor.js";
 export type { PreviewPinAnchor, PreviewPinRecord } from "./preview/pin-types.js";
 export { PreviewPinStore, openPreviewPinStore } from "./preview/pin-store.js";
+export {
+  buildDesignCatalog,
+  type DesignScreenDto,
+  type DesignVersionDto,
+} from "./design/catalog.js";

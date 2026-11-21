@@ -28,6 +28,8 @@ export const IpcChannels = {
   previewNavigate: "preview.navigate",
   previewCommentMode: "preview.commentMode",
   previewPinSubmit: "preview.pinSubmit",
+  designList: "design.list",
+  designPreviewUrl: "design.previewUrl",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -564,6 +566,46 @@ export const previewPinEventDto = z.object({
 });
 
 export type PreviewPinEventDto = z.infer<typeof previewPinEventDto>;
+
+export const designVersionDto = z.object({
+  version: z.string().min(1),
+  relativePath: z.string().min(1),
+});
+
+export const designScreenDto = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  versions: z.array(designVersionDto),
+});
+
+export type DesignScreenDto = z.infer<typeof designScreenDto>;
+
+export const designListPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type DesignListPayload = z.infer<typeof designListPayload>;
+
+export const designListResult = z.object({
+  designRoot: z.string().nullable(),
+  screens: z.array(designScreenDto),
+});
+
+export type DesignListResult = z.infer<typeof designListResult>;
+
+export const designPreviewUrlPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  relativePath: z.string().min(1),
+});
+
+export type DesignPreviewUrlPayload = z.infer<typeof designPreviewUrlPayload>;
+
+export const designPreviewUrlResult = z.union([
+  z.object({ ok: z.literal(true), url: z.string().url() }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type DesignPreviewUrlResult = z.infer<typeof designPreviewUrlResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

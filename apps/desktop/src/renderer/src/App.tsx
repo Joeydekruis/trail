@@ -162,6 +162,11 @@ declare global {
       onPreviewPin?: (
         listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
       ) => () => void;
+      listDesigns?: (workspaceId?: string) => Promise<import("@trail/ipc").DesignListResult>;
+      getDesignPreviewUrl?: (input: {
+        workspaceId?: string;
+        relativePath: string;
+      }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;

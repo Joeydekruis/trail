@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { formatSyncLabel } from "./sync-label";
 import { CommandPalette } from "./CommandPalette";
@@ -6,10 +6,13 @@ import { NewTaskModal } from "./NewTaskModal";
 import { IssueDetailModal } from "./IssueDetailModal";
 import { getIssueDetailByRef, parseIssueTitleLine, type IssueDetail } from "./design/issue-detail-fixture";
 import { BoardView } from "./BoardView";
-import { DecisionsView } from "./DecisionsView";
-import { DesignsView } from "./DesignsView";
-import { DocsView } from "./DocsView";
-import { RoadmapView } from "./RoadmapView";
+import {
+  LazyDecisionsView,
+  LazyDesignsView,
+  LazyDocsView,
+  LazyRoadmapView,
+  ShellViewFallback,
+} from "./lazy-shell-views";
 import { SettingsView } from "./SettingsView";
 import { WorktreeView } from "./WorktreeView";
 import { dotColor, getDashboardFixture, workspaceShortcut } from "./design/fixture";
@@ -1079,7 +1082,9 @@ function ShellMain({
   if (centerView === "designs") {
     return (
       <div style={{ flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <DesignsView />
+        <Suspense fallback={<ShellViewFallback label="Designs" />}>
+          <LazyDesignsView workspace={activeWorkspace} />
+        </Suspense>
       </div>
     );
   }
@@ -1123,13 +1128,19 @@ function ShellMain({
             />
           ) : null}
           {centerView === "roadmap" ? (
-            <RoadmapView workspace={activeWorkspace} onGoToBoard={setCenterView} />
+            <Suspense fallback={<ShellViewFallback label="Roadmap" />}>
+              <LazyRoadmapView workspace={activeWorkspace} onGoToBoard={setCenterView} />
+            </Suspense>
           ) : null}
           {centerView === "decisions" ? (
-            <DecisionsView workspace={activeWorkspace} onOpenIssue={onOpenIssue} />
+            <Suspense fallback={<ShellViewFallback label="Decisions" />}>
+              <LazyDecisionsView workspace={activeWorkspace} onOpenIssue={onOpenIssue} />
+            </Suspense>
           ) : null}
           {centerView === "docs" ? (
-            <DocsView workspace={activeWorkspace} onSyncNow={onSyncNow} syncing={syncing} />
+            <Suspense fallback={<ShellViewFallback label="Docs" />}>
+              <LazyDocsView workspace={activeWorkspace} onSyncNow={onSyncNow} syncing={syncing} />
+            </Suspense>
           ) : null}
         </div>
       </div>

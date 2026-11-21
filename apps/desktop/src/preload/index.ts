@@ -187,6 +187,11 @@ export type TrailApi = {
     issueNumber: number;
     enabled: boolean;
   }) => Promise<void>;
+  listDesigns: (workspaceId?: string) => Promise<import("@trail/ipc").DesignListResult>;
+  getDesignPreviewUrl: (input: {
+    workspaceId?: string;
+    relativePath: string;
+  }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
   onPreviewPin: (
     listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
   ) => () => void;
@@ -352,6 +357,14 @@ const trailApi: TrailApi = {
     >,
   previewSetCommentMode: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.previewCommentMode, input) as Promise<void>,
+  listDesigns: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.designList, { workspaceId }) as Promise<
+      import("@trail/ipc").DesignListResult
+    >,
+  getDesignPreviewUrl: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.designPreviewUrl, input) as Promise<
+      { ok: true; url: string } | { ok: false; message: string }
+    >,
   onPreviewPin: (listener) => {
     const channel = "trail.previewPin";
     const handler = (
