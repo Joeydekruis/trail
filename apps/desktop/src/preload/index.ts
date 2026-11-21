@@ -110,9 +110,22 @@ export type TrailApi = {
   syncNow: (
     workspaceId?: string,
   ) => Promise<
-    | { ok: true; syncedAt: string; issueCount: number }
+    | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
     | { ok: false; message: string }
   >;
+  listSyncConflicts: (
+    workspaceId?: string,
+  ) => Promise<{ conflicts: import("@trail/ipc").SyncConflictDto[] }>;
+  resolveSyncConflict: (input: {
+    workspaceId?: string;
+    issueNumber: number;
+    useGitHubForAll?: boolean;
+    picks?: {
+      state?: "github" | "trail";
+      boardColumn?: "github" | "trail";
+      labels?: "github" | "trail";
+    };
+  }) => Promise<{ ok: true } | { ok: false; message: string }>;
   listWorktrees: (workspaceId?: string) => Promise<{
     worktrees: import("@trail/ipc").WorktreeDto[];
     repoRoot: string | null;
@@ -383,8 +396,16 @@ const trailApi: TrailApi = {
     }>,
   syncNow: (workspaceId) =>
     ipcRenderer.invoke(PreloadIpcChannels.syncNow, { workspaceId }) as Promise<
-      | { ok: true; syncedAt: string; issueCount: number }
+      | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
       | { ok: false; message: string }
+    >,
+  listSyncConflicts: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.syncConflictList, { workspaceId }) as Promise<{
+      conflicts: import("@trail/ipc").SyncConflictDto[];
+    }>,
+  resolveSyncConflict: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.syncConflictResolve, input) as Promise<
+      { ok: true } | { ok: false; message: string }
     >,
   listWorktrees: (workspaceId) =>
     ipcRenderer.invoke(PreloadIpcChannels.worktreeList, { workspaceId }) as Promise<{

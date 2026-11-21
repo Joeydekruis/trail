@@ -16,6 +16,7 @@ export class MemorySqlite implements SqliteDatabase {
         "preview_pins",
         "knowledge_docs",
         "decisions",
+        "issue_sync_conflicts",
       ]) {
         if (sql.includes(name) && !this.tables.has(name)) {
           this.tables.set(name, []);
@@ -74,6 +75,73 @@ export class MemorySqlite implements SqliteDatabase {
             "issue_cache",
             rows.filter((r) => r.workspace_id !== params[0]),
           );
+        }
+        if (sql.includes("DELETE FROM issue_sync_conflicts WHERE workspace_id = ? AND issue_number")) {
+          const [workspaceId, issueNumber] = params;
+          const rows = self.tables.get("issue_sync_conflicts") ?? [];
+          self.tables.set(
+            "issue_sync_conflicts",
+            rows.filter(
+              (r) =>
+                !(r.workspace_id === workspaceId && r.issue_number === issueNumber),
+            ),
+          );
+          return { changes: 1 };
+        }
+        if (sql.includes("DELETE FROM issue_sync_conflicts WHERE workspace_id")) {
+          const rows = self.tables.get("issue_sync_conflicts") ?? [];
+          self.tables.set(
+            "issue_sync_conflicts",
+            rows.filter((r) => r.workspace_id !== params[0]),
+          );
+        }
+        if (sql.includes("INSERT INTO issue_sync_conflicts")) {
+          const row = params[0] as Record<string, unknown>;
+          const rows = self.tables.get("issue_sync_conflicts") ?? [];
+          const mapped = {
+            workspace_id: row.workspaceId,
+            issue_number: row.issueNumber,
+            title: row.title,
+            github_state: row.githubState,
+            trail_state: row.trailState,
+            github_board_column: row.githubBoardColumn,
+            trail_board_column: row.trailBoardColumn,
+            github_labels_json: row.githubLabelsJson,
+            trail_labels_json: row.trailLabelsJson,
+            github_updated_at: row.githubUpdatedAt,
+            trail_updated_at: row.trailUpdatedAt,
+            detected_at: row.detectedAt,
+          };
+          const next = rows.filter(
+            (r) =>
+              !(
+                r.workspace_id === mapped.workspace_id &&
+                r.issue_number === mapped.issue_number
+              ),
+          );
+          next.push(mapped);
+          self.tables.set("issue_sync_conflicts", next);
+        }
+        if (sql.includes("UPDATE issue_cache SET") && sql.includes("title = @title")) {
+          const row = params[0] as Record<string, unknown>;
+          const rows = self.tables.get("issue_cache") ?? [];
+          const target = rows.find(
+            (r) => r.workspace_id === row.workspaceId && r.number === row.number,
+          );
+          if (target) {
+            Object.assign(target, {
+              title: row.title,
+              state: row.state,
+              board_column: row.boardColumn,
+              priority: row.priority,
+              labels_json: row.labelsJson,
+              updated_at: row.updatedAt,
+              html_url: row.htmlUrl,
+              body: row.body ?? null,
+            });
+            return { changes: 1 };
+          }
+          return { changes: 0 };
         }
         if (sql.includes("UPDATE workspaces SET repository")) {
           const repository = params[0];
@@ -317,6 +385,20 @@ export class MemorySqlite implements SqliteDatabase {
             .get("decisions")
             ?.find((r) => r.workspace_id === params[0] && r.adr_id === params[1]);
         }
+        if (sql.includes("FROM issue_sync_conflicts WHERE workspace_id") && sql.includes("AND issue_number")) {
+          return self.tables
+            .get("issue_sync_conflicts")
+            ?.find(
+              (r) => r.workspace_id === params[0] && r.issue_number === params[1],
+            );
+        }
+        if (sql.includes("COUNT(*)") && sql.includes("issue_sync_conflicts")) {
+          return {
+            count:
+              self.tables.get("issue_sync_conflicts")?.filter((r) => r.workspace_id === params[0])
+                .length ?? 0,
+          };
+        }
         return undefined;
       },
       all(...params: unknown[]) {
@@ -350,6 +432,11 @@ export class MemorySqlite implements SqliteDatabase {
           return [...(self.tables.get("knowledge_docs") ?? [])]
             .filter((r) => r.workspace_id === params[0])
             .sort((a, b) => String(a.title).localeCompare(String(b.title)));
+        }
+        if (sql.includes("FROM issue_sync_conflicts WHERE workspace_id")) {
+          return [...(self.tables.get("issue_sync_conflicts") ?? [])]
+            .filter((r) => r.workspace_id === params[0])
+            .sort((a, b) => (a.issue_number as number) - (b.issue_number as number));
         }
         if (sql.includes("FROM decisions WHERE workspace_id")) {
           let rows = [...(self.tables.get("decisions") ?? [])].filter(

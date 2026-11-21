@@ -104,6 +104,60 @@ export class IssueCacheStore {
     return result.changes > 0;
   }
 
+  upsert(issue: IssueCacheRecord): void {
+    const existing = this.get(issue.workspaceId, issue.number);
+    if (!existing) {
+      this.db
+        .prepare(`
+          INSERT INTO issue_cache (
+            workspace_id, number, title, state, board_column, priority,
+            labels_json, updated_at, html_url, body
+          ) VALUES (
+            @workspaceId, @number, @title, @state, @boardColumn, @priority,
+            @labelsJson, @updatedAt, @htmlUrl, @body
+          )
+        `)
+        .run({
+          workspaceId: issue.workspaceId,
+          number: issue.number,
+          title: issue.title,
+          state: issue.state,
+          boardColumn: issue.boardColumn,
+          priority: issue.priority,
+          labelsJson: JSON.stringify(issue.labels),
+          updatedAt: issue.updatedAt,
+          htmlUrl: issue.htmlUrl,
+          body: issue.body,
+        });
+      return;
+    }
+    this.db
+      .prepare(`
+        UPDATE issue_cache SET
+          title = @title,
+          state = @state,
+          board_column = @boardColumn,
+          priority = @priority,
+          labels_json = @labelsJson,
+          updated_at = @updatedAt,
+          html_url = @htmlUrl,
+          body = @body
+        WHERE workspace_id = @workspaceId AND number = @number
+      `)
+      .run({
+        workspaceId: issue.workspaceId,
+        number: issue.number,
+        title: issue.title,
+        state: issue.state,
+        boardColumn: issue.boardColumn,
+        priority: issue.priority,
+        labelsJson: JSON.stringify(issue.labels),
+        updatedAt: issue.updatedAt,
+        htmlUrl: issue.htmlUrl,
+        body: issue.body,
+      });
+  }
+
   countOpen(workspaceId: string): number {
     const row = this.db
       .prepare(

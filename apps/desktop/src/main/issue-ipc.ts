@@ -7,7 +7,11 @@ import {
   issueGetPayload,
   issueGetResult,
 } from "@trail/ipc";
-import { getIssueCacheStore, getWorkspaceStore } from "./database";
+import {
+  getIssueCacheStore,
+  getIssueSyncConflictStore,
+  getWorkspaceStore,
+} from "./database";
 import { createGitHubIssue, fetchGitHubIssueComments } from "./github-api";
 import { readGitHubToken } from "./github-token-store";
 import { syncWorkspaceNow } from "./sync-now";
@@ -94,7 +98,7 @@ export function registerIssueIpc(): void {
       return issueCreateResult.parse({ ok: false, message: created.message });
     }
 
-    await syncWorkspaceNow(workspaces, issues, id);
+    await syncWorkspaceNow(workspaces, issues, getIssueSyncConflictStore(), id);
 
     return issueCreateResult.parse({
       ok: true,

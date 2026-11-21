@@ -45,6 +45,8 @@ export const PreloadIpcChannels = {
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
   syncNow: "sync.now",
+  syncConflictList: "sync.conflict.list",
+  syncConflictResolve: "sync.conflict.resolve",
   windowMinimize: "window.minimize",
   windowMaximize: "window.maximize",
   windowClose: "window.close",

@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import type { WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
+import type { SyncConflictDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { formatSyncLabel } from "./sync-label";
 import { CommandPalette } from "./CommandPalette";
 import { NewTaskModal } from "./NewTaskModal";
@@ -69,6 +69,8 @@ export type TrailShellProps = {
   onSyncNow: () => void;
   syncing: boolean;
   syncError?: string | null;
+  syncConflicts?: SyncConflictDto[];
+  onResolveSyncConflict?: () => void;
   lastSyncedAt?: string | null;
   github?: WorkspaceGithubSnapshot;
   onGithubDisconnect?: () => void;
@@ -120,6 +122,8 @@ export function TrailShell({
   onSyncNow,
   syncing,
   syncError,
+  syncConflicts = [],
+  onResolveSyncConflict,
   lastSyncedAt,
   github,
   onGithubDisconnect,
@@ -730,6 +734,15 @@ export function TrailShell({
               </TrailButton>
             </div>
           ) : null}
+          {syncConflicts.length > 0 ? (
+            <div style={{ padding: "8px 16px 0" }}>
+              <ConflictBanner action="Resolve" onAction={onResolveSyncConflict}>
+                {syncConflicts.length === 1
+                  ? `Issue #${syncConflicts[0].issueNumber} differs between GitHub and Trail.`
+                  : `${syncConflicts.length} issues differ between GitHub and Trail.`}
+              </ConflictBanner>
+            </div>
+          ) : null}
           <TabBar
             centerView={centerView}
             worktreeTabOpen={worktreeTabOpen}
@@ -820,8 +833,20 @@ export function TrailShell({
           </span>
         </span>
         <SyncStatus
-          state={syncError ? "conflict" : syncing ? "syncing" : "synced"}
-          label={syncing ? "Syncing…" : syncError ?? formatSyncLabel(lastSyncedAt)}
+          state={
+            syncConflicts.length > 0 || syncError
+              ? "conflict"
+              : syncing
+                ? "syncing"
+                : "synced"
+          }
+          label={
+            syncing
+              ? "Syncing…"
+              : syncConflicts.length > 0
+                ? `${syncConflicts.length} conflict${syncConflicts.length === 1 ? "" : "s"}`
+                : syncError ?? formatSyncLabel(lastSyncedAt)
+          }
         />
         <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6 }}>
           <span className="tr-dot" style={{ color: "var(--mint)" }} />
@@ -1396,9 +1421,6 @@ function DashboardMain({
           </TrailButton>
         </div>
       </div>
-      <ConflictBanner action="Resolve">
-        Issue #37 was closed on GitHub, but the task is still In progress in Trail.
-      </ConflictBanner>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
         <TrailStatTile label="Open tasks" value="24" note="6 added this week" />
         <TrailStatTile label="Running now" value="1" note="Limit is 2 at once" tone="mint" />

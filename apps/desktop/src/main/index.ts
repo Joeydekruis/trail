@@ -9,7 +9,12 @@ import {
   syncNowPayload,
   syncNowResult,
 } from "@trail/ipc";
-import { getIssueCacheStore, getWorkspaceStore, initDatabase } from "./database";
+import {
+  getIssueCacheStore,
+  getIssueSyncConflictStore,
+  getWorkspaceStore,
+  initDatabase,
+} from "./database";
 import { syncWorkspaceNow } from "./sync-now";
 import { scheduleDeferredStartup } from "./deferred-startup";
 import { registerBoardIpc } from "./board-ipc";
@@ -28,6 +33,7 @@ import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
 import { registerAutopilotIpc } from "./autopilot-ipc";
 import { registerMcpIpc } from "./mcp-ipc";
+import { registerSyncConflictIpc } from "./sync-conflict-ipc";
 import { stopAutopilotScheduler } from "./autopilot-service";
 import { stopMcpServer } from "./mcp-server";
 
@@ -125,6 +131,7 @@ ipcMain.handle(IpcChannels.syncNow, async (_event, raw: unknown) => {
   const result = await syncWorkspaceNow(
     getWorkspaceStore(),
     getIssueCacheStore(),
+    getIssueSyncConflictStore(),
     workspaceId,
   );
   return syncNowResult.parse(result);
@@ -165,6 +172,7 @@ void app.whenReady().then(() => {
   registerKnowledgeIpc();
   registerDecisionIpc();
   registerMcpIpc();
+  registerSyncConflictIpc();
   registerAutopilotIpc();
   createWindow();
 

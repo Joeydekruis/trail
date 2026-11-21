@@ -107,14 +107,18 @@ export function TrailAvatar({
 export function ConflictBanner({
   children,
   action,
+  onAction,
 }: {
   children: ReactNode;
   action: string;
+  onAction?: () => void;
 }) {
   return (
     <div className="tr-conflict">
       <span className="tr-conflict-text">{children}</span>
-      <TrailButton variant="secondary">{action}</TrailButton>
+      <TrailButton variant="secondary" onClick={onAction} disabled={!onAction}>
+        {action}
+      </TrailButton>
     </div>
   );
 }

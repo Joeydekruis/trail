@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { WorktreeDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { DiagnosticsView } from "./DiagnosticsView";
 import { OnboardingView } from "./OnboardingView";
+import { ResolveSyncConflictModal } from "./ResolveSyncConflictModal";
 import { TrailShell } from "./TrailShell";
 import { isElectronRenderer, waitForTrail } from "./wait-for-trail";
 import { applyWorkspaceAccent } from "./workspace-accent";
@@ -82,9 +83,22 @@ declare global {
       syncNow: (
         workspaceId?: string,
       ) => Promise<
-        | { ok: true; syncedAt: string; issueCount: number }
+        | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
         | { ok: false; message: string }
       >;
+      listSyncConflicts?: (
+        workspaceId?: string,
+      ) => Promise<{ conflicts: import("@trail/ipc").SyncConflictDto[] }>;
+      resolveSyncConflict?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+        useGitHubForAll?: boolean;
+        picks?: {
+          state?: "github" | "trail";
+          boardColumn?: "github" | "trail";
+          labels?: "github" | "trail";
+        };
+      }) => Promise<{ ok: true } | { ok: false; message: string }>;
       listWorktrees?: (workspaceId?: string) => Promise<{
         worktrees: WorktreeDto[];
         repoRoot: string | null;
@@ -270,6 +284,10 @@ export function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncConflicts, setSyncConflicts] = useState<
+    import("@trail/ipc").SyncConflictDto[]
+  >([]);
+  const [resolveSyncOpen, setResolveSyncOpen] = useState(false);
   const [boardRefreshKey, setBoardRefreshKey] = useState(0);
   const [github, setGithub] = useState<WorkspaceGithubSnapshot>({ connected: false });
   const [activeLastSyncedAt, setActiveLastSyncedAt] = useState<string | null>(null);
@@ -470,6 +488,26 @@ export function App() {
     });
   }, [activeWorkspaceId, refreshWorkspaces]);
 
+  const refreshSyncConflicts = useCallback(async () => {
+    const api = window.trail;
+    if (!api?.listSyncConflicts || !activeWorkspace?.id) {
+      setSyncConflicts([]);
+      return;
+    }
+    const listed = await api.listSyncConflicts(activeWorkspace.id);
+    setSyncConflicts(listed.conflicts);
+  }, [activeWorkspace?.id]);
+
+  useEffect(() => {
+    void refreshSyncConflicts();
+  }, [refreshSyncConflicts, boardRefreshKey]);
+
+  useEffect(() => {
+    if (syncConflicts.length === 0) {
+      setResolveSyncOpen(false);
+    }
+  }, [syncConflicts.length]);
+
   const onSyncNow = useCallback(() => {
     const api = window.trail;
     if (!api || syncing) {
@@ -483,6 +521,7 @@ export function App() {
         if (result.ok) {
           setActiveLastSyncedAt(result.syncedAt);
           setBoardRefreshKey((key) => key + 1);
+          void refreshSyncConflicts();
           return;
         }
         setSyncError(result.message);
@@ -491,7 +530,7 @@ export function App() {
         setSyncError(error instanceof Error ? error.message : "Sync failed");
       })
       .finally(() => setSyncing(false));
-  }, [activeWorkspace?.id, syncing]);
+  }, [activeWorkspace?.id, syncing, refreshSyncConflicts]);
 
   if (view === "onboarding") {
     return (
@@ -526,6 +565,8 @@ export function App() {
       onSyncNow={onSyncNow}
       syncing={syncing}
       syncError={syncError}
+      syncConflicts={syncConflicts}
+      onResolveSyncConflict={() => setResolveSyncOpen(true)}
       lastSyncedAt={activeLastSyncedAt}
       github={github}
       onGithubDisconnect={() => void onGithubDisconnect()}
@@ -547,6 +588,15 @@ export function App() {
       open={diagnosticsOpen}
       onClose={() => setDiagnosticsOpen(false)}
       openViewCount={openViewCount}
+    />
+    <ResolveSyncConflictModal
+      open={resolveSyncOpen}
+      conflicts={syncConflicts}
+      onClose={() => setResolveSyncOpen(false)}
+      onResolved={() => {
+        void refreshSyncConflicts();
+        setBoardRefreshKey((key) => key + 1);
+      }}
     />
     </>
   );

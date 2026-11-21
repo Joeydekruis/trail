@@ -47,6 +47,8 @@ export const IpcChannels = {
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
   syncNow: "sync.now",
+  syncConflictList: "sync.conflict.list",
+  syncConflictResolve: "sync.conflict.resolve",
   windowMinimize: "window.minimize",
   windowMaximize: "window.maximize",
   windowClose: "window.close",
@@ -118,9 +120,75 @@ export const syncNowResult = z.discriminatedUnion("ok", [
     ok: z.literal(true),
     syncedAt: z.string().min(1),
     issueCount: z.number().int().nonnegative(),
+    conflictCount: z.number().int().nonnegative(),
   }),
   z.object({ ok: z.literal(false), message: z.string().min(1) }),
 ]);
+
+export const boardColumnId = z.enum([
+  "backlog",
+  "todo",
+  "in-progress",
+  "in-review",
+  "done",
+]);
+
+export type BoardColumnIdDto = z.infer<typeof boardColumnId>;
+
+export const syncConflictListPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type SyncConflictListPayload = z.infer<typeof syncConflictListPayload>;
+
+const syncConflictSideDto = z.object({
+  state: z.string(),
+  boardColumn: boardColumnId,
+  labels: z.array(z.string()),
+  updatedAt: z.string(),
+});
+
+export const syncConflictDto = z.object({
+  workspaceId: z.string().min(1),
+  issueNumber: z.number().int().positive(),
+  title: z.string(),
+  github: syncConflictSideDto,
+  trail: syncConflictSideDto,
+  detectedAt: z.string(),
+});
+
+export type SyncConflictDto = z.infer<typeof syncConflictDto>;
+
+export const syncConflictListResult = z.object({
+  conflicts: z.array(syncConflictDto),
+});
+
+export type SyncConflictListResult = z.infer<typeof syncConflictListResult>;
+
+export const syncConflictFieldPick = z.enum(["state", "boardColumn", "labels"]);
+export const syncConflictSidePick = z.enum(["github", "trail"]);
+
+export const syncConflictResolvePayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive(),
+  useGitHubForAll: z.boolean().optional(),
+  picks: z
+    .object({
+      state: syncConflictSidePick.optional(),
+      boardColumn: syncConflictSidePick.optional(),
+      labels: syncConflictSidePick.optional(),
+    })
+    .optional(),
+});
+
+export type SyncConflictResolvePayload = z.infer<typeof syncConflictResolvePayload>;
+
+export const syncConflictResolveResult = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type SyncConflictResolveResult = z.infer<typeof syncConflictResolveResult>;
 
 export const boardSnapshotPayload = z.object({
   workspaceId: z.string().min(1).optional(),
@@ -158,16 +226,6 @@ export const boardSnapshotResult = z.object({
 });
 
 export type BoardSnapshotResult = z.infer<typeof boardSnapshotResult>;
-
-export const boardColumnId = z.enum([
-  "backlog",
-  "todo",
-  "in-progress",
-  "in-review",
-  "done",
-]);
-
-export type BoardColumnIdDto = z.infer<typeof boardColumnId>;
 
 export const boardMoveIssuePayload = z.object({
   workspaceId: z.string().min(1).optional(),

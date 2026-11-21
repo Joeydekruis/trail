@@ -1,4 +1,5 @@
-import type { IssueCacheStore, WorkspaceStore } from "@trail/core";
+import type { IssueCacheStore, IssueSyncConflictStore, WorkspaceStore } from "@trail/core";
+import { mergeWorkspaceIssuesFromGitHub } from "@trail/core";
 import { fetchGitHubUser } from "./github-api";
 import { fetchWorkspaceIssues } from "./github-issues";
 import { fetchIssueBoardColumns } from "./github-project-status";
@@ -22,9 +23,11 @@ function parseRepository(repository: string): { owner: string; repo: string } {
 export async function syncWorkspaceNow(
   store: WorkspaceStore,
   issueStore: IssueCacheStore,
+  conflictStore: IssueSyncConflictStore,
   workspaceId?: string,
 ): Promise<
-  { ok: true; syncedAt: string; issueCount: number } | { ok: false; message: string }
+  | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
+  | { ok: false; message: string }
 > {
   const token = readGitHubToken();
   if (!token) {
@@ -83,8 +86,21 @@ export async function syncWorkspaceNow(
     return { ...issue, boardColumn: mapped };
   });
 
-  issueStore.replaceWorkspaceIssues(id, issues);
   const syncedAt = new Date().toISOString();
+  const local = issueStore.listByWorkspace(id);
+  const { merged, conflicts } = mergeWorkspaceIssuesFromGitHub(
+    id,
+    local,
+    issues,
+    syncedAt,
+  );
+  issueStore.replaceWorkspaceIssues(id, merged);
+  conflictStore.replaceWorkspaceConflicts(id, conflicts);
   store.setLastSyncAt(id, syncedAt);
-  return { ok: true, syncedAt, issueCount: fetched.issues.length };
+  return {
+    ok: true,
+    syncedAt,
+    issueCount: merged.length,
+    conflictCount: conflicts.length,
+  };
 }

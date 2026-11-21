@@ -7,12 +7,14 @@ import {
   MemorySqlite,
   openDecisionStore,
   openIssueCacheStore,
+  openIssueSyncConflictStore,
   openKnowledgeDocStore,
   openPreviewPinStore,
   openWorktreeStore,
   openWorkspaceStore,
   type DecisionStore,
   type IssueCacheStore,
+  type IssueSyncConflictStore,
   type KnowledgeDocStore,
   type PreviewPinStore,
   type SqliteDatabase,
@@ -22,6 +24,7 @@ import {
 
 let store: WorkspaceStore | null = null;
 let issueStore: IssueCacheStore | null = null;
+let issueSyncConflictStore: IssueSyncConflictStore | null = null;
 let worktreeStore: WorktreeStore | null = null;
 let previewPinStore: PreviewPinStore | null = null;
 let knowledgeDocStore: KnowledgeDocStore | null = null;
@@ -39,6 +42,13 @@ export function getIssueCacheStore(): IssueCacheStore {
     throw new Error("Issue cache store not initialized");
   }
   return issueStore;
+}
+
+export function getIssueSyncConflictStore(): IssueSyncConflictStore {
+  if (!issueSyncConflictStore) {
+    throw new Error("Issue sync conflict store not initialized");
+  }
+  return issueSyncConflictStore;
 }
 
 export function getWorktreeStore(): WorktreeStore {
@@ -72,6 +82,7 @@ export function getDecisionStore(): DecisionStore {
 function openStores(db: SqliteDatabase, label: string): void {
   store = openWorkspaceStore(db);
   issueStore = openIssueCacheStore(db);
+  issueSyncConflictStore = openIssueSyncConflictStore(db);
   worktreeStore = openWorktreeStore(db);
   previewPinStore = openPreviewPinStore(db);
   knowledgeDocStore = openKnowledgeDocStore(db);

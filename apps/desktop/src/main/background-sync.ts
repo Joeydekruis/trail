@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron";
-import { getIssueCacheStore, getWorkspaceStore } from "./database";
+import { getIssueCacheStore, getIssueSyncConflictStore, getWorkspaceStore } from "./database";
 import { readGitHubToken } from "./github-token-store";
 import { syncWorkspaceNow } from "./sync-now";
 import { runAutopilotTick } from "./autopilot-service";
@@ -68,6 +68,7 @@ async function runBackgroundSync(): Promise<void> {
     const result = await syncWorkspaceNow(
       getWorkspaceStore(),
       getIssueCacheStore(),
+      getIssueSyncConflictStore(),
       workspaceId,
     );
     if (result.ok) {

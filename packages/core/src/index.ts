@@ -51,6 +51,21 @@ export { issueRecordToDetail, type IssueDetailFromCache } from "./issues/detail.
 export { buildBoardSnapshot, type BoardSnapshot } from "./issues/board-snapshot.js";
 export { IssueCacheStore, openIssueCacheStore } from "./issues/store.js";
 export {
+  IssueSyncConflictStore,
+  openIssueSyncConflictStore,
+} from "./issues/sync-conflict-store.js";
+export type {
+  IssueSyncConflictRecord,
+  IssueSyncConflictSide,
+  SyncConflictField,
+  SyncConflictResolutionPicks,
+} from "./issues/sync-conflict-types.js";
+export {
+  applySyncConflictPicks,
+  issueSidesDiffer,
+  mergeWorkspaceIssuesFromGitHub,
+} from "./issues/sync-merge.js";
+export {
   slugFromIssueTitle,
   branchNameForIssue,
   worktreeDirectoryName,
