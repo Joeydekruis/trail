@@ -8,4 +8,4 @@
 - [x] IPC list/resolve + push state, Projects status, labels to GitHub
 - [x] Conflict banner + Resolve sync conflict modal
 - [ ] Assignee field (not in issue cache yet)
-- [ ] Per-card sync status on board (`synced` / `pending` / `conflict`)
+- [x] Per-card sync status on board (`synced` / `conflict`; `pending` reserved)

@@ -48,7 +48,12 @@ export {
   type GitHubIssueCommentRow,
 } from "./issues/comments.js";
 export { issueRecordToDetail, type IssueDetailFromCache } from "./issues/detail.js";
-export { buildBoardSnapshot, type BoardSnapshot } from "./issues/board-snapshot.js";
+export {
+  buildBoardSnapshot,
+  type BoardSnapshot,
+  type BuildBoardSnapshotOptions,
+  type IssueCardSyncStatus,
+} from "./issues/board-snapshot.js";
 export { IssueCacheStore, openIssueCacheStore } from "./issues/store.js";
 export {
   IssueSyncConflictStore,

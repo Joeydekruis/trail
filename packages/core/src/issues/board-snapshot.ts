@@ -2,12 +2,15 @@ import { BOARD_COLUMN_META, BOARD_COLUMN_ORDER, type BoardColumnId } from "./col
 import { compareByPriority, priorityDisplay } from "./priority.js";
 import type { IssueCacheRecord } from "./types.js";
 
+export type IssueCardSyncStatus = "synced" | "conflict" | "pending";
+
 export type BoardCardSnapshot = {
   issue: string;
   title: string;
   prioColor: string;
   prioLabel: string;
   labels: Array<{ text: string; tone: "blue" | "mint" | "gray" | "violet" }>;
+  syncStatus: IssueCardSyncStatus;
 };
 
 export type BoardColumnSnapshot = {
@@ -39,7 +42,15 @@ function labelTone(name: string): BoardCardSnapshot["labels"][number]["tone"] {
   return "gray";
 }
 
-export function buildBoardSnapshot(issues: IssueCacheRecord[]): BoardSnapshot {
+export type BuildBoardSnapshotOptions = {
+  conflictIssueNumbers?: ReadonlySet<number>;
+};
+
+export function buildBoardSnapshot(
+  issues: IssueCacheRecord[],
+  options?: BuildBoardSnapshotOptions,
+): BoardSnapshot {
+  const conflicts = options?.conflictIssueNumbers;
   const columns: BoardColumnSnapshot[] = BOARD_COLUMN_ORDER.map((id) => {
     const meta = BOARD_COLUMN_META[id];
     return {
@@ -74,6 +85,7 @@ export function buildBoardSnapshot(issues: IssueCacheRecord[]): BoardSnapshot {
       prioColor: display.color,
       prioLabel: display.label,
       labels: issue.labels.slice(0, 4).map((text) => ({ text, tone: labelTone(text) })),
+      syncStatus: conflicts?.has(issue.number) ? "conflict" : "synced",
     });
     column.count = column.cards.length;
   }

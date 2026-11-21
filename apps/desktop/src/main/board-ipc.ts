@@ -7,7 +7,7 @@ import {
   boardSnapshotResult,
   IpcChannels,
 } from "@trail/ipc";
-import { getIssueCacheStore, getWorkspaceStore } from "./database";
+import { getIssueCacheStore, getIssueSyncConflictStore, getWorkspaceStore } from "./database";
 import { moveBoardIssue } from "./board-move-issue";
 
 export function registerBoardIpc(): void {
@@ -27,7 +27,12 @@ export function registerBoardIpc(): void {
       });
     }
 
-    const snapshot = buildBoardSnapshot(issues);
+    const conflictNumbers = new Set(
+      getIssueSyncConflictStore()
+        .listByWorkspace(id)
+        .map((row) => row.issueNumber),
+    );
+    const snapshot = buildBoardSnapshot(issues, { conflictIssueNumbers: conflictNumbers });
     return boardSnapshotResult.parse({
       source: "cache",
       repository: workspace.repository,

@@ -201,12 +201,17 @@ const boardLabelChip = z.object({
   tone: z.enum(["blue", "mint", "gray", "violet"]),
 });
 
+export const issueCardSyncStatus = z.enum(["synced", "conflict", "pending"]);
+
+export type IssueCardSyncStatusDto = z.infer<typeof issueCardSyncStatus>;
+
 export const boardCardDto = z.object({
   issue: z.string(),
   title: z.string(),
   prioColor: z.string(),
   prioLabel: z.string(),
   labels: z.array(boardLabelChip),
+  syncStatus: issueCardSyncStatus.default("synced"),
 });
 
 export const boardColumnDto = z.object({

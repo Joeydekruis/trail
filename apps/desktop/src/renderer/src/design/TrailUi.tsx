@@ -224,7 +224,18 @@ export function FilterPill({
   );
 }
 
+function syncStatusLabel(status: BoardCard["syncStatus"]): string | null {
+  if (status === "conflict") {
+    return "Conflict";
+  }
+  if (status === "pending") {
+    return "Pending";
+  }
+  return null;
+}
+
 export function IssueKanbanCard({ card, onClick }: { card: BoardCard; onClick?: () => void }) {
+  const syncLabel = syncStatusLabel(card.syncStatus);
   return (
     <div
       className="tr-card"
@@ -264,6 +275,12 @@ export function IssueKanbanCard({ card, onClick }: { card: BoardCard; onClick?: 
         <span className="tr-card-title" style={{ flex: 1, fontWeight: 500 }}>
           {card.title}
         </span>
+        {syncLabel ? (
+          <SyncStatus
+            state={card.syncStatus === "pending" ? "pending" : "conflict"}
+            label={syncLabel}
+          />
+        ) : null}
         {card.agent ? (
           <TrailAvatar initials={card.agent.initials} name="" tone={card.agent.tone as Tone} />
         ) : null}
@@ -478,10 +495,24 @@ export function TrailProgressBar({
   );
 }
 
-export function SyncStatus({ label }: { state: string; label: string }) {
+export function SyncStatus({
+  state,
+  label,
+}: {
+  state: "synced" | "syncing" | "conflict" | "pending" | string;
+  label: string;
+}) {
+  const dotColor =
+    state === "conflict"
+      ? "var(--amber)"
+      : state === "pending"
+        ? "var(--blue)"
+        : state === "syncing"
+          ? "var(--violet)"
+          : "var(--mint)";
   return (
     <span className="tr-sync">
-      <span className="tr-dot" style={{ color: "var(--mint)" }} />
+      <span className="tr-dot" style={{ color: dotColor }} />
       {label}
     </span>
   );

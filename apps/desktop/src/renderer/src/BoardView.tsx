@@ -109,14 +109,18 @@ export function BoardView({
         name: column.name,
         tone: column.tone,
         count: column.count,
-        rows: column.cards.map((card) => ({
-          issue: card.issue,
-          title: card.title,
-          adr: "—",
-          pr: "—",
-          syncLabel: "Synced",
-          by: "—",
-        })),
+        rows: column.cards.map((card) => {
+          const syncState = card.syncStatus ?? "synced";
+          return {
+            issue: card.issue,
+            title: card.title,
+            adr: "—",
+            pr: "—",
+            syncLabel: syncState === "conflict" ? "Conflict" : "Synced",
+            syncState,
+            by: "—",
+          };
+        }),
       }));
       return {
         repo: liveBoard.repository ?? workspace?.repository ?? fixture.repo,
@@ -724,7 +728,7 @@ function BoardListDataRow({
       </span>
       <span className="tr-mono tr-faint">{row.adr}</span>
       <span className="tr-small">{row.pr}</span>
-      <SyncStatus state="synced" label={row.syncLabel} />
+      <SyncStatus state={row.syncState ?? "synced"} label={row.syncLabel} />
       <span className="tr-mono tr-faint">{row.by}</span>
     </div>
   );

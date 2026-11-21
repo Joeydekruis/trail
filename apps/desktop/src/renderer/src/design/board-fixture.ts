@@ -6,6 +6,7 @@ export type BoardCard = {
   prioColor: string;
   prioLabel: string;
   labels: { text: string; tone: "blue" | "mint" | "gray" | "violet" }[];
+  syncStatus?: "synced" | "conflict" | "pending";
   adr?: string;
   pr?: string;
   prTone?: "violet" | "blue";
@@ -147,6 +148,7 @@ export type BoardListRow = {
   adr: string;
   pr: string;
   syncLabel: string;
+  syncState?: "synced" | "conflict" | "pending";
   by: string;
 };
 
