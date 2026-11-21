@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
   BrowserWindow,
   shell,
@@ -6,6 +7,8 @@ import {
 } from "electron";
 import { DEFAULT_PREVIEW_URL, normalizePreviewUrl } from "@trail/core";
 import type { PreviewWorktreeRef } from "@trail/ipc";
+import { resolvePreviewOverlayScriptPath } from "./preview-overlay-path";
+import { resolvePreviewPreloadPath } from "./preview-preload-path";
 
 type PreviewKey = string;
 
@@ -13,9 +16,11 @@ type PreviewEntry = {
   view: WebContentsView;
   url: string;
   window: BrowserWindow | null;
+  ref: PreviewWorktreeRef;
 };
 
 const entries = new Map<PreviewKey, PreviewEntry>();
+const refByWebContentsId = new Map<number, PreviewWorktreeRef>();
 
 function previewKey(ref: PreviewWorktreeRef): PreviewKey {
   return `${ref.workspaceId}:${ref.issueNumber}`;
@@ -25,14 +30,34 @@ function partitionForWorkspace(workspaceId: string): string {
   return `persist:preview-${workspaceId}`;
 }
 
-function createView(workspaceId: string): WebContentsView {
+function registerWebContentsRef(view: WebContentsView, ref: PreviewWorktreeRef): void {
+  refByWebContentsId.set(view.webContents.id, ref);
+  view.webContents.on("destroyed", () => {
+    refByWebContentsId.delete(view.webContents.id);
+  });
+}
+
+function injectPinOverlay(view: WebContentsView): void {
+  if (view.webContents.isDestroyed()) {
+    return;
+  }
+  try {
+    const script = readFileSync(resolvePreviewOverlayScriptPath(), "utf8");
+    void view.webContents.executeJavaScript(script);
+  } catch (error) {
+    console.warn("[trail] preview pin overlay inject failed:", error);
+  }
+}
+
+function createView(ref: PreviewWorktreeRef): WebContentsView {
   const view = new WebContentsView({
     webPreferences: {
-      partition: partitionForWorkspace(workspaceId),
+      partition: partitionForWorkspace(ref.workspaceId),
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
       spellcheck: false,
+      preload: resolvePreviewPreloadPath(),
     },
   });
   view.webContents.setWindowOpenHandler(({ url }) => {
@@ -41,7 +66,29 @@ function createView(workspaceId: string): WebContentsView {
     }
     return { action: "deny" };
   });
+  view.webContents.on("did-finish-load", () => {
+    injectPinOverlay(view);
+  });
+  registerWebContentsRef(view, ref);
   return view;
+}
+
+export function getPreviewRefForWebContents(webContentsId: number): PreviewWorktreeRef | null {
+  return refByWebContentsId.get(webContentsId) ?? null;
+}
+
+export function isPreviewWebContents(webContentsId: number): boolean {
+  return refByWebContentsId.has(webContentsId);
+}
+
+export function setPreviewCommentMode(ref: PreviewWorktreeRef, enabled: boolean): void {
+  const entry = entries.get(previewKey(ref));
+  if (!entry || entry.view.webContents.isDestroyed()) {
+    return;
+  }
+  void entry.view.webContents.executeJavaScript(
+    `window.__trailPinOverlay?.setCommentMode(${enabled ? "true" : "false"})`,
+  );
 }
 
 function detachFromWindow(entry: PreviewEntry): void {
@@ -63,6 +110,7 @@ function disposeEntry(key: PreviewKey): void {
   }
   detachFromWindow(entry);
   if (!entry.view.webContents.isDestroyed()) {
+    refByWebContentsId.delete(entry.view.webContents.id);
     entry.view.webContents.close();
   }
   entries.delete(key);
@@ -105,9 +153,10 @@ export function attachPreview(
   let entry = entries.get(key);
   if (!entry) {
     entry = {
-      view: createView(ref.workspaceId),
+      view: createView(ref),
       url: "",
       window: null,
+      ref,
     };
     entries.set(key, entry);
   }
@@ -155,6 +204,7 @@ export function detachPreview(ref: PreviewWorktreeRef): void {
     return;
   }
   detachFromWindow(entry);
+  setPreviewCommentMode(ref, false);
 }
 
 export function navigatePreview(

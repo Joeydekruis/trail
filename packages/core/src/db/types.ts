@@ -1,5 +1,5 @@
 export type SqliteStatement = {
-  run: (...params: unknown[]) => { changes: number };
+  run: (...params: unknown[]) => { changes: number; lastInsertRowid?: number | bigint };
   get: (...params: unknown[]) => unknown;
   all: (...params: unknown[]) => unknown[];
 };

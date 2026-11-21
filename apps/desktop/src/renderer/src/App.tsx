@@ -145,6 +145,14 @@ declare global {
         issueNumber: number;
         url: string;
       }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
+      previewSetCommentMode?: (input: {
+        workspaceId: string;
+        issueNumber: number;
+        enabled: boolean;
+      }) => Promise<void>;
+      onPreviewPin?: (
+        listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
+      ) => () => void;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;

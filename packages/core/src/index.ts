@@ -71,3 +71,6 @@ export {
   normalizePreviewUrl,
   type NormalizePreviewUrlResult,
 } from "./preview/normalize-preview-url.js";
+export { cssPathForElement, xpathForElement } from "./preview/dom-anchor.js";
+export type { PreviewPinAnchor, PreviewPinRecord } from "./preview/pin-types.js";
+export { PreviewPinStore, openPreviewPinStore } from "./preview/pin-store.js";

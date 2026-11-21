@@ -7,7 +7,14 @@ export class MemorySqlite implements SqliteDatabase {
 
   exec(sql: string): void {
     if (sql.includes("CREATE TABLE")) {
-      for (const name of ["schema_version", "workspaces", "app_settings", "issue_cache", "worktrees"]) {
+      for (const name of [
+        "schema_version",
+        "workspaces",
+        "app_settings",
+        "issue_cache",
+        "worktrees",
+        "preview_pins",
+      ]) {
         if (sql.includes(name) && !this.tables.has(name)) {
           this.tables.set(name, []);
         }
@@ -129,6 +136,29 @@ export class MemorySqlite implements SqliteDatabase {
           next.push(mapped);
           self.tables.set("worktrees", next);
         }
+        if (sql.includes("INSERT INTO preview_pins")) {
+          const row = params[0] as Record<string, unknown>;
+          const rows = self.tables.get("preview_pins") ?? [];
+          const id = rows.length + 1;
+          rows.push({
+            id,
+            workspace_id: row.workspaceId,
+            issue_number: row.issueNumber,
+            pin_number: row.pinNumber,
+            comment: row.comment,
+            page_url: row.pageUrl,
+            selector: row.selector,
+            xpath: row.xpath,
+            element_text: row.elementText,
+            offset_x: row.offsetX,
+            offset_y: row.offsetY,
+            viewport_width: row.viewportWidth,
+            viewport_height: row.viewportHeight,
+            created_at: row.createdAt,
+          });
+          self.tables.set("preview_pins", rows);
+          return { changes: 1, lastInsertRowid: id };
+        }
         return { changes: 1 };
       },
       get(...params: unknown[]) {
@@ -176,6 +206,17 @@ export class MemorySqlite implements SqliteDatabase {
               (r) => r.workspace_id === params[0] && r.issue_number === params[1],
             );
         }
+        if (sql.includes("MAX(pin_number)") && sql.includes("preview_pins")) {
+          const rows =
+            self.tables.get("preview_pins")?.filter(
+              (r) => r.workspace_id === params[0] && r.issue_number === params[1],
+            ) ?? [];
+          const maxNum = rows.reduce(
+            (max, r) => Math.max(max, (r.pin_number as number) ?? 0),
+            0,
+          );
+          return { maxNum: rows.length === 0 ? null : maxNum };
+        }
         if (sql.includes("workspaces WHERE id")) {
           return self.tables.get("workspaces")?.find((r) => r.id === params[0]);
         }
@@ -196,6 +237,13 @@ export class MemorySqlite implements SqliteDatabase {
           return [...(self.tables.get("worktrees") ?? [])]
             .filter((r) => r.workspace_id === params[0])
             .sort((a, b) => (b.issue_number as number) - (a.issue_number as number));
+        }
+        if (sql.includes("FROM preview_pins WHERE workspace_id")) {
+          return [...(self.tables.get("preview_pins") ?? [])]
+            .filter(
+              (r) => r.workspace_id === params[0] && r.issue_number === params[1],
+            )
+            .sort((a, b) => (a.pin_number as number) - (b.pin_number as number));
         }
         if (sql.includes("FROM workspaces ORDER BY")) {
           const rows = [...(self.tables.get("workspaces") ?? [])];

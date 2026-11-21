@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig } from "electron-vite";
 import react from "@vitejs/plugin-react";
 import { visualizer } from "rollup-plugin-visualizer";
+import { pinOverlayBuildPlugin } from "./plugins/pin-overlay-build";
 
 const analyze = process.env.DESKTOP_ANALYZE === "1";
 
@@ -37,10 +38,18 @@ export default defineConfig({
   preload: {
     build: {
       rollupOptions: {
-        external: ["electron"],
+        input: {
+          index: resolve("src/preload/index.ts"),
+          "preview-preload": resolve("src/preload/preview-preload.ts"),
+        },
+        output: {
+          entryFileNames: "[name].js",
+        },
+        external: ["electron", "@trail/ipc"],
       },
       sourcemap: false,
     },
+    plugins: [pinOverlayBuildPlugin()],
   },
   renderer: {
     resolve: {

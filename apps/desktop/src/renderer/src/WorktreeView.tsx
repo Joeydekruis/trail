@@ -1,15 +1,11 @@
-import { useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DEFAULT_PREVIEW_URL, normalizePreviewUrl } from "@trail/core/client";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
 import { useBatchedAgentLines } from "./use-batched-agent-lines";
+import { previewPinToChatLine } from "./preview-pin-chat";
 import { WorktreePreviewSurface } from "./worktree-preview-surface";
 import { SelectButton, SyncStatus, TrailAvatar, TrailButton, TrailChip, TrailPanel, TrailProgressBar } from "./design/TrailUi";
 import type { WorktreeSessionContext } from "./worktree-session";
-
-const INITIAL_PINS: PreviewPin[] = [];
-
-type PreviewPin = { n: number; x: number; y: number };
-type PreviewDraft = { n: number; x: number; y: number; el: string };
 
 type WorktreeViewProps = {
   context?: WorktreeSessionContext | null;
@@ -82,15 +78,41 @@ function WorktreeViewBody({
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [mode, setMode] = useState<"chat" | "preview">("chat");
   const [commentMode, setCommentMode] = useState(false);
-  const [pins, setPins] = useState<PreviewPin[]>(INITIAL_PINS);
-  const [draft, setDraft] = useState<PreviewDraft | null>(null);
-  const [draftText, setDraftText] = useState("");
   const [extraMessages, setExtraMessages] = useState<ChatLine[]>([]);
   const [previewUrl, setPreviewUrl] = useState(DEFAULT_PREVIEW_URL);
   const [previewUrlDraft, setPreviewUrlDraft] = useState(DEFAULT_PREVIEW_URL);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
   useBatchedAgentLines(workspaceId, context.issueNumber, setExtraMessages);
+
+  useEffect(() => {
+    if (!workspaceId) {
+      return;
+    }
+    const enabled = mode === "preview" && commentMode;
+    void window.trail?.previewSetCommentMode?.({
+      workspaceId,
+      issueNumber: context.issueNumber,
+      enabled,
+    });
+  }, [commentMode, context.issueNumber, mode, workspaceId]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.onPreviewPin || !workspaceId) {
+      return;
+    }
+    return api.onPreviewPin((payload) => {
+      if (
+        payload.workspaceId !== workspaceId ||
+        payload.issueNumber !== context.issueNumber
+      ) {
+        return;
+      }
+      setExtraMessages((prev) => [...prev, previewPinToChatLine(payload)]);
+      setCommentMode(false);
+    });
+  }, [workspaceId, context.issueNumber]);
 
   const seededMessages = useMemo<ChatLine[]>(() => {
     const now = new Date();
@@ -126,30 +148,6 @@ function WorktreeViewBody({
       return;
     }
     setDetailsOpen((v) => !v);
-  };
-
-  const sendDraft = () => {
-    const text = draftText.trim();
-    if (!text || !draft) return;
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const where = `${previewUrl} · x ${draft.x.toFixed(0)}%, y ${draft.y.toFixed(0)}% · ${draft.el}`;
-    setPins((prev) => [...prev, { n: draft.n, x: draft.x, y: draft.y }]);
-    setExtraMessages((prev) => [
-      ...prev,
-      {
-        who: "You",
-        initials: "JK",
-        tone: "mint",
-        time,
-        chip: { text: "From preview comment", tone: "violet" },
-        body: `Pin ${draft.n}: "${text}"`,
-        monoLines: [where],
-      },
-    ]);
-    setDraft(null);
-    setDraftText("");
-    setCommentMode(false);
   };
 
   return (
@@ -255,19 +253,6 @@ function WorktreeViewBody({
             messages={messages}
             commentMode={commentMode}
             onToggleComment={() => setCommentMode((v) => !v)}
-            pins={pins}
-            draft={draft}
-            draftText={draftText}
-            onDraftText={setDraftText}
-            onCancelDraft={() => {
-              setDraft(null);
-              setDraftText("");
-            }}
-            onSendDraft={sendDraft}
-            onCanvasClick={(x, y) => {
-              if (!commentMode || draft) return;
-              setDraft({ n: pins.length + 1, x, y, el: "Selected element" });
-            }}
           />
         )}
         {detailsOpen && mode === "chat" ? (
@@ -462,13 +447,6 @@ function PreviewSplit({
   messages,
   commentMode,
   onToggleComment,
-  pins,
-  draft,
-  draftText,
-  onDraftText,
-  onCancelDraft,
-  onSendDraft,
-  onCanvasClick,
 }: {
   workspaceId: string;
   issueNumber: number;
@@ -480,32 +458,7 @@ function PreviewSplit({
   messages: ChatLine[];
   commentMode: boolean;
   onToggleComment: () => void;
-  pins: PreviewPin[];
-  draft: PreviewDraft | null;
-  draftText: string;
-  onDraftText: (t: string) => void;
-  onCancelDraft: () => void;
-  onSendDraft: () => void;
-  onCanvasClick: (x: number, y: number) => void;
 }) {
-  const commentPinsEnabled = false;
-
-  const handleCanvas = (e: MouseEvent<HTMLDivElement>) => {
-    if (!commentPinsEnabled) return;
-    if (e.target instanceof HTMLElement && e.target.closest('[role="dialog"]')) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    onCanvasClick(x, y);
-  };
-
-  const draftPos =
-    draft && draft.x > 55
-      ? { right: `calc(${100 - draft.x}% + 16px)`, top: `${draft.y}%` }
-      : draft
-        ? { left: `calc(${draft.x}% + 16px)`, top: `${draft.y}%` }
-        : undefined;
-
   return (
     <>
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", background: "var(--bg)" }}>
@@ -552,10 +505,9 @@ function PreviewSplit({
           ) : null}
           <button
             type="button"
-            className="tr-btn tr-btn-secondary"
-            disabled={!commentPinsEnabled}
+            className={commentMode ? "tr-btn tr-btn-secondary is-on" : "tr-btn tr-btn-secondary"}
             aria-pressed={commentMode}
-            data-tip="Pin overlay lands with preview preload (next batch)"
+            data-tip="Click on the page to place a pin and send feedback to chat"
             data-tip-pos="below"
             onClick={onToggleComment}
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
@@ -574,124 +526,7 @@ function PreviewSplit({
           issueNumber={issueNumber}
           url={previewUrl}
           active={Boolean(workspaceId)}
-        >
-          <div
-            data-preview-canvas=""
-            onClick={handleCanvas}
-            style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
-            }}
-          >
-          {pins.map((p) => (
-            <span
-              key={p.n}
-              style={{
-                position: "absolute",
-                left: `calc(${p.x}% - 12px)`,
-                top: `calc(${p.y}% - 12px)`,
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                background: "var(--accent)",
-                color: "var(--on-accent)",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 600,
-                boxShadow: "0 0 0 3px rgba(0,0,0,0.25)",
-                pointerEvents: "none",
-              }}
-            >
-              {p.n}
-            </span>
-          ))}
-          {draft ? (
-            <>
-              <span
-                style={{
-                  position: "absolute",
-                  left: `calc(${draft.x}% - 12px)`,
-                  top: `calc(${draft.y}% - 12px)`,
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  border: "2px dashed var(--accent)",
-                  background: "rgba(0,0,0,0.35)",
-                  color: "#fff",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  pointerEvents: "none",
-                }}
-              >
-                {draft.n}
-              </span>
-              <div
-                role="dialog"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  position: "absolute",
-                  ...draftPos,
-                  width: 320,
-                  boxSizing: "border-box",
-                  padding: 12,
-                  background: "var(--surface-raised)",
-                  border: "1px solid var(--accent)",
-                  borderRadius: 10,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
-                  zIndex: 2,
-                }}
-              >
-                <span style={{ fontWeight: 500, fontSize: 13 }}>New comment · pin {draft.n}</span>
-                <textarea
-                  id="pincomment"
-                  rows={4}
-                  autoFocus
-                  value={draftText}
-                  onChange={(e) => onDraftText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                      e.preventDefault();
-                      onSendDraft();
-                    }
-                  }}
-                  placeholder="What should change?"
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    padding: "8px 10px",
-                    border: "1px solid var(--line-strong)",
-                    borderRadius: 8,
-                    background: "var(--bg)",
-                    color: "var(--ink)",
-                    font: "inherit",
-                    fontSize: 13,
-                    lineHeight: "20px",
-                    resize: "none",
-                    outline: 0,
-                  }}
-                />
-                <span style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                  <TrailButton variant="ghost" onClick={onCancelDraft}>
-                    Cancel
-                  </TrailButton>
-                  <TrailButton variant="primary" onClick={onSendDraft}>
-                    Send to chat
-                  </TrailButton>
-                </span>
-              </div>
-            </>
-          ) : null}
-          </div>
-        </WorktreePreviewSurface>
+        />
       </div>
       <div
         style={{

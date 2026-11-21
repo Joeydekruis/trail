@@ -5,7 +5,7 @@
 **Status:**
 
 - [x] Preview — `WebContentsView` per worktree, IPC attach/setBounds/detach, localhost URL bar
-- [ ] Preview preload — pin overlay (shadow DOM) + Send to chat
+- [x] Preview preload — pin overlay (shadow DOM) + Send to chat (SQLite anchors)
 - [ ] Preview idle — dev-server stop na 10 min onzichtbaar (performance briefing)
 - [ ] Designs + Docs schermen (lazy chunks)
 - [ ] Lijstvirtualisatie (>100 items) en chat memo

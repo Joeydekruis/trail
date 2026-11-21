@@ -26,6 +26,8 @@ export const IpcChannels = {
   previewSetBounds: "preview.setBounds",
   previewDetach: "preview.detach",
   previewNavigate: "preview.navigate",
+  previewCommentMode: "preview.commentMode",
+  previewPinSubmit: "preview.pinSubmit",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -515,6 +517,53 @@ export type PreviewNavigatePayload = z.infer<typeof previewNavigatePayload>;
 export const previewNavigateResult = previewAttachResult;
 
 export type PreviewNavigateResult = z.infer<typeof previewNavigateResult>;
+
+export const previewPinAnchorDto = z.object({
+  selector: z.string().min(1),
+  xpath: z.string().min(1),
+  elementText: z.string(),
+  offsetX: z.number().finite(),
+  offsetY: z.number().finite(),
+  viewportWidth: z.number().int().positive(),
+  viewportHeight: z.number().int().positive(),
+  pageUrl: z.string().url(),
+});
+
+export type PreviewPinAnchorDto = z.infer<typeof previewPinAnchorDto>;
+
+export const previewCommentModePayload = previewWorktreeRef.extend({
+  enabled: z.boolean(),
+});
+
+export type PreviewCommentModePayload = z.infer<typeof previewCommentModePayload>;
+
+export const previewPinSubmitPayload = z.object({
+  comment: z.string().min(1).max(4000),
+  anchor: previewPinAnchorDto,
+});
+
+export type PreviewPinSubmitPayload = z.infer<typeof previewPinSubmitPayload>;
+
+export const previewPinSubmitResult = z.union([
+  z.object({ ok: z.literal(true), pinNumber: z.number().int().positive() }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type PreviewPinSubmitResult = z.infer<typeof previewPinSubmitResult>;
+
+export const previewPinEventDto = z.object({
+  workspaceId: z.string().min(1),
+  issueNumber: z.number().int().positive(),
+  pinNumber: z.number().int().positive(),
+  comment: z.string().min(1),
+  pageUrl: z.string().url(),
+  selector: z.string().min(1),
+  elementText: z.string(),
+  offsetX: z.number().finite(),
+  offsetY: z.number().finite(),
+});
+
+export type PreviewPinEventDto = z.infer<typeof previewPinEventDto>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

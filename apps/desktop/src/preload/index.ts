@@ -170,6 +170,14 @@ export type TrailApi = {
     issueNumber: number;
     url: string;
   }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
+  previewSetCommentMode: (input: {
+    workspaceId: string;
+    issueNumber: number;
+    enabled: boolean;
+  }) => Promise<void>;
+  onPreviewPin: (
+    listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
+  ) => () => void;
   setWorktreeStatus: (input: {
     workspaceId?: string;
     issueNumber: number;
@@ -330,6 +338,19 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.previewNavigate, input) as Promise<
       { ok: true; url: string } | { ok: false; message: string }
     >,
+  previewSetCommentMode: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.previewCommentMode, input) as Promise<void>,
+  onPreviewPin: (listener) => {
+    const channel = "trail.previewPin";
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: import("@trail/ipc").PreviewPinEventDto,
+    ) => {
+      listener(payload);
+    };
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
   onAgentOutput: (listener) => {
     const channel = "trail.agentOutput";
     const handler = (
