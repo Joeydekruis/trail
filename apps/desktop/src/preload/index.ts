@@ -148,6 +148,28 @@ export type TrailApi = {
       exitCode?: number;
     }) => void,
   ) => () => void;
+  previewAttach: (input: {
+    workspaceId: string;
+    issueNumber: number;
+    url?: string;
+  }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
+  previewSetBounds: (input: {
+    workspaceId: string;
+    issueNumber: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => Promise<void>;
+  previewDetach: (input: {
+    workspaceId: string;
+    issueNumber: number;
+  }) => Promise<void>;
+  previewNavigate: (input: {
+    workspaceId: string;
+    issueNumber: number;
+    url: string;
+  }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
   setWorktreeStatus: (input: {
     workspaceId?: string;
     issueNumber: number;
@@ -296,6 +318,18 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.agentRunStop, input) as Promise<{
       stopped: boolean;
     }>,
+  previewAttach: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.previewAttach, input) as Promise<
+      { ok: true; url: string } | { ok: false; message: string }
+    >,
+  previewSetBounds: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.previewSetBounds, input) as Promise<void>,
+  previewDetach: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.previewDetach, input) as Promise<void>,
+  previewNavigate: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.previewNavigate, input) as Promise<
+      { ok: true; url: string } | { ok: false; message: string }
+    >,
   onAgentOutput: (listener) => {
     const channel = "trail.agentOutput";
     const handler = (

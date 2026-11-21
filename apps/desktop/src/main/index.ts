@@ -16,6 +16,8 @@ import { registerBoardIpc } from "./board-ipc";
 import { registerIssueIpc } from "./issue-ipc";
 import { registerWorktreeIpc } from "./worktree-ipc";
 import { registerAgentIpc } from "./agent-ipc";
+import { registerPreviewIpc } from "./preview-ipc";
+import { disposeAllPreviews, onPreviewWindowClosed } from "./preview-host";
 import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
 
@@ -57,6 +59,10 @@ function createWindow(): void {
   win.on("ready-to-show", () => {
     win.show();
     scheduleDeferredStartup();
+  });
+
+  win.on("closed", () => {
+    onPreviewWindowClosed(win);
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -129,6 +135,7 @@ void app.whenReady().then(() => {
   registerIssueIpc();
   registerWorktreeIpc();
   registerAgentIpc();
+  registerPreviewIpc();
   createWindow();
 
   app.on("activate", () => {
@@ -142,4 +149,8 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
+});
+
+app.on("before-quit", () => {
+  disposeAllPreviews();
 });

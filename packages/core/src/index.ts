@@ -66,3 +66,8 @@ export { WorktreeStore, openWorktreeStore, worktreeId } from "./worktree/store.j
 export { parseAgentVersionOutput } from "./agent/parse-version.js";
 export type { AgentBackendId, AgentBackendStatus } from "./agent/types.js";
 export { AGENT_BACKEND_IDS } from "./agent/types.js";
+export {
+  DEFAULT_PREVIEW_URL,
+  normalizePreviewUrl,
+  type NormalizePreviewUrlResult,
+} from "./preview/normalize-preview-url.js";

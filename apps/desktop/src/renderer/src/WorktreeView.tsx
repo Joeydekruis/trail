@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
+import { DEFAULT_PREVIEW_URL, normalizePreviewUrl } from "@trail/core/client";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
+import { useBatchedAgentLines } from "./use-batched-agent-lines";
+import { WorktreePreviewSurface } from "./worktree-preview-surface";
 import { SelectButton, SyncStatus, TrailAvatar, TrailButton, TrailChip, TrailPanel, TrailProgressBar } from "./design/TrailUi";
 import type { WorktreeSessionContext } from "./worktree-session";
 
-const PREVIEW_URL = "localhost:3000/sign-in";
-const INITIAL_PINS = [{ n: 1, x: 72, y: 63 }];
+const INITIAL_PINS: PreviewPin[] = [];
 
 type PreviewPin = { n: number; x: number; y: number };
 type PreviewDraft = { n: number; x: number; y: number; el: string };
@@ -84,6 +86,11 @@ function WorktreeViewBody({
   const [draft, setDraft] = useState<PreviewDraft | null>(null);
   const [draftText, setDraftText] = useState("");
   const [extraMessages, setExtraMessages] = useState<ChatLine[]>([]);
+  const [previewUrl, setPreviewUrl] = useState(DEFAULT_PREVIEW_URL);
+  const [previewUrlDraft, setPreviewUrlDraft] = useState(DEFAULT_PREVIEW_URL);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
+  useBatchedAgentLines(workspaceId, context.issueNumber, setExtraMessages);
 
   const seededMessages = useMemo<ChatLine[]>(() => {
     const now = new Date();
@@ -94,7 +101,7 @@ function WorktreeViewBody({
         initials: "TR",
         tone: "mint",
         time,
-        body: "This worktree is on disk. Agent chat and preview attach here in a later batch.",
+        body: "Worktree is ready. Use Preview for the dev server (default port 3000) and Start run for agents.",
         monoLines: [context.branch, context.path],
       },
     ];
@@ -104,36 +111,6 @@ function WorktreeViewBody({
     () => [...seededMessages, ...extraMessages],
     [seededMessages, extraMessages],
   );
-
-  useEffect(() => {
-    const api = window.trail;
-    if (!api?.onAgentOutput || !workspaceId) {
-      return;
-    }
-    return api.onAgentOutput((payload) => {
-      if (
-        payload.workspaceId !== workspaceId ||
-        payload.issueNumber !== context.issueNumber
-      ) {
-        return;
-      }
-      const now = new Date();
-      const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      setExtraMessages((prev) => [
-        ...prev,
-        {
-          who: payload.backend === "claude" ? "Claude" : "Agent",
-          initials: payload.backend === "claude" ? "CL" : "CU",
-          tone: payload.backend === "claude" ? "blue" : "blue",
-          time,
-          body: payload.line,
-          ...(payload.stream === "stderr"
-            ? { chip: { text: "stderr", tone: "gray" as const } }
-            : {}),
-        },
-      ]);
-    });
-  }, [workspaceId, context.issueNumber]);
 
   const setViewMode = (next: "chat" | "preview") => {
     setMode(next);
@@ -156,7 +133,7 @@ function WorktreeViewBody({
     if (!text || !draft) return;
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const where = `${PREVIEW_URL} · x ${draft.x.toFixed(0)}%, y ${draft.y.toFixed(0)}% · ${draft.el}`;
+    const where = `${previewUrl} · x ${draft.x.toFixed(0)}%, y ${draft.y.toFixed(0)}% · ${draft.el}`;
     setPins((prev) => [...prev, { n: draft.n, x: draft.x, y: draft.y }]);
     setExtraMessages((prev) => [
       ...prev,
@@ -251,6 +228,30 @@ function WorktreeViewBody({
           <ChatColumn messages={messages} />
         ) : (
           <PreviewSplit
+            workspaceId={workspaceId ?? ""}
+            issueNumber={context.issueNumber}
+            previewUrl={previewUrl}
+            previewUrlDraft={previewUrlDraft}
+            previewError={previewError}
+            onPreviewUrlDraft={setPreviewUrlDraft}
+            onCommitPreviewUrl={async () => {
+              const normalized = normalizePreviewUrl(previewUrlDraft);
+              if (!normalized.ok) {
+                setPreviewError(normalized.message);
+                return;
+              }
+              setPreviewError(null);
+              setPreviewUrl(normalized.url);
+              setPreviewUrlDraft(normalized.url);
+              const nav = await window.trail?.previewNavigate?.({
+                workspaceId: workspaceId ?? "",
+                issueNumber: context.issueNumber,
+                url: normalized.url,
+              });
+              if (nav && !nav.ok) {
+                setPreviewError(nav.message);
+              }
+            }}
             messages={messages}
             commentMode={commentMode}
             onToggleComment={() => setCommentMode((v) => !v)}
@@ -265,7 +266,7 @@ function WorktreeViewBody({
             onSendDraft={sendDraft}
             onCanvasClick={(x, y) => {
               if (!commentMode || draft) return;
-              setDraft({ n: pins.length + 1, x, y, el: "Sign in button" });
+              setDraft({ n: pins.length + 1, x, y, el: "Selected element" });
             }}
           />
         )}
@@ -451,6 +452,13 @@ function ChatRow({ message: m }: { message: ChatLine }) {
 }
 
 function PreviewSplit({
+  workspaceId,
+  issueNumber,
+  previewUrl,
+  previewUrlDraft,
+  previewError,
+  onPreviewUrlDraft,
+  onCommitPreviewUrl,
   messages,
   commentMode,
   onToggleComment,
@@ -462,6 +470,13 @@ function PreviewSplit({
   onSendDraft,
   onCanvasClick,
 }: {
+  workspaceId: string;
+  issueNumber: number;
+  previewUrl: string;
+  previewUrlDraft: string;
+  previewError: string | null;
+  onPreviewUrlDraft: (value: string) => void;
+  onCommitPreviewUrl: () => void;
   messages: ChatLine[];
   commentMode: boolean;
   onToggleComment: () => void;
@@ -473,7 +488,10 @@ function PreviewSplit({
   onSendDraft: () => void;
   onCanvasClick: (x: number, y: number) => void;
 }) {
+  const commentPinsEnabled = false;
+
   const handleCanvas = (e: MouseEvent<HTMLDivElement>) => {
+    if (!commentPinsEnabled) return;
     if (e.target instanceof HTMLElement && e.target.closest('[role="dialog"]')) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -502,52 +520,70 @@ function PreviewSplit({
             background: "var(--surface)",
           }}
         >
-          <span className="tr-mono" style={{
-            flex: 1,
-            minWidth: 0,
-            height: 28,
-            display: "inline-flex",
-            alignItems: "center",
-            padding: "0 10px",
-            background: "var(--bg)",
-            border: "1px solid var(--line-strong)",
-            borderRadius: 8,
-            fontSize: 12,
-            color: "var(--ink-muted)",
-          }}>
-            {PREVIEW_URL}
-          </span>
-          <SyncStatus state="synced" label="Dev server running" />
+          <input
+            className="tr-mono"
+            aria-label="Preview URL"
+            value={previewUrlDraft}
+            onChange={(e) => onPreviewUrlDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void onCommitPreviewUrl();
+              }
+            }}
+            onBlur={() => void onCommitPreviewUrl()}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              height: 28,
+              padding: "0 10px",
+              background: "var(--bg)",
+              border: "1px solid var(--line-strong)",
+              borderRadius: 8,
+              fontSize: 12,
+              color: "var(--ink-muted)",
+            }}
+          />
+          <SyncStatus state="synced" label="Embedded preview" />
+          {previewError ? (
+            <span className="tr-small" style={{ color: "var(--warning)" }}>
+              {previewError}
+            </span>
+          ) : null}
           <button
             type="button"
-            className={commentMode ? "tr-btn tr-btn-secondary is-on" : "tr-btn tr-btn-secondary"}
+            className="tr-btn tr-btn-secondary"
+            disabled={!commentPinsEnabled}
             aria-pressed={commentMode}
-            data-tip="Comment mode: click anywhere on the page to send feedback to the chat"
+            data-tip="Pin overlay lands with preview preload (next batch)"
             data-tip-pos="below"
             onClick={onToggleComment}
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
             Comment
           </button>
-          <TrailButton variant="secondary">Open in browser</TrailButton>
+          <TrailButton
+            variant="secondary"
+            onClick={() => void window.trail?.openExternal?.(previewUrl)}
+          >
+            Open in browser
+          </TrailButton>
         </div>
-        <div
-          data-preview-canvas=""
-          onClick={handleCanvas}
-          style={{
-            position: "relative",
-            flex: 1,
-            minHeight: 0,
-            background: "#e5e7eb",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "auto",
-            padding: 24,
-            cursor: commentMode && !draft ? "crosshair" : "default",
-          }}
+        <WorktreePreviewSurface
+          workspaceId={workspaceId}
+          issueNumber={issueNumber}
+          url={previewUrl}
+          active={Boolean(workspaceId)}
         >
-          <SignInMockCard />
+          <div
+            data-preview-canvas=""
+            onClick={handleCanvas}
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+            }}
+          >
           {pins.map((p) => (
             <span
               key={p.n}
@@ -654,7 +690,8 @@ function PreviewSplit({
               </div>
             </>
           ) : null}
-        </div>
+          </div>
+        </WorktreePreviewSurface>
       </div>
       <div
         style={{
@@ -685,61 +722,6 @@ function PreviewSplit({
         <WorktreeComposerBar compact />
       </div>
     </>
-  );
-}
-
-function SignInMockCard() {
-  return (
-    <div
-      data-preview-canvas=""
-      style={{
-        position: "relative",
-        width: 340,
-        padding: 24,
-        background: "#fff",
-        borderRadius: 12,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-        color: "#111827",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-      }}
-    >
-      <span style={{ fontSize: 20, fontWeight: 600 }}>Sign in</span>
-      <FakeField>Email</FakeField>
-      <FakeField>Password</FakeField>
-      <div
-        style={{
-          height: 38,
-          borderRadius: 8,
-          background: "#111827",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        Sign in
-      </div>
-    </div>
-  );
-}
-
-function FakeField({ children }: { children: string }) {
-  return (
-    <div
-      style={{
-        height: 36,
-        border: "1px solid #d1d5db",
-        borderRadius: 8,
-        padding: "0 12px",
-        display: "flex",
-        alignItems: "center",
-        color: "#6b7280",
-      }}
-    >
-      {children}
-    </div>
   );
 }
 

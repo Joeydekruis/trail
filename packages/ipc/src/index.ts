@@ -22,6 +22,10 @@ export const IpcChannels = {
   agentStatus: "agent.status",
   agentRunStart: "agent.runStart",
   agentRunStop: "agent.runStop",
+  previewAttach: "preview.attach",
+  previewSetBounds: "preview.setBounds",
+  previewDetach: "preview.detach",
+  previewNavigate: "preview.navigate",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -468,6 +472,49 @@ export const agentRunStopResult = z.object({
 });
 
 export type AgentRunStopResult = z.infer<typeof agentRunStopResult>;
+
+export const previewWorktreeRef = z.object({
+  workspaceId: z.string().min(1),
+  issueNumber: z.number().int().positive(),
+});
+
+export type PreviewWorktreeRef = z.infer<typeof previewWorktreeRef>;
+
+export const previewAttachPayload = previewWorktreeRef.extend({
+  url: z.string().min(1).optional(),
+});
+
+export type PreviewAttachPayload = z.infer<typeof previewAttachPayload>;
+
+export const previewAttachResult = z.union([
+  z.object({ ok: z.literal(true), url: z.string().url() }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type PreviewAttachResult = z.infer<typeof previewAttachResult>;
+
+export const previewSetBoundsPayload = previewWorktreeRef.extend({
+  x: z.number().finite(),
+  y: z.number().finite(),
+  width: z.number().finite().nonnegative(),
+  height: z.number().finite().nonnegative(),
+});
+
+export type PreviewSetBoundsPayload = z.infer<typeof previewSetBoundsPayload>;
+
+export const previewDetachPayload = previewWorktreeRef;
+
+export type PreviewDetachPayload = z.infer<typeof previewDetachPayload>;
+
+export const previewNavigatePayload = previewWorktreeRef.extend({
+  url: z.string().min(1),
+});
+
+export type PreviewNavigatePayload = z.infer<typeof previewNavigatePayload>;
+
+export const previewNavigateResult = previewAttachResult;
+
+export type PreviewNavigateResult = z.infer<typeof previewNavigateResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

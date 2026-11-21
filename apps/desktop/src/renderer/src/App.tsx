@@ -123,6 +123,28 @@ declare global {
           exitCode?: number;
         }) => void,
       ) => () => void;
+      previewAttach?: (input: {
+        workspaceId: string;
+        issueNumber: number;
+        url?: string;
+      }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
+      previewSetBounds?: (input: {
+        workspaceId: string;
+        issueNumber: number;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }) => Promise<void>;
+      previewDetach?: (input: {
+        workspaceId: string;
+        issueNumber: number;
+      }) => Promise<void>;
+      previewNavigate?: (input: {
+        workspaceId: string;
+        issueNumber: number;
+        url: string;
+      }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;
