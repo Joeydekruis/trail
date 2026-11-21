@@ -167,6 +167,20 @@ declare global {
         workspaceId?: string;
         relativePath: string;
       }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
+      listKnowledgeDocs?: (workspaceId?: string) => Promise<import("@trail/ipc").KnowledgeDocListResult>;
+      getKnowledgeDoc?: (input: {
+        workspaceId?: string;
+        slug: string;
+      }) => Promise<
+        | { ok: true; doc: import("@trail/ipc").KnowledgeDocDto }
+        | { ok: false; message: string }
+      >;
+      saveKnowledgeDoc?: (input: {
+        workspaceId?: string;
+        slug?: string;
+        title: string;
+        bodyMarkdown: string;
+      }) => Promise<{ doc: import("@trail/ipc").KnowledgeDocDto }>;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;

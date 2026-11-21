@@ -192,6 +192,20 @@ export type TrailApi = {
     workspaceId?: string;
     relativePath: string;
   }) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
+  listKnowledgeDocs: (workspaceId?: string) => Promise<import("@trail/ipc").KnowledgeDocListResult>;
+  getKnowledgeDoc: (input: {
+    workspaceId?: string;
+    slug: string;
+  }) => Promise<
+    | { ok: true; doc: import("@trail/ipc").KnowledgeDocDto }
+    | { ok: false; message: string }
+  >;
+  saveKnowledgeDoc: (input: {
+    workspaceId?: string;
+    slug?: string;
+    title: string;
+    bodyMarkdown: string;
+  }) => Promise<{ doc: import("@trail/ipc").KnowledgeDocDto }>;
   onPreviewPin: (
     listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
   ) => () => void;
@@ -365,6 +379,19 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.designPreviewUrl, input) as Promise<
       { ok: true; url: string } | { ok: false; message: string }
     >,
+  listKnowledgeDocs: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.knowledgeDocList, { workspaceId }) as Promise<
+      import("@trail/ipc").KnowledgeDocListResult
+    >,
+  getKnowledgeDoc: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.knowledgeDocGet, input) as Promise<
+      | { ok: true; doc: import("@trail/ipc").KnowledgeDocDto }
+      | { ok: false; message: string }
+    >,
+  saveKnowledgeDoc: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.knowledgeDocSave, input) as Promise<{
+      doc: import("@trail/ipc").KnowledgeDocDto;
+    }>,
   onPreviewPin: (listener) => {
     const channel = "trail.previewPin";
     const handler = (

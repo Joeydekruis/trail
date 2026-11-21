@@ -4,10 +4,12 @@ import { app } from "electron";
 import {
   MemorySqlite,
   openIssueCacheStore,
+  openKnowledgeDocStore,
   openPreviewPinStore,
   openWorktreeStore,
   openWorkspaceStore,
   type IssueCacheStore,
+  type KnowledgeDocStore,
   type PreviewPinStore,
   type SqliteDatabase,
   type WorktreeStore,
@@ -18,6 +20,7 @@ let store: WorkspaceStore | null = null;
 let issueStore: IssueCacheStore | null = null;
 let worktreeStore: WorktreeStore | null = null;
 let previewPinStore: PreviewPinStore | null = null;
+let knowledgeDocStore: KnowledgeDocStore | null = null;
 
 export function getWorkspaceStore(): WorkspaceStore {
   if (!store) {
@@ -47,11 +50,19 @@ export function getPreviewPinStore(): PreviewPinStore {
   return previewPinStore;
 }
 
+export function getKnowledgeDocStore(): KnowledgeDocStore {
+  if (!knowledgeDocStore) {
+    throw new Error("Knowledge doc store not initialized");
+  }
+  return knowledgeDocStore;
+}
+
 function openStores(db: SqliteDatabase, label: string): void {
   store = openWorkspaceStore(db);
   issueStore = openIssueCacheStore(db);
   worktreeStore = openWorktreeStore(db);
   previewPinStore = openPreviewPinStore(db);
+  knowledgeDocStore = openKnowledgeDocStore(db);
   console.info("[trail] workspace cache:", label);
 }
 

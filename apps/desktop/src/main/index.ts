@@ -17,6 +17,7 @@ import { registerIssueIpc } from "./issue-ipc";
 import { registerWorktreeIpc } from "./worktree-ipc";
 import { registerAgentIpc } from "./agent-ipc";
 import { registerDesignIpc } from "./design-ipc";
+import { registerKnowledgeIpc } from "./knowledge-ipc";
 import { registerPreviewIpc } from "./preview-ipc";
 import { disposeAllPreviews, onPreviewWindowClosed } from "./preview-host";
 import { registerGitHubIpc } from "./github-ipc";
@@ -138,6 +139,7 @@ void app.whenReady().then(() => {
   registerAgentIpc();
   registerPreviewIpc();
   registerDesignIpc();
+  registerKnowledgeIpc();
   createWindow();
 
   app.on("activate", () => {

@@ -11,6 +11,6 @@
 - [x] Docs/Roadmap/Decisions — lazy-loaded chunks
 - [x] Chat memo (`ChatRow`)
 - [ ] Lijstvirtualisatie (>100 items)
-- [ ] Docs editor (Markdown, SQLite kennis)
+- [x] Docs editor (Markdown, SQLite kennis, split preview)
 
 **Notities:** Comment-modus in de UI wacht op preview-preload; embedded view tekent boven renderer-HTML.

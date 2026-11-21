@@ -79,3 +79,9 @@ export {
   type DesignScreenDto,
   type DesignVersionDto,
 } from "./design/catalog.js";
+export {
+  KnowledgeDocStore,
+  openKnowledgeDocStore,
+} from "./knowledge/store.js";
+export { slugFromTitle, knowledgeDocId } from "./knowledge/slug.js";
+export type { KnowledgeDocRecord, KnowledgeDocSummary } from "./knowledge/types.js";

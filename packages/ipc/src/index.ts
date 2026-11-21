@@ -30,6 +30,9 @@ export const IpcChannels = {
   previewPinSubmit: "preview.pinSubmit",
   designList: "design.list",
   designPreviewUrl: "design.previewUrl",
+  knowledgeDocList: "knowledge.doc.list",
+  knowledgeDocGet: "knowledge.doc.get",
+  knowledgeDocSave: "knowledge.doc.save",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -606,6 +609,61 @@ export const designPreviewUrlResult = z.union([
 ]);
 
 export type DesignPreviewUrlResult = z.infer<typeof designPreviewUrlResult>;
+
+export const knowledgeDocSummaryDto = z.object({
+  slug: z.string().min(1),
+  title: z.string().min(1),
+  updatedAt: z.string().min(1),
+});
+
+export type KnowledgeDocSummaryDto = z.infer<typeof knowledgeDocSummaryDto>;
+
+export const knowledgeDocDto = knowledgeDocSummaryDto.extend({
+  bodyMarkdown: z.string(),
+});
+
+export type KnowledgeDocDto = z.infer<typeof knowledgeDocDto>;
+
+export const knowledgeDocListPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type KnowledgeDocListPayload = z.infer<typeof knowledgeDocListPayload>;
+
+export const knowledgeDocListResult = z.object({
+  docs: z.array(knowledgeDocSummaryDto),
+});
+
+export type KnowledgeDocListResult = z.infer<typeof knowledgeDocListResult>;
+
+export const knowledgeDocGetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  slug: z.string().min(1),
+});
+
+export type KnowledgeDocGetPayload = z.infer<typeof knowledgeDocGetPayload>;
+
+export const knowledgeDocGetResult = z.union([
+  z.object({ ok: z.literal(true), doc: knowledgeDocDto }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type KnowledgeDocGetResult = z.infer<typeof knowledgeDocGetResult>;
+
+export const knowledgeDocSavePayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  slug: z.string().min(1).optional(),
+  title: z.string().min(1).max(200),
+  bodyMarkdown: z.string().max(200_000),
+});
+
+export type KnowledgeDocSavePayload = z.infer<typeof knowledgeDocSavePayload>;
+
+export const knowledgeDocSaveResult = z.object({
+  doc: knowledgeDocDto,
+});
+
+export type KnowledgeDocSaveResult = z.infer<typeof knowledgeDocSaveResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),
