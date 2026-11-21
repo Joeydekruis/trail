@@ -16,7 +16,7 @@
     "dist:dir": "electron-builder --config electron-builder.yml --dir",
     "test": "node --test scripts/installer-budget.test.mjs && vitest run",
     "test:e2e": "playwright test",
-    "verify:sqlite": "electron scripts/sqlite-smoke.cjs",
+    "verify:sqlite": "electron --no-sandbox scripts/sqlite-smoke.cjs",
     "rebuild:native": "npx @electron/rebuild -w better-sqlite3 -f"
   },
   "dependencies": {
