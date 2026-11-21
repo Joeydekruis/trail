@@ -1,5 +1,9 @@
 import { Suspense, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { isGitHubUnreachableError } from "@trail/core/client";
+import {
+  formatRateLimitBannerMessage,
+  isGitHubRateLimitError,
+  isGitHubUnreachableError,
+} from "@trail/core/client";
 import type { SyncConflictDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { formatSyncLabel } from "./sync-label";
 import { CommandPalette } from "./CommandPalette";
@@ -70,6 +74,7 @@ export type TrailShellProps = {
   onSyncNow: () => void;
   syncing: boolean;
   syncError?: string | null;
+  syncRateLimitUntil?: number | null;
   syncConflicts?: SyncConflictDto[];
   onResolveSyncConflict?: () => void;
   lastSyncedAt?: string | null;
@@ -123,6 +128,7 @@ export function TrailShell({
   onSyncNow,
   syncing,
   syncError,
+  syncRateLimitUntil = null,
   syncConflicts = [],
   onResolveSyncConflict,
   lastSyncedAt,
@@ -733,6 +739,19 @@ export function TrailShell({
               <TrailButton variant="secondary" onClick={() => setCenterView("settings")}>
                 Open Settings
               </TrailButton>
+            </div>
+          ) : null}
+          {syncError && isGitHubRateLimitError(syncError) ? (
+            <div style={{ padding: "8px 16px 0" }}>
+              <ConflictBanner
+                action="Sync now anyway"
+                onAction={onSyncNow}
+                secondaryAction="Open settings"
+                onSecondaryAction={() => setCenterView("settings")}
+              >
+                {formatRateLimitBannerMessage(syncRateLimitUntil)} Cached data stays available while sync is
+                paused.
+              </ConflictBanner>
             </div>
           ) : null}
           {syncError && isGitHubUnreachableError(syncError) ? (

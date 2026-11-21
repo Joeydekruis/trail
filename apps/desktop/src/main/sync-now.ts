@@ -1,5 +1,6 @@
 import type { IssueCacheStore, IssueSyncConflictStore, WorkspaceStore } from "@trail/core";
-import { formatGitHubSyncErrorMessage, mergeWorkspaceIssuesFromGitHub } from "@trail/core";
+import { formatGitHubSyncErrorMessage, githubHttpFailure, mergeWorkspaceIssuesFromGitHub } from "@trail/core";
+import { clearGitHubRateLimitPause } from "./github-rate-limit-pause";
 import { fetchGitHubUser } from "./github-api";
 import { fetchWorkspaceIssues } from "./github-issues";
 import { fetchIssueBoardColumns } from "./github-project-status";
@@ -27,7 +28,7 @@ export async function syncWorkspaceNow(
   workspaceId?: string,
 ): Promise<
   | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
-  | { ok: false; message: string }
+  | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean }
 > {
   try {
     return await syncWorkspaceNowInner(store, issueStore, conflictStore, workspaceId);
@@ -44,7 +45,7 @@ async function syncWorkspaceNowInner(
   workspaceId?: string,
 ): Promise<
   | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
-  | { ok: false; message: string }
+  | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean }
 > {
   const token = readGitHubToken();
   if (!token) {
@@ -53,7 +54,12 @@ async function syncWorkspaceNowInner(
 
   const user = await fetchGitHubUser(token);
   if (!user.ok) {
-    return { ok: false, message: formatGitHubSyncErrorMessage(user.message) };
+    return {
+      ok: false,
+      message: user.message,
+      retryAfterSec: user.retryAfterSec,
+      rateLimited: user.rateLimited,
+    };
   }
 
   const id = workspaceId ?? store.getActiveId();
@@ -82,12 +88,23 @@ async function syncWorkspaceNowInner(
     } catch {
       // ignore
     }
-    return { ok: false, message: formatGitHubSyncErrorMessage(message) };
+    const failure = githubHttpFailure(response.status, message, response.headers);
+    return {
+      ok: false,
+      message: failure.message,
+      retryAfterSec: failure.retryAfterSec,
+      rateLimited: failure.rateLimited,
+    };
   }
 
   const fetched = await fetchWorkspaceIssues(token, id, owner, repo);
   if (!fetched.ok) {
-    return { ok: false, message: formatGitHubSyncErrorMessage(fetched.message) };
+    return {
+      ok: false,
+      message: fetched.message,
+      retryAfterSec: fetched.retryAfterSec,
+      rateLimited: fetched.rateLimited,
+    };
   }
 
   const statusField = readWorkspaceProjectStatusField(store, id);
@@ -114,6 +131,7 @@ async function syncWorkspaceNowInner(
   issueStore.replaceWorkspaceIssues(id, merged);
   conflictStore.replaceWorkspaceConflicts(id, conflicts);
   store.setLastSyncAt(id, syncedAt);
+  clearGitHubRateLimitPause(id);
   return {
     ok: true,
     syncedAt,

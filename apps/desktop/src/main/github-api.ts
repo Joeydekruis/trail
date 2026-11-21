@@ -1,3 +1,5 @@
+import { githubHttpFailure } from "@trail/core";
+
 const GITHUB_API = "https://api.github.com";
 const TRAIL_USER_AGENT = "Trail-Desktop";
 
@@ -32,10 +34,19 @@ async function parseError(response: Response): Promise<string> {
 
 export async function fetchGitHubUser(
   token: string,
-): Promise<{ ok: true; login: string } | { ok: false; message: string }> {
+): Promise<
+  | { ok: true; login: string }
+  | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean }
+> {
   const response = await fetch(`${GITHUB_API}/user`, { headers: authHeaders(token) });
   if (!response.ok) {
-    return { ok: false, message: await parseError(response) };
+    const failure = githubHttpFailure(response.status, await parseError(response), response.headers);
+    return {
+      ok: false,
+      message: failure.message,
+      retryAfterSec: failure.retryAfterSec,
+      rateLimited: failure.rateLimited,
+    };
   }
   const user = (await response.json()) as GitHubUser;
   if (!user.login) {

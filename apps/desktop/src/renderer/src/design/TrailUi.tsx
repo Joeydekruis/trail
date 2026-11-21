@@ -108,17 +108,28 @@ export function ConflictBanner({
   children,
   action,
   onAction,
+  secondaryAction,
+  onSecondaryAction,
 }: {
   children: ReactNode;
   action: string;
   onAction?: () => void;
+  secondaryAction?: string;
+  onSecondaryAction?: () => void;
 }) {
   return (
     <div className="tr-conflict">
       <span className="tr-conflict-text">{children}</span>
-      <TrailButton variant="secondary" onClick={onAction} disabled={!onAction}>
-        {action}
-      </TrailButton>
+      <span style={{ display: "inline-flex", gap: 8, flex: "0 0 auto" }}>
+        {secondaryAction ? (
+          <TrailButton variant="secondary" onClick={onSecondaryAction} disabled={!onSecondaryAction}>
+            {secondaryAction}
+          </TrailButton>
+        ) : null}
+        <TrailButton variant="secondary" onClick={onAction} disabled={!onAction}>
+          {action}
+        </TrailButton>
+      </span>
     </div>
   );
 }

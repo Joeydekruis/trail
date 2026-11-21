@@ -66,7 +66,12 @@ export type TrailApi = {
     listener: (payload: { workspaceId: string; syncedAt: string; issueCount: number }) => void,
   ) => () => void;
   onBackgroundSyncError: (
-    listener: (payload: { workspaceId: string; message: string }) => void,
+    listener: (payload: {
+      workspaceId: string;
+      message: string;
+      retryAfterSec?: number;
+      rateLimited?: boolean;
+    }) => void,
   ) => () => void;
   createIssue: (input: {
     workspaceId?: string;
@@ -110,12 +115,7 @@ export type TrailApi = {
       }>;
     }>;
   }>;
-  syncNow: (
-    workspaceId?: string,
-  ) => Promise<
-    | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
-    | { ok: false; message: string }
-  >;
+  syncNow: (workspaceId?: string) => Promise<import("@trail/ipc").SyncNowResult>;
   listSyncConflicts: (
     workspaceId?: string,
   ) => Promise<{ conflicts: import("@trail/ipc").SyncConflictDto[] }>;
@@ -371,7 +371,12 @@ const trailApi: TrailApi = {
     const channel = "trail.backgroundSyncError";
     const handler = (
       _event: Electron.IpcRendererEvent,
-      payload: { workspaceId: string; message: string },
+      payload: {
+        workspaceId: string;
+        message: string;
+        retryAfterSec?: number;
+        rateLimited?: boolean;
+      },
     ) => {
       listener(payload);
     };

@@ -5,6 +5,11 @@ import { readGitHubToken } from "./github-token-store";
 import { syncWorkspaceNow } from "./sync-now";
 import { runAutopilotTick } from "./autopilot-service";
 import { readWorkspaceSyncIntervalSec } from "./workspace-github-settings";
+import {
+  clearGitHubRateLimitPause,
+  noteGitHubRateLimit,
+  rateLimitPauseRemainingMs,
+} from "./github-rate-limit-pause";
 
 const BACKGROUND_SYNC_CHANNEL = "trail.backgroundSync";
 const BACKGROUND_SYNC_ERROR_CHANNEL = "trail.backgroundSyncError";
@@ -65,6 +70,11 @@ function scheduleNextWake(delayMs?: number): void {
         if (backgroundSyncDelayMs(activeId) === null) {
           return;
         }
+        const rateLimitWait = rateLimitPauseRemainingMs(activeId);
+        if (rateLimitWait !== null) {
+          scheduleNextWake(rateLimitWait);
+          return;
+        }
         scheduleNextWake();
       } catch {
         scheduleNextWake(60_000);
@@ -81,6 +91,11 @@ async function runBackgroundSync(): Promise<void> {
     return;
   }
   if (syncInFlight || powerSuspended) {
+    return;
+  }
+  const rateLimitWait = rateLimitPauseRemainingMs(workspaceId);
+  if (rateLimitWait !== null) {
+    scheduleNextWake(rateLimitWait);
     return;
   }
   const token = readGitHubToken();
@@ -102,6 +117,7 @@ async function runBackgroundSync(): Promise<void> {
       workspaceId,
     );
     if (result.ok) {
+      clearGitHubRateLimitPause(workspaceId);
       notifyBackgroundSync({
         workspaceId,
         syncedAt: result.syncedAt,
@@ -110,9 +126,14 @@ async function runBackgroundSync(): Promise<void> {
       void runAutopilotTick(workspaceId);
       return;
     }
+    if (result.rateLimited && result.retryAfterSec) {
+      noteGitHubRateLimit(workspaceId, result.retryAfterSec);
+    }
     notifyBackgroundSyncError({
       workspaceId,
       message: result.message,
+      retryAfterSec: result.retryAfterSec,
+      rateLimited: result.rateLimited,
     });
   } finally {
     syncInFlight = false;
@@ -129,7 +150,12 @@ function notifyBackgroundSync(payload: {
   }
 }
 
-function notifyBackgroundSyncError(payload: { workspaceId: string; message: string }): void {
+function notifyBackgroundSyncError(payload: {
+  workspaceId: string;
+  message: string;
+  retryAfterSec?: number;
+  rateLimited?: boolean;
+}): void {
   for (const window of BrowserWindow.getAllWindows()) {
     window.webContents.send(BACKGROUND_SYNC_ERROR_CHANNEL, payload);
   }

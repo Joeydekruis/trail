@@ -58,7 +58,12 @@ declare global {
         listener: (payload: { workspaceId: string; syncedAt: string; issueCount: number }) => void,
       ) => () => void;
       onBackgroundSyncError?: (
-        listener: (payload: { workspaceId: string; message: string }) => void,
+        listener: (payload: {
+          workspaceId: string;
+          message: string;
+          retryAfterSec?: number;
+          rateLimited?: boolean;
+        }) => void,
       ) => () => void;
       getBoardSnapshot?: (workspaceId?: string) => Promise<import("@trail/ipc").BoardSnapshotResult>;
       moveBoardIssue?: (input: {
@@ -83,12 +88,7 @@ declare global {
       }) => Promise<import("@trail/ipc").IssueGetResult>;
       openExternal?: (url: string) => Promise<void>;
       openPath?: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
-      syncNow: (
-        workspaceId?: string,
-      ) => Promise<
-        | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
-        | { ok: false; message: string }
-      >;
+      syncNow: (workspaceId?: string) => Promise<import("@trail/ipc").SyncNowResult>;
       listSyncConflicts?: (
         workspaceId?: string,
       ) => Promise<{ conflicts: import("@trail/ipc").SyncConflictDto[] }>;
@@ -291,6 +291,8 @@ export function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncRateLimitUntil, setSyncRateLimitUntil] = useState<number | null>(null);
+  const [, setRateLimitClock] = useState(0);
   const [syncConflicts, setSyncConflicts] = useState<
     import("@trail/ipc").SyncConflictDto[]
   >([]);
@@ -490,6 +492,7 @@ export function App() {
       if (payload.workspaceId === activeWorkspaceId) {
         setActiveLastSyncedAt(payload.syncedAt);
         setSyncError(null);
+        setSyncRateLimitUntil(null);
       }
       void refreshWorkspaces();
       setBoardRefreshKey((key) => key + 1);
@@ -504,9 +507,20 @@ export function App() {
     return api.onBackgroundSyncError((payload) => {
       if (payload.workspaceId === activeWorkspaceId) {
         setSyncError(payload.message);
+        if (payload.rateLimited && payload.retryAfterSec) {
+          setSyncRateLimitUntil(Date.now() + payload.retryAfterSec * 1_000);
+        }
       }
     });
   }, [activeWorkspaceId]);
+
+  useEffect(() => {
+    if (!syncRateLimitUntil || syncRateLimitUntil <= Date.now()) {
+      return;
+    }
+    const id = window.setInterval(() => setRateLimitClock((value) => value + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, [syncRateLimitUntil]);
 
   const refreshSyncConflicts = useCallback(async () => {
     const api = window.trail;
@@ -540,11 +554,16 @@ export function App() {
       .then((result) => {
         if (result.ok) {
           setActiveLastSyncedAt(result.syncedAt);
+          setSyncError(null);
+          setSyncRateLimitUntil(null);
           setBoardRefreshKey((key) => key + 1);
           void refreshSyncConflicts();
           return;
         }
         setSyncError(result.message);
+        if (result.rateLimited && result.retryAfterSec) {
+          setSyncRateLimitUntil(Date.now() + result.retryAfterSec * 1_000);
+        }
       })
       .catch((error: unknown) => {
         setSyncError(error instanceof Error ? error.message : "Sync failed");
@@ -585,6 +604,7 @@ export function App() {
       onSyncNow={onSyncNow}
       syncing={syncing}
       syncError={syncError}
+      syncRateLimitUntil={syncRateLimitUntil}
       syncConflicts={syncConflicts}
       onResolveSyncConflict={() => setResolveSyncOpen(true)}
       lastSyncedAt={activeLastSyncedAt}

@@ -123,7 +123,12 @@ export const syncNowResult = z.discriminatedUnion("ok", [
     issueCount: z.number().int().nonnegative(),
     conflictCount: z.number().int().nonnegative(),
   }),
-  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+  z.object({
+    ok: z.literal(false),
+    message: z.string().min(1),
+    retryAfterSec: z.number().int().positive().optional(),
+    rateLimited: z.boolean().optional(),
+  }),
 ]);
 
 export const boardColumnId = z.enum([

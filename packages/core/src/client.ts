@@ -9,8 +9,11 @@ export {
 } from "./workspace/settings.js";
 export {
   GITHUB_NOT_REACHABLE_MESSAGE,
+  GITHUB_RATE_LIMIT_MESSAGE,
+  isGitHubRateLimitError,
   isGitHubUnreachableError,
 } from "./github/sync-error.js";
+export { formatRateLimitBannerMessage } from "./github/rate-limit.js";
 export {
   DEFAULT_AUTOPILOT_MAX_PARALLEL,
   DEFAULT_AUTOPILOT_PICKUP_LABELS,

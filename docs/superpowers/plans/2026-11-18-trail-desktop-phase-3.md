@@ -7,6 +7,7 @@
 - [x] Background sync voor actieve workspace (instelbaar interval, default 60s)
 - [x] Focus-backoff: 60 s focused / 5 min unfocused / pause tijdens slaapstand
 - [x] Amber banner **GitHub is not reachable** + Retry now (cache blijft bruikbaar)
+- [x] Rate limit — pauzeer background sync tot `Retry-After` / `X-RateLimit-Reset`; banner met Sync now anyway + Open settings
 - [x] Settings → GitHub: sync-interval + board mapping
 - [x] New task (form) → **Create on GitHub** (REST issue + type/priority labels)
 - [x] New task chat → local draft heuristics + approve + Create on GitHub

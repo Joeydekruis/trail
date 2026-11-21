@@ -1,4 +1,5 @@
 import {
+  githubHttpFailure,
   isPullRequestIssue,
   mapGitHubIssueToCache,
   type GitHubIssuePayload,
@@ -22,7 +23,10 @@ export async function fetchWorkspaceIssues(
   workspaceId: string,
   owner: string,
   repo: string,
-): Promise<{ ok: true; issues: IssueCacheRecord[] } | { ok: false; message: string }> {
+): Promise<
+  | { ok: true; issues: IssueCacheRecord[] }
+  | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean }
+> {
   const issues: IssueCacheRecord[] = [];
   for (let page = 1; page <= 10; page += 1) {
     const url = `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=all&per_page=100&page=${page}`;
@@ -37,7 +41,13 @@ export async function fetchWorkspaceIssues(
       } catch {
         // ignore
       }
-      return { ok: false, message };
+      const failure = githubHttpFailure(response.status, message, response.headers);
+      return {
+        ok: false,
+        message: failure.message,
+        retryAfterSec: failure.retryAfterSec,
+        rateLimited: failure.rateLimited,
+      };
     }
     const rows = (await response.json()) as GitHubIssuePayload[];
     if (rows.length === 0) {

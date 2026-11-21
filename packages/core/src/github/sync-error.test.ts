@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   formatGitHubSyncErrorMessage,
   GITHUB_NOT_REACHABLE_MESSAGE,
+  GITHUB_RATE_LIMIT_MESSAGE,
+  isGitHubRateLimitError,
   isGitHubUnreachableError,
 } from "./sync-error.js";
 
@@ -20,5 +22,10 @@ describe("formatGitHubSyncErrorMessage", () => {
   it("normalizes unreachable errors", () => {
     expect(formatGitHubSyncErrorMessage("fetch failed")).toBe(GITHUB_NOT_REACHABLE_MESSAGE);
     expect(formatGitHubSyncErrorMessage("Bad credentials")).toBe("Bad credentials");
+  });
+
+  it("normalizes rate limit errors", () => {
+    expect(isGitHubRateLimitError("API rate limit exceeded")).toBe(true);
+    expect(formatGitHubSyncErrorMessage("API rate limit exceeded")).toBe(GITHUB_RATE_LIMIT_MESSAGE);
   });
 });

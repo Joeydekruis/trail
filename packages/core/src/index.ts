@@ -10,8 +10,18 @@ export { formatWorkspaceRepoLine } from "./workspace/format.js";
 export {
   formatGitHubSyncErrorMessage,
   GITHUB_NOT_REACHABLE_MESSAGE,
+  GITHUB_RATE_LIMIT_MESSAGE,
+  isGitHubRateLimitError,
   isGitHubUnreachableError,
 } from "./github/sync-error.js";
+export {
+  DEFAULT_RATE_LIMIT_BACKOFF_SEC,
+  formatRateLimitBannerMessage,
+  githubHttpFailure,
+  isGitHubRateLimitHttpStatus,
+  retryAfterSecFromHeaders,
+  type GitHubHttpFailure,
+} from "./github/rate-limit.js";
 export {
   resolveBackgroundSyncIntervalSec,
   UNFOCUSED_BACKGROUND_SYNC_SEC,
