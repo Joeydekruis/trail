@@ -4,7 +4,7 @@
 
 ## Trail Desktop (current direction)
 
-**Trail Desktop** is an Electron app for macOS and Windows: GitHub-native PM, worktrees, coding agents, in-app preview with pins, and MCP. Source of truth is **GitHub**; Trail keeps a local cache.
+**Trail Desktop** is an Electron app for macOS and Windows: GitHub-native PM, worktrees, coding agents, in-app preview with pins, and MCP. Source of truth is **GitHub**; Trail keeps a local cache. **⌘/Ctrl+K** opens the command palette over live board tasks, worktrees, ADRs, and docs.
 
 | Resource | Link |
 | --- | --- |

@@ -30,6 +30,10 @@ import {
   worktreeToSession,
 } from "./worktree-session";
 import type { WorktreeDto } from "@trail/ipc";
+import {
+  buildCommandPaletteGroups,
+  type PaletteCatalog,
+} from "./command-palette-groups";
 import type { PaletteItem } from "./design/palette-fixture";
 import {
   shellContentMaxWidth,
@@ -159,6 +163,7 @@ export function TrailShell({
   const [worktreeTabOpen, setWorktreeTabOpen] = useState(true);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
+  const [paletteCatalog, setPaletteCatalog] = useState<PaletteCatalog | null>(null);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
   const [issueWorktreeBusy, setIssueWorktreeBusy] = useState(false);
@@ -360,13 +365,60 @@ export function TrailShell({
     if (t.type === "view") {
       setCenterView(t.view);
     } else if (t.type === "worktree") {
-      openWorktree(selectedWorktreeIssue ?? undefined);
+      openWorktree(t.issueNumber ?? selectedWorktreeIssue ?? undefined);
     } else if (t.type === "sync") {
       onSyncNow();
     } else if (t.type === "new-task") {
       setNewTaskOpen(true);
+    } else if (t.type === "settings") {
+      openSettings();
+    } else if (t.type === "open-issue") {
+      openIssue(`#${t.issueNumber}`, t.title);
+    } else if (t.type === "open-decision") {
+      setCenterView("decisions");
+    } else if (t.type === "open-doc") {
+      setCenterView("docs");
     }
   };
+
+  const paletteGroups = useMemo(
+    () =>
+      buildCommandPaletteGroups({
+        query: paletteQuery,
+        worktrees,
+        catalog: paletteCatalog,
+      }),
+    [paletteCatalog, paletteQuery, worktrees],
+  );
+
+  useEffect(() => {
+    if (!paletteOpen) {
+      setPaletteCatalog(null);
+      return;
+    }
+    const api = window.trail;
+    if (!api || !activeWorkspace?.id) {
+      return;
+    }
+    let cancelled = false;
+    void Promise.all([
+      api.getBoardSnapshot?.(activeWorkspace.id),
+      api.listDecisions?.(activeWorkspace.id),
+      api.listKnowledgeDocs?.(activeWorkspace.id),
+    ]).then(([board, decisions, docs]) => {
+      if (cancelled) {
+        return;
+      }
+      setPaletteCatalog({
+        board: board ?? null,
+        decisions: decisions?.decisions ?? [],
+        docs: docs?.docs ?? [],
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeWorkspace?.id, boardRefreshKey, paletteOpen]);
 
   useEffect(() => {
     if (centerView !== "worktree" || selectedWorktreeIssue !== null || worktrees.length === 0) {
@@ -974,6 +1026,7 @@ export function TrailShell({
       <CommandPalette
         open={paletteOpen}
         query={paletteQuery}
+        groups={paletteGroups}
         onQueryChange={setPaletteQuery}
         onClose={() => setPaletteOpen(false)}
         onPick={handlePalettePick}

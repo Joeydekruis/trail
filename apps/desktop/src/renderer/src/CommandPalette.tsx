@@ -1,18 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { flattenPalette, filterPaletteGroups, type PaletteItem } from "./design/palette-fixture";
+import { flattenPalette } from "./command-palette-groups";
+import type { PaletteGroup, PaletteItem } from "./design/palette-fixture";
 import { IconSearch } from "./design/TrailIcons";
 
 type CommandPaletteProps = {
   open: boolean;
   query: string;
+  groups: PaletteGroup[];
   onQueryChange: (q: string) => void;
   onClose: () => void;
   onPick: (item: PaletteItem) => void;
 };
 
-export function CommandPalette({ open, query, onQueryChange, onClose, onPick }: CommandPaletteProps) {
+export function CommandPalette({
+  open,
+  query,
+  groups,
+  onQueryChange,
+  onClose,
+  onPick,
+}: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const groups = useMemo(() => filterPaletteGroups(query), [query]);
   const flat = useMemo(() => flattenPalette(groups), [groups]);
   const [cursor, setCursor] = useState(0);
 

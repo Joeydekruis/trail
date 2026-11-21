@@ -17,3 +17,4 @@
 
 - [x] Instelbare Projects **Status**-veldnaam per workspace (Settings → GitHub)
 - [x] Slepen naar **Done** sluit issue; van Done weg heropent
+- [x] Command palette (⌘/Ctrl+K) — live pages, worktrees, board-taken, ADR's, docs, acties
