@@ -26,12 +26,13 @@ export async function syncWorkspaceNow(
   issueStore: IssueCacheStore,
   conflictStore: IssueSyncConflictStore,
   workspaceId?: string,
+  options?: { forceFull?: boolean },
 ): Promise<
   | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
   | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean }
 > {
   try {
-    return await syncWorkspaceNowInner(store, issueStore, conflictStore, workspaceId);
+    return await syncWorkspaceNowInner(store, issueStore, conflictStore, workspaceId, options);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Sync failed";
     return { ok: false, message: formatGitHubSyncErrorMessage(message) };
@@ -43,6 +44,7 @@ async function syncWorkspaceNowInner(
   issueStore: IssueCacheStore,
   conflictStore: IssueSyncConflictStore,
   workspaceId?: string,
+  options?: { forceFull?: boolean },
 ): Promise<
   | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
   | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean }
@@ -97,7 +99,7 @@ async function syncWorkspaceNowInner(
     };
   }
 
-  const fetched = await fetchWorkspaceIssues(token, id, owner, repo);
+  const fetched = await fetchWorkspaceIssues(token, id, owner, repo, store, options);
   if (!fetched.ok) {
     return {
       ok: false,
@@ -105,6 +107,15 @@ async function syncWorkspaceNowInner(
       retryAfterSec: fetched.retryAfterSec,
       rateLimited: fetched.rateLimited,
     };
+  }
+
+  if (fetched.notModified) {
+    const syncedAt = new Date().toISOString();
+    store.setLastSyncAt(id, syncedAt);
+    clearGitHubRateLimitPause(id);
+    const issueCount = issueStore.listByWorkspace(id).length;
+    const conflictCount = conflictStore.listByWorkspace(id).length;
+    return { ok: true, syncedAt, issueCount, conflictCount };
   }
 
   const statusField = readWorkspaceProjectStatusField(store, id);

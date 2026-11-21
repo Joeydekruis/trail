@@ -22,6 +22,7 @@ export {
   retryAfterSecFromHeaders,
   type GitHubHttpFailure,
 } from "./github/rate-limit.js";
+export { etagFromResponse, withIfNoneMatch } from "./github/conditional-request.js";
 export {
   resolveBackgroundSyncIntervalSec,
   UNFOCUSED_BACKGROUND_SYNC_SEC,
@@ -41,6 +42,7 @@ export {
   workspaceLastSyncKey,
   workspaceProjectStatusFieldKey,
   workspaceSyncIntervalKey,
+  workspaceIssuesEtagKey,
 } from "./workspace/settings.js";
 export type { IssueCacheRecord } from "./issues/types.js";
 export {

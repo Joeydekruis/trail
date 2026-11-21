@@ -112,6 +112,7 @@ export type WorkspaceSwitchResult = z.infer<typeof workspaceSwitchResult>;
 
 export const syncNowPayload = z.object({
   workspaceId: z.string().min(1).optional(),
+  forceFull: z.boolean().optional(),
 });
 
 export type SyncNowPayload = z.infer<typeof syncNowPayload>;

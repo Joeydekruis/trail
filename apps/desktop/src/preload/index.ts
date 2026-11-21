@@ -418,9 +418,8 @@ const trailApi: TrailApi = {
       }>;
     }>,
   syncNow: (workspaceId) =>
-    ipcRenderer.invoke(PreloadIpcChannels.syncNow, { workspaceId }) as Promise<
-      | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
-      | { ok: false; message: string }
+    ipcRenderer.invoke(PreloadIpcChannels.syncNow, { workspaceId, forceFull: true }) as Promise<
+      import("@trail/ipc").SyncNowResult
     >,
   listSyncConflicts: (workspaceId) =>
     ipcRenderer.invoke(PreloadIpcChannels.syncConflictList, { workspaceId }) as Promise<{

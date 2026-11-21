@@ -5,6 +5,7 @@ import {
   resolveProjectStatusField,
   resolveSyncIntervalSec,
   workspaceProjectStatusFieldKey,
+  workspaceIssuesEtagKey,
   workspaceSyncIntervalKey,
 } from "./settings.js";
 
@@ -23,6 +24,10 @@ describe("workspace project settings", () => {
 
   it("builds sync interval key", () => {
     expect(workspaceSyncIntervalKey("trail")).toBe("workspace:trail:sync_interval_sec");
+  });
+
+  it("builds issues etag key", () => {
+    expect(workspaceIssuesEtagKey("trail")).toBe("workspace:trail:github_issues_etag");
   });
 
   it("parses sync interval seconds", () => {

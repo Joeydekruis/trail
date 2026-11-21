@@ -18,6 +18,10 @@ export function workspaceSyncIntervalKey(workspaceId: string): string {
   return `workspace:${workspaceId}:sync_interval_sec`;
 }
 
+export function workspaceIssuesEtagKey(workspaceId: string): string {
+  return `workspace:${workspaceId}:github_issues_etag`;
+}
+
 export function resolveProjectStatusField(
   stored: string | null | undefined,
 ): string {

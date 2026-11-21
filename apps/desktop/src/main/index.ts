@@ -127,12 +127,13 @@ ipcMain.handle(IpcChannels.shellOpenPath, (_event, raw: unknown) => {
 });
 
 ipcMain.handle(IpcChannels.syncNow, async (_event, raw: unknown) => {
-  const { workspaceId } = syncNowPayload.parse(raw);
+  const { workspaceId, forceFull } = syncNowPayload.parse(raw);
   const result = await syncWorkspaceNow(
     getWorkspaceStore(),
     getIssueCacheStore(),
     getIssueSyncConflictStore(),
     workspaceId,
+    { forceFull: forceFull ?? true },
   );
   return syncNowResult.parse(result);
 });

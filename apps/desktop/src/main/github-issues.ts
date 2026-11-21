@@ -1,9 +1,13 @@
 import {
+  etagFromResponse,
   githubHttpFailure,
   isPullRequestIssue,
   mapGitHubIssueToCache,
+  withIfNoneMatch,
+  workspaceIssuesEtagKey,
   type GitHubIssuePayload,
   type IssueCacheRecord,
+  type WorkspaceStore,
 } from "@trail/core";
 
 const GITHUB_API = "https://api.github.com";
@@ -18,19 +22,35 @@ function authHeaders(token: string): HeadersInit {
   };
 }
 
+export type FetchWorkspaceIssuesResult =
+  | { ok: true; issues: IssueCacheRecord[]; notModified?: false }
+  | { ok: true; notModified: true }
+  | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean };
+
 export async function fetchWorkspaceIssues(
   token: string,
   workspaceId: string,
   owner: string,
   repo: string,
-): Promise<
-  | { ok: true; issues: IssueCacheRecord[] }
-  | { ok: false; message: string; retryAfterSec?: number; rateLimited?: boolean }
-> {
+  workspaces: WorkspaceStore,
+  options?: { forceFull?: boolean },
+): Promise<FetchWorkspaceIssuesResult> {
+  const storedEtag = options?.forceFull
+    ? null
+    : workspaces.getAppSetting(workspaceIssuesEtagKey(workspaceId));
   const issues: IssueCacheRecord[] = [];
+  let pageOneEtag: string | null = null;
+
   for (let page = 1; page <= 10; page += 1) {
     const url = `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=all&per_page=100&page=${page}`;
-    const response = await fetch(url, { headers: authHeaders(token) });
+    const headers =
+      page === 1 ? withIfNoneMatch(authHeaders(token), storedEtag) : authHeaders(token);
+    const response = await fetch(url, { headers });
+
+    if (page === 1 && response.status === 304) {
+      return { ok: true, notModified: true };
+    }
+
     if (!response.ok) {
       let message = `GitHub issues error (${response.status})`;
       try {
@@ -49,6 +69,11 @@ export async function fetchWorkspaceIssues(
         rateLimited: failure.rateLimited,
       };
     }
+
+    if (page === 1) {
+      pageOneEtag = etagFromResponse(response.headers);
+    }
+
     const rows = (await response.json()) as GitHubIssuePayload[];
     if (rows.length === 0) {
       break;
@@ -63,5 +88,10 @@ export async function fetchWorkspaceIssues(
       break;
     }
   }
+
+  if (pageOneEtag) {
+    workspaces.setAppSetting(workspaceIssuesEtagKey(workspaceId), pageOneEtag);
+  }
+
   return { ok: true, issues };
 }

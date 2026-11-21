@@ -98,7 +98,9 @@ export function registerIssueIpc(): void {
       return issueCreateResult.parse({ ok: false, message: created.message });
     }
 
-    await syncWorkspaceNow(workspaces, issues, getIssueSyncConflictStore(), id);
+    await syncWorkspaceNow(workspaces, issues, getIssueSyncConflictStore(), id, {
+      forceFull: true,
+    });
 
     return issueCreateResult.parse({
       ok: true,
