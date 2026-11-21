@@ -13,17 +13,22 @@ import {
   decisionGetResult,
   decisionListPayload,
   decisionListResult,
+  decisionResolveContentConflictPayload,
+  decisionResolveContentConflictResult,
 } from "@trail/ipc";
 import {
   formatDecisionMarkdown,
   formatDecisionsBundleMarkdown,
   mcpCreateDecision,
+  refreshDecisionContentConflicts,
   releaseDecisionBlock,
+  resolveDecisionContentConflict,
   stopDecisionBlockedWorktree,
   syncProposedDecisionBlocks,
 } from "@trail/core";
 import { runAutopilotTick } from "./autopilot-service";
 import {
+  getDecisionConflictStore,
   getDecisionStore,
   getIssueCacheStore,
   getKnowledgeDocStore,
@@ -157,8 +162,33 @@ export function registerDecisionIpc(): void {
     const decisions = getDecisionStore();
     const worktrees = getWorktreeStore();
     syncProposedDecisionBlocks(workspaceId, decisions, worktrees);
+    const conflictStore = getDecisionConflictStore();
+    refreshDecisionContentConflicts(workspaceId, decisions, conflictStore);
     const rows = decisions.list(workspaceId);
-    return decisionListResult.parse({ decisions: rows });
+    const contentConflicts = conflictStore.listByWorkspace(workspaceId).map((row) => ({
+      adrIdA: row.adrIdA,
+      adrIdB: row.adrIdB,
+      topic: row.topic,
+      summary: row.summary,
+    }));
+    return decisionListResult.parse({ decisions: rows, contentConflicts });
+  });
+
+  ipcMain.handle(IpcChannels.decisionResolveContentConflict, (_event, raw: unknown) => {
+    const payload = decisionResolveContentConflictPayload.parse(raw);
+    const workspaceId = resolveWorkspaceId(payload.workspaceId);
+    const result = resolveDecisionContentConflict(
+      getDecisionStore(),
+      getDecisionConflictStore(),
+      {
+        workspaceId,
+        adrIdA: payload.adrIdA,
+        adrIdB: payload.adrIdB,
+        resolution: payload.resolution,
+        scopeNote: payload.scopeNote,
+      },
+    );
+    return decisionResolveContentConflictResult.parse(result);
   });
 
   ipcMain.handle(IpcChannels.decisionGet, (_event, raw: unknown) => {

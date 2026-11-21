@@ -61,6 +61,8 @@ On **Sync now**, Trail merges GitHub issue data with the local cache instead of 
 
 Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-8-sync-conflict.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-8-sync-conflict.md).
 
+**Decision conflicts:** accepted ADRs that contradict each other (e.g. where tasks live) show an amber **Compare** banner on **Decisions**; resolve by superseding one ADR or keeping both with a scope note. Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-9-decision-conflict.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-9-decision-conflict.md).
+
 ---
 
 ## Legacy CLI + local web UI

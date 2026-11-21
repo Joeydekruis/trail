@@ -51,6 +51,14 @@ export class DecisionStore {
     }
   }
 
+  listRecords(workspaceId: string): DecisionRecord[] {
+    this.ensureSeeded(workspaceId);
+    const rows = this.db
+      .prepare("SELECT * FROM decisions WHERE workspace_id = ? ORDER BY adr_id DESC")
+      .all(workspaceId) as DecisionRow[];
+    return rows.map(mapRow);
+  }
+
   list(workspaceId: string): DecisionSummary[] {
     this.ensureSeeded(workspaceId);
     const rows = this.db
@@ -158,6 +166,37 @@ export class DecisionStore {
       ...current,
       status: "rejected",
       blocksIssueNumber: null,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.upsert(updated);
+  }
+
+  markSuperseded(workspaceId: string, adrId: string, note?: string): DecisionRecord | null {
+    const current = this.get(workspaceId, adrId);
+    if (!current || current.status !== "accepted") {
+      return null;
+    }
+    const consequences = note
+      ? `${current.consequencesMarkdown}\n\n${note}`.trim()
+      : current.consequencesMarkdown;
+    const updated: DecisionRecord = {
+      ...current,
+      status: "superseded",
+      consequencesMarkdown: consequences,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.upsert(updated);
+  }
+
+  appendConsequences(workspaceId: string, adrId: string, note: string): DecisionRecord | null {
+    const current = this.get(workspaceId, adrId);
+    if (!current || current.status !== "accepted") {
+      return null;
+    }
+    const consequences = `${current.consequencesMarkdown}\n\n${note}`.trim();
+    const updated: DecisionRecord = {
+      ...current,
+      consequencesMarkdown: consequences,
       updatedAt: new Date().toISOString(),
     };
     return this.upsert(updated);

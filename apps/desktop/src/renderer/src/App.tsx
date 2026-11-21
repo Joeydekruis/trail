@@ -229,6 +229,9 @@ declare global {
         workspaceId?: string;
         adrId?: string;
       }) => Promise<import("@trail/ipc").DecisionExportMarkdownResult>;
+      resolveDecisionContentConflict?: (
+        input: import("@trail/ipc").DecisionResolveContentConflictPayload,
+      ) => Promise<import("@trail/ipc").DecisionResolveContentConflictResult>;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;

@@ -118,6 +118,21 @@ export {
   openDecisionStore,
 } from "./decisions/store.js";
 export {
+  DecisionConflictStore,
+  openDecisionConflictStore,
+} from "./decisions/conflict-store.js";
+export type { DecisionConflictRecord } from "./decisions/conflict-store.js";
+export type { DecisionContentConflict } from "./decisions/conflict-detect.js";
+export {
+  detectDecisionContentConflicts,
+  taskStoreClaimFromMarkdown,
+} from "./decisions/conflict-detect.js";
+export { refreshDecisionContentConflicts } from "./decisions/reconcile-conflicts.js";
+export {
+  resolveDecisionContentConflict,
+  type DecisionContentConflictResolution,
+} from "./decisions/resolve-content-conflict.js";
+export {
   releaseDecisionBlock,
   stopDecisionBlockedWorktree,
   syncProposedDecisionBlocks,

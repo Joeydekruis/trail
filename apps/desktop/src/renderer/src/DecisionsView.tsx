@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DecisionDetailDto, DecisionSummaryDto, WorkspaceDto } from "@trail/ipc";
+import type {
+  DecisionContentConflictDto,
+  DecisionDetailDto,
+  DecisionSummaryDto,
+  WorkspaceDto,
+} from "@trail/ipc";
 import { downloadMarkdownFile } from "./download-markdown";
 import { NewDecisionModal } from "./NewDecisionModal";
 import { ViewPageHeader } from "./design/ViewPageHeader";
 import {
+  ConflictBanner,
   DecisionRow,
   FilterPill,
   SyncStatus,
@@ -11,6 +17,7 @@ import {
   TrailChip,
   TrailPanel,
 } from "./design/TrailUi";
+import { ResolveDecisionConflictModal } from "./ResolveDecisionConflictModal";
 
 function statusLabel(status: DecisionSummaryDto["status"]): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
@@ -54,6 +61,9 @@ export function DecisionsView({
   const [newOpen, setNewOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [contentConflicts, setContentConflicts] = useState<DecisionContentConflictDto[]>([]);
+  const [resolveConflictOpen, setResolveConflictOpen] = useState(false);
+  const [activeConflict, setActiveConflict] = useState<DecisionContentConflictDto | null>(null);
 
   const reloadList = useCallback(async () => {
     const api = window.trail;
@@ -62,6 +72,12 @@ export function DecisionsView({
     }
     const result = await api.listDecisions(workspace.id);
     setRows(result.decisions);
+    setContentConflicts(result.contentConflicts);
+    if (result.contentConflicts.length > 0) {
+      setActiveConflict((current) => current ?? result.contentConflicts[0] ?? null);
+    } else {
+      setActiveConflict(null);
+    }
     setSelectedId((current) => {
       if (current && result.decisions.some((row) => row.adrId === current)) {
         return current;
@@ -103,6 +119,15 @@ export function DecisionsView({
   }, [rows]);
 
   const repoLabel = workspace?.repository ?? workspace?.name ?? "Workspace";
+  const conflictAdrIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const conflict of contentConflicts) {
+      ids.add(conflict.adrIdA);
+      ids.add(conflict.adrIdB);
+    }
+    return ids;
+  }, [contentConflicts]);
+  const primaryConflict = contentConflicts[0] ?? null;
 
   async function handleAccept() {
     const api = window.trail;
@@ -185,6 +210,17 @@ export function DecisionsView({
           {exportError}
         </p>
       ) : null}
+      {primaryConflict ? (
+        <ConflictBanner
+          action="Compare"
+          onAction={() => {
+            setActiveConflict(primaryConflict);
+            setResolveConflictOpen(true);
+          }}
+        >
+          {primaryConflict.summary}
+        </ConflictBanner>
+      ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         <FilterPill label="All" count={statusCounts.all} active />
         <FilterPill label="Accepted" count={statusCounts.accepted} />
@@ -221,7 +257,7 @@ export function DecisionsView({
                 title={row.title}
                 status={statusLabel(row.status)}
                 meta={formatMeta(row.author, row.updatedAt)}
-                conflict={row.blocksIssueNumber != null}
+                conflict={row.blocksIssueNumber != null || conflictAdrIds.has(row.adrId)}
                 selected={selectedId === row.adrId}
               />
             </div>
@@ -319,6 +355,15 @@ export function DecisionsView({
           void reloadList();
         }}
       />
+      {workspace?.id && activeConflict ? (
+        <ResolveDecisionConflictModal
+          open={resolveConflictOpen}
+          workspaceId={workspace.id}
+          conflict={activeConflict}
+          onClose={() => setResolveConflictOpen(false)}
+          onResolved={() => void reloadList()}
+        />
+      ) : null}
     </div>
   );
 }

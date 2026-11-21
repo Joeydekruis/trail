@@ -43,6 +43,7 @@ export const IpcChannels = {
   decisionReject: "decision.reject",
   decisionCreate: "decision.create",
   decisionExportMarkdown: "decision.exportMarkdown",
+  decisionResolveContentConflict: "decision.resolveContentConflict",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -832,11 +833,42 @@ export const decisionListPayload = z.object({
 
 export type DecisionListPayload = z.infer<typeof decisionListPayload>;
 
+export const decisionContentConflictDto = z.object({
+  adrIdA: z.string().min(1),
+  adrIdB: z.string().min(1),
+  topic: z.string().min(1),
+  summary: z.string().min(1),
+});
+
+export type DecisionContentConflictDto = z.infer<typeof decisionContentConflictDto>;
+
 export const decisionListResult = z.object({
   decisions: z.array(decisionSummaryDto),
+  contentConflicts: z.array(decisionContentConflictDto),
 });
 
 export type DecisionListResult = z.infer<typeof decisionListResult>;
+
+export const decisionResolveContentConflictPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  adrIdA: z.string().min(1),
+  adrIdB: z.string().min(1),
+  resolution: z.enum(["keep_a_supersede_b", "keep_b_supersede_a", "keep_both"]),
+  scopeNote: z.string().max(5_000).optional(),
+});
+
+export type DecisionResolveContentConflictPayload = z.infer<
+  typeof decisionResolveContentConflictPayload
+>;
+
+export const decisionResolveContentConflictResult = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type DecisionResolveContentConflictResult = z.infer<
+  typeof decisionResolveContentConflictResult
+>;
 
 export const decisionGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

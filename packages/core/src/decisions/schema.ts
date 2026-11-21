@@ -24,6 +24,20 @@ export function migrateDecisions(db: SqliteDatabase, schemaVersion: number): num
     db.exec(CREATE_DECISIONS);
     version = 8;
   }
+  if (version < 11) {
+    db.exec(`
+CREATE TABLE IF NOT EXISTS decision_conflicts (
+  workspace_id TEXT NOT NULL,
+  adr_id_a TEXT NOT NULL,
+  adr_id_b TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  detected_at TEXT NOT NULL,
+  PRIMARY KEY (workspace_id, adr_id_a, adr_id_b)
+);
+`);
+    version = 11;
+  }
   if (version > schemaVersion) {
     db.prepare("DELETE FROM schema_version").run();
     db.prepare("INSERT INTO schema_version (version) VALUES (?)").run(version);

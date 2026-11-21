@@ -17,6 +17,7 @@ export class MemorySqlite implements SqliteDatabase {
         "knowledge_docs",
         "decisions",
         "issue_sync_conflicts",
+        "decision_conflicts",
       ]) {
         if (sql.includes(name) && !this.tables.has(name)) {
           this.tables.set(name, []);
@@ -95,6 +96,50 @@ export class MemorySqlite implements SqliteDatabase {
             "issue_sync_conflicts",
             rows.filter((r) => r.workspace_id !== params[0]),
           );
+        }
+        if (sql.includes("INSERT INTO decision_conflicts")) {
+          const [
+            workspaceId,
+            adrIdA,
+            adrIdB,
+            topic,
+            summary,
+            detectedAt,
+          ] = params as [string, string, string, string, string, string];
+          const rows = self.tables.get("decision_conflicts") ?? [];
+          const mapped = {
+            workspace_id: workspaceId,
+            adr_id_a: adrIdA,
+            adr_id_b: adrIdB,
+            topic,
+            summary,
+            detected_at: detectedAt,
+          };
+          const next = rows.filter(
+            (r) =>
+              !(
+                r.workspace_id === workspaceId &&
+                r.adr_id_a === adrIdA &&
+                r.adr_id_b === adrIdB
+              ),
+          );
+          next.push(mapped);
+          self.tables.set("decision_conflicts", next);
+          return { changes: 1 };
+        }
+        if (sql.includes("DELETE FROM decision_conflicts WHERE workspace_id")) {
+          const [workspaceId, adrIdA, adrIdB] = params as [string, string, string];
+          const rows = self.tables.get("decision_conflicts") ?? [];
+          const next = rows.filter(
+            (r) =>
+              !(
+                r.workspace_id === workspaceId &&
+                r.adr_id_a === adrIdA &&
+                r.adr_id_b === adrIdB
+              ),
+          );
+          self.tables.set("decision_conflicts", next);
+          return { changes: rows.length - next.length };
         }
         if (sql.includes("INSERT INTO issue_sync_conflicts")) {
           const row = params[0] as Record<string, unknown>;
@@ -441,6 +486,15 @@ export class MemorySqlite implements SqliteDatabase {
           return [...(self.tables.get("issue_sync_conflicts") ?? [])]
             .filter((r) => r.workspace_id === params[0])
             .sort((a, b) => (a.issue_number as number) - (b.issue_number as number));
+        }
+        if (sql.includes("FROM decision_conflicts WHERE workspace_id")) {
+          return [...(self.tables.get("decision_conflicts") ?? [])]
+            .filter((r) => r.workspace_id === params[0])
+            .sort(
+              (a, b) =>
+                String(a.adr_id_a).localeCompare(String(b.adr_id_a)) ||
+                String(a.adr_id_b).localeCompare(String(b.adr_id_b)),
+            );
         }
         if (sql.includes("FROM decisions WHERE workspace_id")) {
           let rows = [...(self.tables.get("decisions") ?? [])].filter(
