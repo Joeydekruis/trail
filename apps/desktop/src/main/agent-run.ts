@@ -1,9 +1,13 @@
-import { planAgentSessionRun } from "@trail/core";
-import { getWorktreeStore } from "./database";
 import {
-  startAgentRunViaUtility,
-  stopAgentRunViaUtility,
-} from "./agent-runner-bridge";
+  AGENT_PARALLEL_LIMIT_MESSAGE,
+  canStartAnotherAgentRun,
+  planAgentSessionRun,
+  resolveAutopilotMaxParallel,
+  workspaceAutopilotMaxParallelKey,
+} from "@trail/core";
+import { countActiveAgentRuns, startAgentRunViaUtility } from "./agent-runner-bridge";
+import { getWorktreeStore, getWorkspaceStore } from "./database";
+import { stopAgentRunViaUtility } from "./agent-runner-bridge";
 import type { StartAgentRunResult } from "./agent-run-shared";
 
 export {
@@ -29,6 +33,14 @@ export async function startAgentRun(input: {
   const prompt =
     input.prompt?.trim() ||
     `Implement GitHub issue #${input.issueNumber}: ${record.title}`;
+
+  const maxParallel = resolveAutopilotMaxParallel(
+    getWorkspaceStore().getAppSetting(workspaceAutopilotMaxParallelKey(input.workspaceId)),
+  );
+  if (!canStartAnotherAgentRun(countActiveAgentRuns(), maxParallel)) {
+    worktreeStore.updateStatus(input.workspaceId, input.issueNumber, "queued");
+    return { ok: false, message: AGENT_PARALLEL_LIMIT_MESSAGE };
+  }
 
   const session = planAgentSessionRun(record.agentSessionId, {
     followUp: input.followUp ?? false,
@@ -58,6 +70,7 @@ export function stopAgentRun(workspaceId: string, issueNumber: number): boolean 
   const stopped = stopAgentRunViaUtility(workspaceId, issueNumber);
   if (stopped) {
     getWorktreeStore().updateStatus(workspaceId, issueNumber, "stopped");
+    void import("./agent-run-queue.js").then((mod) => mod.drainQueuedAgentRuns());
   }
   return stopped;
 }

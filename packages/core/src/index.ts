@@ -122,6 +122,10 @@ export {
 } from "./agent/pick-backend.js";
 export { buildClaudeAgentArgs, planAgentSessionRun } from "./agent/claude-args.js";
 export {
+  AGENT_PARALLEL_LIMIT_MESSAGE,
+  canStartAnotherAgentRun,
+} from "./agent/parallel-limit.js";
+export {
   buildAskAgentWhyPrompt,
   formatAgentRunDuration,
   summarizeAgentRunOutput,

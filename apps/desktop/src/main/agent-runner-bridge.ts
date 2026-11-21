@@ -116,6 +116,7 @@ function handleUtilityMessage(message: unknown): void {
         durationMs,
       });
       void import("./auto-updater.js").then((mod) => mod.tryInstallDownloadedUpdate());
+      void import("./agent-run-queue.js").then((mod) => mod.drainQueuedAgentRuns());
     });
   }
 }
@@ -203,5 +204,6 @@ export function stopAgentRunViaUtility(workspaceId: string, issueNumber: number)
   keyByRunId.delete(runId);
   runStartedAtMs.delete(key);
   void import("./auto-updater.js").then((mod) => mod.tryInstallDownloadedUpdate());
+  void import("./agent-run-queue.js").then((mod) => mod.drainQueuedAgentRuns());
   return true;
 }
