@@ -33,10 +33,10 @@ describe("MCP workspace settings", () => {
     const db = new MemorySqlite();
     const store = openWorkspaceStore(db);
     const ws = store.getActive();
-    const blocked = assertMcpToolAllowed(store, "start_agent_run", ws.id);
-    expect(blocked.ok).toBe(false);
+    expect(assertMcpToolAllowed(store, "start_agent_run", ws.id).ok).toBe(false);
+    expect(assertMcpToolAllowed(store, "stop_agent_run", ws.id).ok).toBe(false);
     writeMcpWorkspaceSettings(store, ws.id, { allowAgentRuns: true });
-    const allowed = assertMcpToolAllowed(store, "start_agent_run", ws.id);
-    expect(allowed.ok).toBe(true);
+    expect(assertMcpToolAllowed(store, "start_agent_run", ws.id).ok).toBe(true);
+    expect(assertMcpToolAllowed(store, "stop_agent_run", ws.id).ok).toBe(true);
   });
 });

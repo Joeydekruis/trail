@@ -677,7 +677,7 @@ export function SettingsView({
                   <p className="tr-small" style={{ margin: 0 }}>
                     Tools: list_workspaces, list_tasks, get_task, list_decisions, get_decision, search_docs,
                     list_open_pins, create_decision, update_task_status, resolve_pin,
-                    add_task_comment, start_agent_run (when enabled).
+                    add_task_comment, start_agent_run, stop_agent_run (when enabled).
                   </p>
                 </SettingsBlock>
               ) : null}
@@ -697,7 +697,7 @@ export function SettingsView({
                         ["sourceDocs", "Knowledge / search_docs"],
                         ["sourceDecisions", "Decisions (list, get, create)"],
                         ["sourceDesigns", "Designs (reserved for future MCP tools)"],
-                        ["allowAgentRuns", "Allow start_agent_run MCP tool"],
+                        ["allowAgentRuns", "Allow start/stop agent run MCP tools"],
                       ] as const
                     ).map(([key, label]) => (
                       <label key={key} style={{ display: "flex", alignItems: "center", gap: 10 }}>

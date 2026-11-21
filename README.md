@@ -45,9 +45,9 @@ While Trail Desktop is running, the main process hosts a **loopback HTTP MCP ser
 
 | Read | Write |
 | --- | --- |
-| `list_workspaces`, `list_tasks`, `get_task`, `list_decisions`, `get_decision`, `search_docs`, `list_open_pins` | `create_decision`, `update_task_status`, `resolve_pin`, `add_task_comment`, `start_agent_run` |
+| `list_workspaces`, `list_tasks`, `get_task`, `list_decisions`, `get_decision`, `search_docs`, `list_open_pins` | `create_decision`, `update_task_status`, `resolve_pin`, `add_task_comment`, `start_agent_run`, `stop_agent_run` |
 
-`start_agent_run` requires **Allow start_agent_run** and an existing local worktree for the issue. Write tools require **Write tools** enabled.
+`start_agent_run` / `stop_agent_run` require **Allow start/stop agent run** and a local worktree (`start` when idle, `stop` when status is running). Write tools require **Write tools** enabled.
 
 Implementation: `packages/mcp` · Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-6-mcp.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-6-mcp.md).
 

@@ -70,3 +70,53 @@ export function resolveMcpStartAgentRun(
     prompt,
   };
 }
+
+export type McpStopAgentRunInput = {
+  workspaceId?: string;
+  number?: number;
+  id?: string;
+};
+
+export type McpStopAgentRunResult =
+  | { ok: true; workspaceId: string; issueNumber: number; title: string }
+  | { ok: false; code: "validation" | "not_found" | "idle"; message: string };
+
+export function resolveMcpStopAgentRun(
+  stores: TrailMcpStores,
+  input: McpStopAgentRunInput,
+): McpStopAgentRunResult {
+  const workspaceId = resolveWorkspaceId(stores, input.workspaceId);
+  const task = mcpGetTask(stores, {
+    workspaceId,
+    number: input.number,
+    id: input.id,
+  });
+  if (!task) {
+    return {
+      ok: false,
+      code: "not_found",
+      message: "Task not found in workspace cache — sync first",
+    };
+  }
+  const worktree = stores.worktrees.get(workspaceId, task.number);
+  if (!worktree) {
+    return {
+      ok: false,
+      code: "not_found",
+      message: "No local worktree for this issue",
+    };
+  }
+  if (worktree.status !== "running") {
+    return {
+      ok: false,
+      code: "idle",
+      message: "No agent run is active for this worktree",
+    };
+  }
+  return {
+    ok: true,
+    workspaceId,
+    issueNumber: task.number,
+    title: task.title,
+  };
+}

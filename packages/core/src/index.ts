@@ -133,7 +133,13 @@ export type { McpResolvePinInput, McpResolvePinResult } from "./mcp/pins.js";
 export { resolveMcpAddTaskComment } from "./mcp/task-comment.js";
 export type { McpAddTaskCommentInput, McpAddTaskCommentResult } from "./mcp/task-comment.js";
 export { resolveMcpStartAgentRun } from "./mcp/agent-run.js";
-export type { McpStartAgentRunInput, McpStartAgentRunResult } from "./mcp/agent-run.js";
+export type {
+  McpStartAgentRunInput,
+  McpStartAgentRunResult,
+  McpStopAgentRunInput,
+  McpStopAgentRunResult,
+} from "./mcp/agent-run.js";
+export { resolveMcpStopAgentRun } from "./mcp/agent-run.js";
 export {
   assertMcpToolAllowed,
   MCP_WRITE_TOOLS,

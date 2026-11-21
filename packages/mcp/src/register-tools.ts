@@ -258,6 +258,26 @@ export function registerTrailWriteTools(
       }
     },
   );
+
+  server.registerTool(
+    "stop_agent_run",
+    {
+      description:
+        "Stop the active agent CLI run for a worktree (requires allowAgentRuns in Settings).",
+      inputSchema: z.object({
+        workspaceId,
+        number: z.number().int().positive().optional(),
+        id: z.string().optional(),
+      }),
+    },
+    async (args) => {
+      try {
+        return ok(await Promise.resolve(invoke("stop_agent_run", args)));
+      } catch (e) {
+        return err(e instanceof Error ? e.message : String(e));
+      }
+    },
+  );
 }
 
 export function registerTrailMcpTools(

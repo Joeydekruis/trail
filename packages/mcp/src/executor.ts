@@ -12,6 +12,7 @@ import {
   assertMcpToolAllowed,
   resolveMcpAddTaskComment,
   resolveMcpStartAgentRun,
+  resolveMcpStopAgentRun,
   resolveMcpUpdateTaskStatus,
 } from "@trail/core";
 import type { TrailMcpToolName } from "./tool-names.js";
@@ -36,11 +37,17 @@ export type TrailMcpStartAgentRunHook = (input: {
   prompt: string;
 }) => Promise<unknown>;
 
+export type TrailMcpStopAgentRunHook = (input: {
+  workspaceId: string;
+  issueNumber: number;
+}) => Promise<unknown>;
+
 export type TrailMcpExecutorContext = {
   stores: TrailMcpStores;
   updateTaskStatus?: TrailMcpUpdateTaskStatusHook;
   addTaskComment?: TrailMcpAddTaskCommentHook;
   startAgentRun?: TrailMcpStartAgentRunHook;
+  stopAgentRun?: TrailMcpStopAgentRunHook;
 };
 
 export async function executeTrailMcpTool(
@@ -196,6 +203,27 @@ export async function executeTrailMcpTool(
         workspaceId: resolved.workspaceId,
         issueNumber: resolved.issueNumber,
         prompt: resolved.prompt,
+      });
+    }
+    case "stop_agent_run": {
+      const resolved = resolveMcpStopAgentRun(stores, {
+        workspaceId: typeof args.workspaceId === "string" ? args.workspaceId : undefined,
+        number: typeof args.number === "number" ? args.number : undefined,
+        id: typeof args.id === "string" ? args.id : undefined,
+      });
+      if (!resolved.ok) {
+        return resolved;
+      }
+      if (!context.stopAgentRun) {
+        return {
+          ok: false,
+          code: "unavailable",
+          message: "stop_agent_run is only available in Trail Desktop",
+        };
+      }
+      return context.stopAgentRun({
+        workspaceId: resolved.workspaceId,
+        issueNumber: resolved.issueNumber,
       });
     }
     default: {

@@ -6,6 +6,7 @@ export const MCP_WRITE_TOOLS = [
   "resolve_pin",
   "add_task_comment",
   "start_agent_run",
+  "stop_agent_run",
 ] as const;
 
 export type McpWriteToolName = (typeof MCP_WRITE_TOOLS)[number];
@@ -146,7 +147,10 @@ export function assertMcpToolAllowed(
       message: `MCP decisions access is disabled for workspace ${ws}`,
     };
   }
-  if (tool === "start_agent_run" && !settings.allowAgentRuns) {
+  if (
+    (tool === "start_agent_run" || tool === "stop_agent_run") &&
+    !settings.allowAgentRuns
+  ) {
     return {
       ok: false,
       code: "disabled",

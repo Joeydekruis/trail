@@ -15,3 +15,4 @@
 - [x] MCP write: `add_task_comment` (GitHub issue comment)
 - [x] Per-workspace MCP toggles persisted in SQLite (Settings → MCP)
 - [x] MCP write: `start_agent_run` (existing worktree + `allowAgentRuns`)
+- [x] MCP write: `stop_agent_run` (running worktree + `allowAgentRuns`)

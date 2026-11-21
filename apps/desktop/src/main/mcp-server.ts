@@ -19,7 +19,7 @@ import {
   getWorkspaceStore,
 } from "./database";
 import { runAutopilotTick } from "./autopilot-service";
-import { startAgentRun } from "./agent-run";
+import { startAgentRun, stopAgentRun } from "./agent-run";
 
 const MCP_TOKEN_KEY = "mcp_http_token";
 
@@ -68,6 +68,17 @@ function mcpExecutorContext(): TrailMcpExecutorContext {
         return { ok: false as const, message: result.message };
       }
       return { ok: true as const, workspaceId, issueNumber, state: "running" as const };
+    },
+    stopAgentRun: async ({ workspaceId, issueNumber }) => {
+      const stopped = stopAgentRun(workspaceId, issueNumber);
+      if (!stopped) {
+        return {
+          ok: false as const,
+          code: "idle" as const,
+          message: "Agent utility had no active run for this worktree",
+        };
+      }
+      return { ok: true as const, workspaceId, issueNumber, state: "stopped" as const };
     },
   };
 }
