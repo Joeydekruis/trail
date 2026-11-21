@@ -2,7 +2,7 @@ import { utilityProcess, type UtilityProcess } from "electron";
 import { detectAgentBackends } from "./agent-cli";
 import { resolveAgentRunnerUtilityPath } from "./agent-runner-path";
 import { createAgentStreamChannel, deliverAgentStreamPort } from "./agent-stream-port";
-import { getWorktreeStore } from "./database";
+import { finalizeAgentRun } from "./agent-draft-pr";
 import {
   broadcastAgentRunState,
   type StartAgentRunInput,
@@ -94,17 +94,18 @@ function handleUtilityMessage(message: unknown): void {
       runIdByKey.delete(key);
       keyByRunId.delete(typed.runId);
     }
-    getWorktreeStore().updateStatus(
+    void finalizeAgentRun(
       typed.workspaceId,
       typed.issueNumber,
-      "stopped",
-    );
-    broadcastAgentRunState({
-      workspaceId: typed.workspaceId,
-      issueNumber: typed.issueNumber,
-      state: "stopped",
-      backend: typed.backend,
-      exitCode: typed.exitCode,
+      typed.exitCode,
+    ).finally(() => {
+      broadcastAgentRunState({
+        workspaceId: typed.workspaceId,
+        issueNumber: typed.issueNumber,
+        state: "stopped",
+        backend: typed.backend,
+        exitCode: typed.exitCode,
+      });
     });
   }
 }

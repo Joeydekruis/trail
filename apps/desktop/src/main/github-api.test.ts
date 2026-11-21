@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createDraftPullRequest,
   createGitHubIssue,
   fetchGitHubBranches,
   fetchGitHubIssueComments,
@@ -49,6 +50,28 @@ describe("fetchGitHubBranches", () => {
       expect(result.comments).toHaveLength(1);
       expect(result.comments[0]?.body).toBe("Ship it");
     }
+  });
+
+  it("creates a draft pull request", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(JSON.stringify({ number: 12, html_url: "https://github.com/acme/widget/pull/12" }), {
+          status: 201,
+        }),
+      ),
+    );
+    const result = await createDraftPullRequest("token", "acme", "widget", {
+      title: "#42 Fix",
+      head: "agent/42-fix",
+      base: "development",
+      body: "Automated",
+    });
+    expect(result).toEqual({
+      ok: true,
+      number: 12,
+      htmlUrl: "https://github.com/acme/widget/pull/12",
+    });
   });
 
   it("creates a GitHub issue", async () => {

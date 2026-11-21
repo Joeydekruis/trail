@@ -70,6 +70,7 @@ export {
   type TrailPreviewConfig,
 } from "./workspace/trail-preview-config.js";
 export { WorktreeStore, openWorktreeStore, worktreeId } from "./worktree/store.js";
+export { draftPullRequestBody, draftPullRequestTitle } from "./worktree/draft-pr.js";
 export { parseAgentVersionOutput } from "./agent/parse-version.js";
 export type { AgentBackendId, AgentBackendStatus } from "./agent/types.js";
 export { AGENT_BACKEND_IDS } from "./agent/types.js";

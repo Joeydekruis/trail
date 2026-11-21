@@ -11,4 +11,4 @@
 - [x] Settings → Agents: parallel run limit
 - [x] Move issue to In progress on GitHub when autopilot picks
 - [x] Global pause autopilot / waiting-for-decision gate (worktree `waiting` blocks new picks)
-- [ ] Draft PR on successful run
+- [x] Draft PR on successful run (push branch + GitHub draft PR + In review)
