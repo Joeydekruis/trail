@@ -24,8 +24,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm run bootstrap:desktop
-        env:
-          ELECTRON_DISABLE_SANDBOX: "1"
       - run: npm test
       - run: npm run typecheck
 
