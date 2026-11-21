@@ -21,6 +21,36 @@
 
 **Monorepo:** `apps/desktop`, `packages/core`, `packages/ipc`, `packages/mcp`, `packages/tokens`. See [AGENTS.md](AGENTS.md).
 
+### MCP (Trail Desktop)
+
+While Trail Desktop is running, the main process hosts a **loopback HTTP MCP server** backed by the local SQLite cache and (for some write tools) live GitHub calls. External clients (Cursor, Claude Code, other MCP hosts) connect via **stdio** or **Streamable HTTP**.
+
+| Transport | How to connect |
+| --- | --- |
+| **Stdio** | `npx trail-mcp` (package `@trail/mcp`). Reads `mcp-connection.json` from Trail’s userData folder (see below). Proxies MCP tool calls to the HTTP shim. |
+| **Streamable HTTP** | `POST`/`GET` `{baseUrl}/mcp` with header `Authorization: Bearer {token}` (same token as in the connection file). Full MCP SDK transport. |
+| **Legacy HTTP shim** | `POST {baseUrl}/tools/{tool_name}` with Bearer auth and JSON body = tool arguments. Used by the stdio bridge only; URL-based clients should prefer `/mcp`. |
+
+**Setup**
+
+1. Run `npm run desktop:dev` (or the packaged app) and open **Settings → MCP**.
+2. Copy the **Cursor config** snippet, or point your client at `streamableUrl` with the Bearer token.
+3. Tune **Workspace access** toggles per workspace (read, write, docs/decisions sources, `start_agent_run`).
+
+**Connection file:** `mcp-connection.json` in Trail Desktop userData (`~/Library/Application Support/@trail/desktop` on macOS). Override with `TRAIL_MCP_CONNECTION` when running `trail-mcp` from another machine or CI.
+
+**Build the MCP bin** (after pulling changes): `npm run build --workspace=@trail/mcp`, then `npx trail-mcp`.
+
+**Tools** (when enabled for the active workspace):
+
+| Read | Write |
+| --- | --- |
+| `list_workspaces`, `list_tasks`, `get_task`, `list_decisions`, `get_decision`, `search_docs`, `list_open_pins` | `create_decision`, `update_task_status`, `resolve_pin`, `add_task_comment`, `start_agent_run` |
+
+`start_agent_run` requires **Allow start_agent_run** and an existing local worktree for the issue. Write tools require **Write tools** enabled.
+
+Implementation: `packages/mcp` · Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-6-mcp.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-6-mcp.md).
+
 ---
 
 ## Legacy CLI + local web UI
