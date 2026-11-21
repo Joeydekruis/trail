@@ -321,6 +321,8 @@ export function BoardView({
               role="switch"
               aria-checked={autopilot}
               aria-label="Autopilot"
+              data-tip="When on, picks the top Todo card by priority, then top to bottom"
+              data-tip-pos="below"
               onClick={toggleAutopilot}
               style={{
                 position: "relative",
@@ -360,10 +362,24 @@ export function BoardView({
         </span>
         <span style={{ marginLeft: "auto" }}>
           <span className="tr-seg" role="group">
-            <button type="button" aria-pressed={boardMode} onClick={() => setBoardMode(true)}>
+            <button
+              type="button"
+              aria-pressed={boardMode}
+              aria-label="Board view"
+              data-tip="Kanban columns"
+              data-tip-pos="below"
+              onClick={() => setBoardMode(true)}
+            >
               Board
             </button>
-            <button type="button" aria-pressed={!boardMode} onClick={() => setBoardMode(false)}>
+            <button
+              type="button"
+              aria-pressed={!boardMode}
+              aria-label="List view"
+              data-tip="Flat list by column"
+              data-tip-pos="below"
+              onClick={() => setBoardMode(false)}
+            >
               List
             </button>
           </span>

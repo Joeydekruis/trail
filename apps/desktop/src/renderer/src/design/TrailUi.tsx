@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import type { BoardCard } from "./board-fixture";
 
 type Tone = "mint" | "amber" | "blue" | "violet" | "red" | "gray" | "claude";
@@ -29,13 +29,14 @@ export function TrailButton({
   disabled,
   onClick,
   type = "button",
+  ...rest
 }: {
   variant: "primary" | "secondary" | "ghost";
   children: ReactNode;
   disabled?: boolean;
   onClick?: () => void;
   type?: "button" | "submit";
-}) {
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "type" | "children">) {
   const cls =
     variant === "primary"
       ? "tr-btn tr-btn-primary"
@@ -43,7 +44,7 @@ export function TrailButton({
         ? "tr-btn tr-btn-secondary"
         : "tr-btn tr-btn-ghost";
   return (
-    <button type={type} className={cls} disabled={disabled} onClick={onClick}>
+    <button type={type} className={cls} disabled={disabled} onClick={onClick} {...rest}>
       {children}
     </button>
   );

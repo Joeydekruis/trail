@@ -23,6 +23,7 @@ type WorktreeViewProps = {
   agentSessionActive?: boolean;
   composerDraft?: { issueNumber: number; text: string } | null;
   onComposerDraftApplied?: () => void;
+  onRefreshWorktrees?: () => void;
 };
 
 export function WorktreeView({
@@ -37,6 +38,7 @@ export function WorktreeView({
   agentSessionActive = false,
   composerDraft = null,
   onComposerDraftApplied,
+  onRefreshWorktrees,
 }: WorktreeViewProps) {
   if (!context) {
     return (
@@ -69,6 +71,7 @@ export function WorktreeView({
       agentSessionActive={agentSessionActive}
       composerDraft={composerDraft}
       onComposerDraftApplied={onComposerDraftApplied}
+      onRefreshWorktrees={onRefreshWorktrees}
     />
   );
 }
@@ -85,6 +88,7 @@ function WorktreeViewBody({
   agentSessionActive,
   composerDraft,
   onComposerDraftApplied,
+  onRefreshWorktrees,
 }: {
   context: WorktreeSessionContext;
   workspaceId?: string;
@@ -99,6 +103,7 @@ function WorktreeViewBody({
   agentSessionActive?: boolean;
   composerDraft?: { issueNumber: number; text: string } | null;
   onComposerDraftApplied?: () => void;
+  onRefreshWorktrees?: () => void;
 }) {
   const fixture = getWorktreeFixture();
   const [detailsOpen, setDetailsOpen] = useState(true);
@@ -254,6 +259,8 @@ function WorktreeViewBody({
         <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8 }}>
           <TrailButton
             variant="secondary"
+            data-tip="Open the worktree folder in Finder or File Explorer"
+            data-tip-pos="below"
             onClick={() => void window.trail?.openPath?.(context.path)}
           >
             Open folder
@@ -267,13 +274,20 @@ function WorktreeViewBody({
             <TrailButton
               variant="primary"
               disabled={startRunBusy}
+              data-tip="Start a new agent run for this issue (fresh session)"
+              data-tip-pos="below"
               onClick={onStartAgentRun}
             >
               {startRunBusy ? "Starting…" : "Start run"}
             </TrailButton>
           ) : null}
           {onStopAgentRun && context.status === "running" ? (
-            <TrailButton variant="secondary" onClick={onStopAgentRun}>
+            <TrailButton
+              variant="secondary"
+              data-tip="Stop the active agent run for this worktree"
+              data-tip-pos="below"
+              onClick={onStopAgentRun}
+            >
               Stop run
             </TrailButton>
           ) : null}
@@ -323,6 +337,7 @@ function WorktreeViewBody({
                   return;
                 }
                 await window.trail?.openExternal?.(result.htmlUrl);
+                onRefreshWorktrees?.();
               })();
             }}
           >
@@ -451,6 +466,9 @@ function ViewModeToggle({
         type="button"
         onClick={() => onChange("chat")}
         aria-pressed={mode === "chat"}
+        aria-label="Chat view"
+        data-tip="Agent chat"
+        data-tip-pos="below"
         style={{
           position: "relative",
           width: 76,
@@ -470,6 +488,9 @@ function ViewModeToggle({
         type="button"
         onClick={() => onChange("preview")}
         aria-pressed={mode === "preview"}
+        aria-label="Preview view"
+        data-tip="Embedded preview with pins"
+        data-tip-pos="below"
         style={{
           position: "relative",
           width: 76,
@@ -638,12 +659,20 @@ function WorktreeComposerBar({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <SelectButton label="Cursor CLI" />
           <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
-            <TrailButton variant="secondary" disabled={!isRunning || !onStop} onClick={onStop}>
+            <TrailButton
+              variant="secondary"
+              disabled={!isRunning || !onStop}
+              data-tip="Stop the active agent run"
+              data-tip-pos="below-end"
+              onClick={onStop}
+            >
               Stop
             </TrailButton>
             <TrailButton
               variant="primary"
               disabled={!canSend}
+              data-tip="Send to agent (⌘/Ctrl+Enter)"
+              data-tip-pos="below-end"
               onClick={() => void submit()}
             >
               {submitting || sendBusy ? "Sending…" : "Send"}

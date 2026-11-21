@@ -524,6 +524,7 @@ export function TrailShell({
           <button
             type="button"
             className="titlebar-no-drag"
+            aria-label="Open command palette"
             onClick={() => {
               setPaletteOpen(true);
               setPaletteQuery("");
@@ -1293,6 +1294,7 @@ function ShellMain({
           agentSessionActive={agentSessionActive}
           composerDraft={worktreeComposerDraft}
           onComposerDraftApplied={onConsumeWorktreeComposerDraft}
+          onRefreshWorktrees={onRefreshWorktrees}
         />
       </div>
     );
