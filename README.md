@@ -63,6 +63,8 @@ Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-8-sync-confli
 
 **Decision conflicts:** accepted ADRs that contradict each other (e.g. where tasks live) show an amber **Compare** banner on **Decisions**; resolve by superseding one ADR or keeping both with a scope note. Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-9-decision-conflict.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-9-decision-conflict.md).
 
+**Agent failures:** a failed agent run shows a red shell banner with exit code, run duration, and a mono tail of test/CLI output. Actions: **Retry**, **Open worktree**, and **Ask Claude why** (prefills the worktree composer). Missing agent CLI pauses autopilot and opens **Settings → Agents**.
+
 ---
 
 ## Legacy CLI + local web UI

@@ -181,6 +181,8 @@ export type TrailApi = {
       issueNumber: number;
       state: "running" | "stopped";
       exitCode?: number;
+      durationMs?: number;
+      backend?: "cursor" | "claude" | null;
     }) => void,
   ) => () => void;
   previewAttach: (input: {
@@ -570,6 +572,8 @@ const trailApi: TrailApi = {
         issueNumber: number;
         state: "running" | "stopped";
         exitCode?: number;
+        durationMs?: number;
+        backend?: "cursor" | "claude" | null;
       },
     ) => {
       listener(payload);

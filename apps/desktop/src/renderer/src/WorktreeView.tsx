@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_PREVIEW_URL, normalizePreviewUrl } from "@trail/core/client";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
 import { useBatchedAgentLines } from "./use-batched-agent-lines";
@@ -16,6 +16,8 @@ type WorktreeViewProps = {
   onStartAgentRun?: () => void;
   onStopAgentRun?: () => void;
   startRunBusy?: boolean;
+  composerDraft?: { issueNumber: number; text: string } | null;
+  onComposerDraftApplied?: () => void;
 };
 
 export function WorktreeView({
@@ -26,6 +28,8 @@ export function WorktreeView({
   onStartAgentRun,
   onStopAgentRun,
   startRunBusy = false,
+  composerDraft = null,
+  onComposerDraftApplied,
 }: WorktreeViewProps) {
   if (!context) {
     return (
@@ -54,6 +58,8 @@ export function WorktreeView({
       onStartAgentRun={onStartAgentRun}
       onStopAgentRun={onStopAgentRun}
       startRunBusy={startRunBusy}
+      composerDraft={composerDraft}
+      onComposerDraftApplied={onComposerDraftApplied}
     />
   );
 }
@@ -66,6 +72,8 @@ function WorktreeViewBody({
   onStartAgentRun,
   onStopAgentRun,
   startRunBusy,
+  composerDraft,
+  onComposerDraftApplied,
 }: {
   context: WorktreeSessionContext;
   workspaceId?: string;
@@ -74,6 +82,8 @@ function WorktreeViewBody({
   onStartAgentRun?: () => void;
   onStopAgentRun?: () => void;
   startRunBusy?: boolean;
+  composerDraft?: { issueNumber: number; text: string } | null;
+  onComposerDraftApplied?: () => void;
 }) {
   const fixture = getWorktreeFixture();
   const [detailsOpen, setDetailsOpen] = useState(true);
@@ -259,7 +269,13 @@ function WorktreeViewBody({
 
       <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
         {mode === "chat" ? (
-          <ChatColumn messages={messages} />
+          <ChatColumn
+            messages={messages}
+            composerDraft={
+              composerDraft?.issueNumber === context.issueNumber ? composerDraft.text : null
+            }
+            onComposerDraftApplied={onComposerDraftApplied}
+          />
         ) : (
           <PreviewSplit
             workspaceId={workspaceId ?? ""}
@@ -376,16 +392,46 @@ function ViewModeToggle({
   );
 }
 
-function ChatColumn({ messages }: { messages: ChatLine[] }) {
+function ChatColumn({
+  messages,
+  composerDraft,
+  onComposerDraftApplied,
+}: {
+  messages: ChatLine[];
+  composerDraft?: string | null;
+  onComposerDraftApplied?: () => void;
+}) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
       <AgentChatLog messages={messages} padding="8px 24px" maxWidth={800} />
-      <WorktreeComposerBar />
+      <WorktreeComposerBar draft={composerDraft} onDraftApplied={onComposerDraftApplied} />
     </div>
   );
 }
 
-function WorktreeComposerBar({ compact = false }: { compact?: boolean }) {
+function WorktreeComposerBar({
+  compact = false,
+  draft,
+  onDraftApplied,
+}: {
+  compact?: boolean;
+  draft?: string | null;
+  onDraftApplied?: () => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [message, setMessage] = useState("");
+  const lastDraftRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!draft || draft === lastDraftRef.current) {
+      return;
+    }
+    lastDraftRef.current = draft;
+    setMessage(draft);
+    onDraftApplied?.();
+    queueMicrotask(() => textareaRef.current?.focus());
+  }, [draft, onDraftApplied]);
+
   return (
     <div
       style={{
@@ -414,9 +460,11 @@ function WorktreeComposerBar({ compact = false }: { compact?: boolean }) {
           Message the agent
         </label>
         <textarea
+          ref={textareaRef}
           id="wtchat"
-          rows={2}
-          readOnly
+          rows={3}
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
           placeholder="Message Cursor in this worktree"
           style={{
             width: "100%",

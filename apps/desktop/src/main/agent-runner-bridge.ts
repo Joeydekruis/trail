@@ -18,6 +18,7 @@ const pendingStarts: Array<{ input: StartAgentRunInput; resolve: (r: StartAgentR
   [];
 const runIdByKey = new Map<RunKey, string>();
 const keyByRunId = new Map<string, RunKey>();
+const runStartedAtMs = new Map<RunKey, number>();
 
 function runKey(workspaceId: string, issueNumber: number): RunKey {
   return `${workspaceId}:${issueNumber}`;
@@ -95,6 +96,12 @@ function handleUtilityMessage(message: unknown): void {
       runIdByKey.delete(key);
       keyByRunId.delete(typed.runId);
     }
+    const durationKey = runKey(typed.workspaceId, typed.issueNumber);
+    const startedAt = runStartedAtMs.get(durationKey);
+    runStartedAtMs.delete(durationKey);
+    const durationMs =
+      startedAt !== undefined ? Math.max(0, Date.now() - startedAt) : undefined;
+
     void finalizeAgentRun(
       typed.workspaceId,
       typed.issueNumber,
@@ -106,6 +113,7 @@ function handleUtilityMessage(message: unknown): void {
         state: "stopped",
         backend: typed.backend,
         exitCode: typed.exitCode,
+        durationMs,
       });
     });
   }
@@ -131,6 +139,8 @@ function startOnUtility(
   const runId = `${key}:${Date.now()}`;
   runIdByKey.set(key, runId);
   keyByRunId.set(runId, key);
+
+  runStartedAtMs.set(key, Date.now());
 
   broadcastAgentRunState({
     workspaceId: input.workspaceId,
@@ -189,5 +199,6 @@ export function stopAgentRunViaUtility(workspaceId: string, issueNumber: number)
   utility.postMessage({ type: "stop", runId });
   runIdByKey.delete(key);
   keyByRunId.delete(runId);
+  runStartedAtMs.delete(key);
   return true;
 }

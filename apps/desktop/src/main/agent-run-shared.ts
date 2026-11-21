@@ -36,6 +36,7 @@ export function broadcastAgentRunState(payload: {
   state: "running" | "stopped";
   backend: "cursor" | "claude" | null;
   exitCode?: number;
+  durationMs?: number;
 }): void {
   broadcast(AGENT_RUN_STATE_CHANNEL, payload);
 }

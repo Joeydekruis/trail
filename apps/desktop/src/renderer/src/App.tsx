@@ -5,7 +5,11 @@ import { OnboardingView } from "./OnboardingView";
 import { ResolveSyncConflictModal } from "./ResolveSyncConflictModal";
 import { TrailShell } from "./TrailShell";
 import { isElectronRenderer, waitForTrail } from "./wait-for-trail";
+import { summarizeAgentRunOutput } from "@trail/core/client";
+import type { AgentRunFailureDetails } from "./AgentRunFailureBanner";
 import { applyWorkspaceAccent } from "./workspace-accent";
+
+const MAX_AGENT_OUTPUT_LINES = 80;
 
 declare global {
   interface Window {
@@ -154,6 +158,8 @@ declare global {
           issueNumber: number;
           state: "running" | "stopped";
           exitCode?: number;
+          durationMs?: number;
+          backend?: "cursor" | "claude" | null;
         }) => void,
       ) => () => void;
       previewAttach?: (input: {
@@ -294,10 +300,8 @@ export function App() {
   const [syncRateLimitUntil, setSyncRateLimitUntil] = useState<number | null>(null);
   const [, setRateLimitClock] = useState(0);
   const [agentAutopilotBlocked, setAgentAutopilotBlocked] = useState(false);
-  const [agentRunFailure, setAgentRunFailure] = useState<{
-    issueNumber: number;
-    exitCode: number;
-  } | null>(null);
+  const [agentRunFailure, setAgentRunFailure] = useState<AgentRunFailureDetails | null>(null);
+  const agentOutputRef = useRef<Map<number, string[]>>(new Map());
   const [syncConflicts, setSyncConflicts] = useState<
     import("@trail/ipc").SyncConflictDto[]
   >([]);
@@ -460,6 +464,24 @@ export function App() {
 
   useEffect(() => {
     const api = window.trail;
+    if (!api?.onAgentOutput) {
+      return;
+    }
+    return api.onAgentOutput((payload) => {
+      if (payload.workspaceId !== activeWorkspaceId) {
+        return;
+      }
+      const rows = agentOutputRef.current.get(payload.issueNumber) ?? [];
+      rows.push(payload.line);
+      if (rows.length > MAX_AGENT_OUTPUT_LINES) {
+        rows.splice(0, rows.length - MAX_AGENT_OUTPUT_LINES);
+      }
+      agentOutputRef.current.set(payload.issueNumber, rows);
+    });
+  }, [activeWorkspaceId]);
+
+  useEffect(() => {
+    const api = window.trail;
     if (!api?.onAgentRunState) {
       return;
     }
@@ -468,15 +490,20 @@ export function App() {
         return;
       }
       if (payload.state === "running") {
+        agentOutputRef.current.set(payload.issueNumber, []);
         setAgentRunFailure(null);
       } else if (
         payload.state === "stopped" &&
         payload.exitCode !== undefined &&
         payload.exitCode !== 0
       ) {
+        const lines = agentOutputRef.current.get(payload.issueNumber) ?? [];
         setAgentRunFailure({
           issueNumber: payload.issueNumber,
           exitCode: payload.exitCode,
+          durationMs: payload.durationMs,
+          outputSummary: summarizeAgentRunOutput(lines),
+          backend: payload.backend,
         });
       }
       void refreshWorktrees();

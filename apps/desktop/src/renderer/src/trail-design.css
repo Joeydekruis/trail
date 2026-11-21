@@ -67,6 +67,8 @@ body { margin: 0; background: var(--bg);; color: var(--ink); font-family: var(--
 .tr-fill { height: 4px; background: currentColor; }
 .tr-code { font-family: var(--font-mono); font-size: 12px; line-height: 16px; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; overflow-x: auto; white-space: pre; }
 .tr-conflict { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: var(--amber-soft); border: 1px solid var(--amber-line); border-radius: 12px; padding: 12px 14px; }
+.tr-conflict-red { background: var(--red-soft); border-color: color-mix(in srgb, var(--red) 42%, var(--line-strong)); }
+.tr-conflict-red .tr-conflict-text { color: var(--red); }
 .tr-conflict-text { flex: 1 1 240px; font-size: 13px; color: var(--amber-ink); }
 .tr-pill { min-height: 44px; padding: 0 14px; border-radius: var(--radius-pill); border: 1px solid var(--line-strong); background: var(--surface-raised); color: var(--ink-soft); font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .tr-pill-active { background: var(--mint); border-color: var(--mint); color: var(--on-mint); }

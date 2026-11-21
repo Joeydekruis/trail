@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
+  buildAskAgentWhyPrompt,
   formatRateLimitBannerMessage,
   isGitHubRateLimitError,
   isGitHubUnreachableError,
@@ -18,7 +19,8 @@ import {
   LazyRoadmapView,
   ShellViewFallback,
 } from "./lazy-shell-views";
-import { SettingsView } from "./SettingsView";
+import { AgentRunFailureBanner, type AgentRunFailureDetails } from "./AgentRunFailureBanner";
+import { SettingsView, type SettingsSectionId } from "./SettingsView";
 import { WorktreeView } from "./WorktreeView";
 import { dotColor, getDashboardFixture, workspaceShortcut } from "./design/fixture";
 import { worktreesToSidebar } from "./worktree-nav";
@@ -91,7 +93,7 @@ export type TrailShellProps = {
   onOpenDiagnostics?: () => void;
   onShellUiMetrics?: (metrics: { openViewCount: number }) => void;
   agentAutopilotBlocked?: boolean;
-  agentRunFailure?: { issueNumber: number; exitCode: number } | null;
+  agentRunFailure?: AgentRunFailureDetails | null;
   onRetryAgentRun?: (issueNumber: number) => void;
   onClearAgentRunFailure?: () => void;
 };
@@ -163,6 +165,18 @@ export function TrailShell({
   const [startRunBusy, setStartRunBusy] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [selectedWorktreeIssue, setSelectedWorktreeIssue] = useState<number | null>(null);
+  const [settingsFocusSection, setSettingsFocusSection] = useState<SettingsSectionId | null>(null);
+  const [worktreeComposerDraft, setWorktreeComposerDraft] = useState<{
+    issueNumber: number;
+    text: string;
+  } | null>(null);
+
+  const openSettings = (section?: SettingsSectionId) => {
+    if (section) {
+      setSettingsFocusSection(section);
+    }
+    setCenterView("settings");
+  };
   const showRepoRootNudge =
     Boolean(activeWorkspace?.repository) &&
     Boolean(github?.connected) &&
@@ -744,14 +758,14 @@ export function TrailShell({
               <span>
                 Link a local git checkout to create worktrees and run agents.
               </span>
-              <TrailButton variant="secondary" onClick={() => setCenterView("settings")}>
+              <TrailButton variant="secondary" onClick={() => openSettings()}>
                 Open Settings
               </TrailButton>
             </div>
           ) : null}
           {agentAutopilotBlocked ? (
             <div style={{ padding: "8px 16px 0" }}>
-              <ConflictBanner action="Open settings" onAction={() => setCenterView("settings")}>
+              <ConflictBanner action="Open settings" onAction={() => openSettings("agents")}>
                 Autopilot is paused because no agent CLI was found. Install Cursor CLI or Claude Code in
                 Settings → Agents, then resume autopilot.
               </ConflictBanner>
@@ -759,20 +773,26 @@ export function TrailShell({
           ) : null}
           {agentRunFailure ? (
             <div style={{ padding: "8px 16px 0" }}>
-              <ConflictBanner
-                action="Retry"
-                onAction={() => {
-                  openWorktree(agentRunFailure.issueNumber);
-                  onRetryAgentRun?.(agentRunFailure.issueNumber);
-                }}
-                secondaryAction="Open worktree"
-                onSecondaryAction={() => {
+              <AgentRunFailureBanner
+                failure={agentRunFailure}
+                onRetry={() => onRetryAgentRun?.(agentRunFailure.issueNumber)}
+                onOpenWorktree={() => {
                   openWorktree(agentRunFailure.issueNumber);
                   onClearAgentRunFailure?.();
                 }}
-              >
-                Agent run failed for #{agentRunFailure.issueNumber} (exit code {agentRunFailure.exitCode}).
-              </ConflictBanner>
+                onAskWhy={() => {
+                  openWorktree(agentRunFailure.issueNumber);
+                  setWorktreeComposerDraft({
+                    issueNumber: agentRunFailure.issueNumber,
+                    text: buildAskAgentWhyPrompt({
+                      issueNumber: agentRunFailure.issueNumber,
+                      exitCode: agentRunFailure.exitCode,
+                      outputSummary: agentRunFailure.outputSummary,
+                    }),
+                  });
+                  onClearAgentRunFailure?.();
+                }}
+              />
             </div>
           ) : null}
           {syncError && isGitHubRateLimitError(syncError) ? (
@@ -781,7 +801,7 @@ export function TrailShell({
                 action="Sync now anyway"
                 onAction={onSyncNow}
                 secondaryAction="Open settings"
-                onSecondaryAction={() => setCenterView("settings")}
+                onSecondaryAction={() => openSettings("github")}
               >
                 {formatRateLimitBannerMessage(syncRateLimitUntil)} Cached data stays available while sync is
                 paused.
@@ -839,6 +859,10 @@ export function TrailShell({
             onStartAgentRun={() => void handleStartAgentRun()}
             onStopAgentRun={() => void handleStopAgentRun()}
             startRunBusy={startRunBusy}
+            worktreeComposerDraft={worktreeComposerDraft}
+            onConsumeWorktreeComposerDraft={() => setWorktreeComposerDraft(null)}
+            settingsFocusSection={settingsFocusSection}
+            onSettingsFocusSectionApplied={() => setSettingsFocusSection(null)}
           />
           {onComposer ? <TrailComposer modKey={modKey} maxWidth={shellContentMaxWidth("dashboard")} /> : null}
         </section>
@@ -1125,6 +1149,10 @@ function ShellMain({
   onStartAgentRun,
   onStopAgentRun,
   startRunBusy,
+  worktreeComposerDraft,
+  onConsumeWorktreeComposerDraft,
+  settingsFocusSection,
+  onSettingsFocusSectionApplied,
 }: {
   centerView: CenterView;
   setCenterView: (view: CenterView) => void;
@@ -1149,6 +1177,10 @@ function ShellMain({
   onStartAgentRun?: () => void;
   onStopAgentRun?: () => void;
   startRunBusy?: boolean;
+  worktreeComposerDraft?: { issueNumber: number; text: string } | null;
+  onConsumeWorktreeComposerDraft?: () => void;
+  settingsFocusSection?: SettingsSectionId | null;
+  onSettingsFocusSectionApplied?: () => void;
 }) {
   if (centerView === "worktree") {
     return (
@@ -1161,6 +1193,8 @@ function ShellMain({
           onStartAgentRun={onStartAgentRun}
           onStopAgentRun={onStopAgentRun}
           startRunBusy={startRunBusy}
+          composerDraft={worktreeComposerDraft}
+          onComposerDraftApplied={onConsumeWorktreeComposerDraft}
         />
       </div>
     );
@@ -1203,6 +1237,8 @@ function ShellMain({
           onSyncNow={onSyncNow}
           syncing={syncing}
           lastSyncedAt={lastSyncedAt}
+          focusSection={settingsFocusSection}
+          onFocusSectionApplied={onSettingsFocusSectionApplied}
         />
       </div>
     );

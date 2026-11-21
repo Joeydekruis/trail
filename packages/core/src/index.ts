@@ -119,6 +119,11 @@ export {
   anyAgentBackendAvailable,
   pickPreferredAgentBackend,
 } from "./agent/pick-backend.js";
+export {
+  buildAskAgentWhyPrompt,
+  formatAgentRunDuration,
+  summarizeAgentRunOutput,
+} from "./agent/run-failure.js";
 export { AGENT_BACKEND_IDS } from "./agent/types.js";
 export {
   DEFAULT_PREVIEW_URL,

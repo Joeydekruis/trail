@@ -65,7 +65,9 @@ const SECTIONS = [
   { id: "notes", label: "Notifications" },
 ] as const;
 
-type SettingsSection = (typeof SECTIONS)[number]["id"];
+export type SettingsSectionId = (typeof SECTIONS)[number]["id"];
+
+type SettingsSection = SettingsSectionId;
 
 export function SettingsView({
   workspace,
@@ -76,6 +78,8 @@ export function SettingsView({
   onSyncNow,
   syncing,
   lastSyncedAt,
+  focusSection = null,
+  onFocusSectionApplied,
 }: {
   workspace: WorkspaceDto | undefined;
   github?: WorkspaceGithubSnapshot;
@@ -85,8 +89,18 @@ export function SettingsView({
   onSyncNow?: () => void;
   syncing?: boolean;
   lastSyncedAt?: string | null;
+  focusSection?: SettingsSectionId | null;
+  onFocusSectionApplied?: () => void;
 }) {
   const [section, setSection] = useState<SettingsSection>("general");
+
+  useEffect(() => {
+    if (!focusSection) {
+      return;
+    }
+    setSection(focusSection);
+    onFocusSectionApplied?.();
+  }, [focusSection, onFocusSectionApplied]);
   const [pat, setPat] = useState("");
   const [patBusy, setPatBusy] = useState(false);
   const [patError, setPatError] = useState<string | null>(null);

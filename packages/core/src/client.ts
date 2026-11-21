@@ -29,3 +29,8 @@ export {
   type NormalizePreviewUrlResult,
 } from "./preview/normalize-preview-url.js";
 export { BOARD_COLUMN_META } from "./issues/columns.js";
+export {
+  buildAskAgentWhyPrompt,
+  formatAgentRunDuration,
+  summarizeAgentRunOutput,
+} from "./agent/run-failure.js";
