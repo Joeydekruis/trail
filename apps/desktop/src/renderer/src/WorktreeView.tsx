@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_PREVIEW_URL, normalizePreviewUrl } from "@trail/core/client";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
 import { useBatchedAgentLines } from "./use-batched-agent-lines";
+import { userChatLine } from "./worktree-user-chat-line";
 import { previewPinToChatLine } from "./preview-pin-chat";
 import { WorktreePreviewSurface } from "./worktree-preview-surface";
 import { AgentChatLog } from "./agent-chat-log";
@@ -15,6 +16,9 @@ type WorktreeViewProps = {
   runError?: string | null;
   onStartAgentRun?: () => void;
   onStopAgentRun?: () => void;
+  onSendAgentMessage?: (
+    message: string,
+  ) => Promise<{ ok: true } | { ok: false; message: string }>;
   startRunBusy?: boolean;
   composerDraft?: { issueNumber: number; text: string } | null;
   onComposerDraftApplied?: () => void;
@@ -27,6 +31,7 @@ export function WorktreeView({
   runError,
   onStartAgentRun,
   onStopAgentRun,
+  onSendAgentMessage,
   startRunBusy = false,
   composerDraft = null,
   onComposerDraftApplied,
@@ -57,6 +62,7 @@ export function WorktreeView({
       runError={runError}
       onStartAgentRun={onStartAgentRun}
       onStopAgentRun={onStopAgentRun}
+      onSendAgentMessage={onSendAgentMessage}
       startRunBusy={startRunBusy}
       composerDraft={composerDraft}
       onComposerDraftApplied={onComposerDraftApplied}
@@ -71,6 +77,7 @@ function WorktreeViewBody({
   runError,
   onStartAgentRun,
   onStopAgentRun,
+  onSendAgentMessage,
   startRunBusy,
   composerDraft,
   onComposerDraftApplied,
@@ -81,6 +88,9 @@ function WorktreeViewBody({
   runError?: string | null;
   onStartAgentRun?: () => void;
   onStopAgentRun?: () => void;
+  onSendAgentMessage?: (
+    message: string,
+  ) => Promise<{ ok: true } | { ok: false; message: string }>;
   startRunBusy?: boolean;
   composerDraft?: { issueNumber: number; text: string } | null;
   onComposerDraftApplied?: () => void;
@@ -94,8 +104,26 @@ function WorktreeViewBody({
   const [previewUrlDraft, setPreviewUrlDraft] = useState(DEFAULT_PREVIEW_URL);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewDevBusy, setPreviewDevBusy] = useState(false);
+  const [composerError, setComposerError] = useState<string | null>(null);
 
   useBatchedAgentLines(workspaceId, context.issueNumber, setExtraMessages);
+
+  const sendAgentMessage = async (text: string) => {
+    if (!onSendAgentMessage) {
+      return;
+    }
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return;
+    }
+    setComposerError(null);
+    setExtraMessages((prev) => [...prev, userChatLine(trimmed)]);
+    const result = await onSendAgentMessage(trimmed);
+    if (!result.ok) {
+      setComposerError(result.message);
+    }
+    return result;
+  };
 
   useEffect(() => {
     const api = window.trail;
@@ -223,9 +251,9 @@ function WorktreeViewBody({
           >
             Open folder
           </TrailButton>
-          {runError ? (
+          {runError || composerError ? (
             <span className="tr-small" style={{ color: "var(--warning)" }}>
-              {runError}
+              {runError ?? composerError}
             </span>
           ) : null}
           {onStartAgentRun && context.status !== "running" ? (
@@ -275,6 +303,10 @@ function WorktreeViewBody({
               composerDraft?.issueNumber === context.issueNumber ? composerDraft.text : null
             }
             onComposerDraftApplied={onComposerDraftApplied}
+            isRunning={context.status === "running"}
+            sendBusy={startRunBusy}
+            onSend={(text) => sendAgentMessage(text)}
+            onStop={onStopAgentRun}
           />
         ) : (
           <PreviewSplit
@@ -306,6 +338,14 @@ function WorktreeViewBody({
             messages={messages}
             commentMode={commentMode}
             onToggleComment={() => setCommentMode((v) => !v)}
+            isRunning={context.status === "running"}
+            sendBusy={startRunBusy}
+            onSend={(text) => sendAgentMessage(text)}
+            onStop={onStopAgentRun}
+            composerDraft={
+              composerDraft?.issueNumber === context.issueNumber ? composerDraft.text : null
+            }
+            onComposerDraftApplied={onComposerDraftApplied}
           />
         )}
         {detailsOpen && mode === "chat" ? (
@@ -396,15 +436,30 @@ function ChatColumn({
   messages,
   composerDraft,
   onComposerDraftApplied,
+  isRunning,
+  sendBusy,
+  onSend,
+  onStop,
 }: {
   messages: ChatLine[];
   composerDraft?: string | null;
   onComposerDraftApplied?: () => void;
+  isRunning: boolean;
+  sendBusy?: boolean;
+  onSend: (text: string) => Promise<{ ok: true } | { ok: false; message: string } | undefined>;
+  onStop?: () => void;
 }) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
       <AgentChatLog messages={messages} padding="8px 24px" maxWidth={800} />
-      <WorktreeComposerBar draft={composerDraft} onDraftApplied={onComposerDraftApplied} />
+      <WorktreeComposerBar
+        draft={composerDraft}
+        onDraftApplied={onComposerDraftApplied}
+        isRunning={isRunning}
+        sendBusy={sendBusy}
+        onSend={onSend}
+        onStop={onStop}
+      />
     </div>
   );
 }
@@ -413,13 +468,23 @@ function WorktreeComposerBar({
   compact = false,
   draft,
   onDraftApplied,
+  isRunning,
+  sendBusy = false,
+  onSend,
+  onStop,
 }: {
   compact?: boolean;
   draft?: string | null;
   onDraftApplied?: () => void;
+  isRunning?: boolean;
+  sendBusy?: boolean;
+  onSend?: (text: string) => Promise<{ ok: true } | { ok: false; message: string } | undefined>;
+  onStop?: () => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputId = compact ? "wtchat-compact" : "wtchat";
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const lastDraftRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -431,6 +496,24 @@ function WorktreeComposerBar({
     onDraftApplied?.();
     queueMicrotask(() => textareaRef.current?.focus());
   }, [draft, onDraftApplied]);
+
+  const canSend = Boolean(onSend) && message.trim().length > 0 && !isRunning && !sendBusy && !submitting;
+
+  const submit = async () => {
+    if (!onSend || !canSend) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const result = await onSend(message);
+      if (result?.ok) {
+        setMessage("");
+        lastDraftRef.current = null;
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -456,16 +539,26 @@ function WorktreeComposerBar({
           borderRadius: 12,
         }}
       >
-        <label htmlFor="wtchat" className="tr-sr">
+        <label htmlFor={inputId} className="tr-sr">
           Message the agent
         </label>
         <textarea
           ref={textareaRef}
-          id="wtchat"
+          id={inputId}
           rows={3}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="Message Cursor in this worktree"
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              event.preventDefault();
+              void submit();
+            }
+          }}
+          placeholder={
+            isRunning
+              ? "Wait for the run to finish, or stop it to send another prompt"
+              : "Message Cursor in this worktree"
+          }
           style={{
             width: "100%",
             boxSizing: "border-box",
@@ -481,8 +574,16 @@ function WorktreeComposerBar({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <SelectButton label="Cursor CLI" />
           <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
-            <TrailButton variant="secondary">Stop</TrailButton>
-            <TrailButton variant="primary">Send</TrailButton>
+            <TrailButton variant="secondary" disabled={!isRunning || !onStop} onClick={onStop}>
+              Stop
+            </TrailButton>
+            <TrailButton
+              variant="primary"
+              disabled={!canSend}
+              onClick={() => void submit()}
+            >
+              {submitting || sendBusy ? "Sending…" : "Send"}
+            </TrailButton>
           </span>
         </div>
       </div>
@@ -502,6 +603,12 @@ function PreviewSplit({
   messages,
   commentMode,
   onToggleComment,
+  isRunning,
+  sendBusy,
+  onSend,
+  onStop,
+  composerDraft,
+  onComposerDraftApplied,
 }: {
   workspaceId: string;
   issueNumber: number;
@@ -514,6 +621,12 @@ function PreviewSplit({
   messages: ChatLine[];
   commentMode: boolean;
   onToggleComment: () => void;
+  isRunning: boolean;
+  sendBusy?: boolean;
+  onSend: (text: string) => Promise<{ ok: true } | { ok: false; message: string } | undefined>;
+  onStop?: () => void;
+  composerDraft?: string | null;
+  onComposerDraftApplied?: () => void;
 }) {
   return (
     <>
@@ -609,7 +722,15 @@ function PreviewSplit({
           <span className="tr-overline">Chat</span>
         </div>
         <AgentChatLog messages={messages} padding="4px 14px" />
-        <WorktreeComposerBar compact />
+        <WorktreeComposerBar
+          compact
+          draft={composerDraft}
+          onDraftApplied={onComposerDraftApplied}
+          isRunning={isRunning}
+          sendBusy={sendBusy}
+          onSend={onSend}
+          onStop={onStop}
+        />
       </div>
     </>
   );

@@ -15,3 +15,4 @@
 - [x] Block agent runs when no CLI; pause autopilot + shell banner (Settings → Agents)
 - [x] Shell banner on failed agent run (exit code) with Retry + Open worktree
 - [x] Failed run banner: red state, mono test output tail, duration, Ask Claude why → worktree composer
+- [x] Worktree composer Send starts agent run with typed prompt; Stop ends run

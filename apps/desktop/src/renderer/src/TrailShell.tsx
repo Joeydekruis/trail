@@ -281,31 +281,61 @@ export function TrailShell({
     }
   };
 
-  const handleStartAgentRun = async () => {
+  const startAgentRunWithPrompt = async (
+    prompt: string,
+  ): Promise<{ ok: true } | { ok: false; message: string }> => {
     if (!activeWorkspace?.id || selectedWorktreeIssue === null) {
-      return;
+      return { ok: false, message: "No worktree selected" };
     }
     const api = window.trail;
-    if (!api?.startAgentRun || startRunBusy) {
-      return;
+    if (!api?.startAgentRun) {
+      return { ok: false, message: "Agent runner unavailable" };
+    }
+    if (activeWorktree?.status === "running") {
+      return {
+        ok: false,
+        message: "Wait for the current run to finish, or stop it before sending a new prompt.",
+      };
+    }
+    if (startRunBusy) {
+      return { ok: false, message: "A run is already starting" };
     }
     setStartRunBusy(true);
     setRunError(null);
     try {
-      const title = activeWorktree?.title ?? `Issue #${selectedWorktreeIssue}`;
       const result = await api.startAgentRun({
         workspaceId: activeWorkspace.id,
         issueNumber: selectedWorktreeIssue,
-        prompt: `Implement GitHub issue #${selectedWorktreeIssue}: ${title}`,
+        prompt,
       });
       if (!result.ok) {
         setRunError(result.message);
-        return;
+        return { ok: false, message: result.message };
       }
       onRefreshWorktrees?.();
+      return { ok: true };
     } finally {
       setStartRunBusy(false);
     }
+  };
+
+  const handleStartAgentRun = async () => {
+    const title = activeWorktree?.title ?? `Issue #${selectedWorktreeIssue ?? "?"}`;
+    const issueNumber = selectedWorktreeIssue;
+    if (issueNumber === null) {
+      return;
+    }
+    await startAgentRunWithPrompt(`Implement GitHub issue #${issueNumber}: ${title}`);
+  };
+
+  const handleSendAgentMessage = async (
+    message: string,
+  ): Promise<{ ok: true } | { ok: false; message: string }> => {
+    const trimmed = message.trim();
+    if (!trimmed) {
+      return { ok: false, message: "Enter a message for the agent" };
+    }
+    return startAgentRunWithPrompt(trimmed);
   };
 
   const handleStopAgentRun = async () => {
@@ -858,6 +888,7 @@ export function TrailShell({
             runError={runError}
             onStartAgentRun={() => void handleStartAgentRun()}
             onStopAgentRun={() => void handleStopAgentRun()}
+            onSendAgentMessage={handleSendAgentMessage}
             startRunBusy={startRunBusy}
             worktreeComposerDraft={worktreeComposerDraft}
             onConsumeWorktreeComposerDraft={() => setWorktreeComposerDraft(null)}
@@ -1148,6 +1179,7 @@ function ShellMain({
   runError,
   onStartAgentRun,
   onStopAgentRun,
+  onSendAgentMessage,
   startRunBusy,
   worktreeComposerDraft,
   onConsumeWorktreeComposerDraft,
@@ -1176,6 +1208,9 @@ function ShellMain({
   runError?: string | null;
   onStartAgentRun?: () => void;
   onStopAgentRun?: () => void;
+  onSendAgentMessage?: (
+    message: string,
+  ) => Promise<{ ok: true } | { ok: false; message: string }>;
   startRunBusy?: boolean;
   worktreeComposerDraft?: { issueNumber: number; text: string } | null;
   onConsumeWorktreeComposerDraft?: () => void;
@@ -1192,6 +1227,7 @@ function ShellMain({
           runError={runError}
           onStartAgentRun={onStartAgentRun}
           onStopAgentRun={onStopAgentRun}
+          onSendAgentMessage={onSendAgentMessage}
           startRunBusy={startRunBusy}
           composerDraft={worktreeComposerDraft}
           onComposerDraftApplied={onConsumeWorktreeComposerDraft}
