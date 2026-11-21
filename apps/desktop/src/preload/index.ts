@@ -300,6 +300,7 @@ export type TrailApi = {
   close: () => Promise<void>;
   openExternal: (url: string) => Promise<void>;
   openPath: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  openInCursor: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
   getDiagnosticsSnapshot: (input?: {
     openViewCount?: number;
   }) => Promise<import("@trail/ipc").DiagnosticsGetSnapshotResult>;
@@ -610,6 +611,10 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.shellOpenExternal, { url }) as Promise<void>,
   openPath: (path) =>
     ipcRenderer.invoke(PreloadIpcChannels.shellOpenPath, { path }) as Promise<
+      { ok: true } | { ok: false; message: string }
+    >,
+  openInCursor: (path) =>
+    ipcRenderer.invoke(PreloadIpcChannels.shellOpenInCursor, { path }) as Promise<
       { ok: true } | { ok: false; message: string }
     >,
   getDiagnosticsSnapshot: (input) =>

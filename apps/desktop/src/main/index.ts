@@ -1,5 +1,6 @@
 import { existsSync, rmSync } from "node:fs";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { openFolderInCursor } from "./open-in-cursor";
 import { join } from "node:path";
 import {
   IpcChannels,
@@ -124,6 +125,12 @@ ipcMain.handle(IpcChannels.shellOpenPath, (_event, raw: unknown) => {
     return shellOpenPathResult.parse({ ok: false, message: error });
   }
   return shellOpenPathResult.parse({ ok: true });
+});
+
+ipcMain.handle(IpcChannels.shellOpenInCursor, async (_event, raw: unknown) => {
+  const { path } = shellOpenPathPayload.parse(raw);
+  const result = await openFolderInCursor(path);
+  return shellOpenPathResult.parse(result);
 });
 
 ipcMain.handle(IpcChannels.syncNow, async (_event, raw: unknown) => {

@@ -14,6 +14,7 @@
 - [x] New task (form) → **Create on GitHub** (REST issue + type/priority labels)
 - [x] New task chat → local draft heuristics + approve + Create on GitHub
 - [x] Worktrees — `git worktree add`, SQLite registry, sidebar + tab; onboarding/Settings repo path
+- [x] Worktree header **Open in Cursor** (`cursor` CLI with `open -a Cursor` fallback on macOS)
 - [x] Agent runner — utility process, `claude -p` wanneer beschikbaar; cursor-agent preview; output naar worktree chat
 - [x] Agent stream via `MessagePort` (run state blijft op IPC)
 - [ ] OAuth i.p.v. PAT (later)

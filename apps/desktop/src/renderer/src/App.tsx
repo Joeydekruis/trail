@@ -92,6 +92,7 @@ declare global {
       }) => Promise<import("@trail/ipc").IssueGetResult>;
       openExternal?: (url: string) => Promise<void>;
       openPath?: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+      openInCursor?: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
       syncNow: (workspaceId?: string) => Promise<import("@trail/ipc").SyncNowResult>;
       listSyncConflicts?: (
         workspaceId?: string,

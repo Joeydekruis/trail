@@ -105,6 +105,7 @@ function WorktreeViewBody({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewDevBusy, setPreviewDevBusy] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
+  const [cursorOpenError, setCursorOpenError] = useState<string | null>(null);
 
   useBatchedAgentLines(workspaceId, context.issueNumber, setExtraMessages);
 
@@ -251,9 +252,9 @@ function WorktreeViewBody({
           >
             Open folder
           </TrailButton>
-          {runError || composerError ? (
+          {runError || composerError || cursorOpenError ? (
             <span className="tr-small" style={{ color: "var(--warning)" }}>
-              {runError ?? composerError}
+              {runError ?? composerError ?? cursorOpenError}
             </span>
           ) : null}
           {onStartAgentRun && context.status !== "running" ? (
@@ -271,7 +272,22 @@ function WorktreeViewBody({
             </TrailButton>
           ) : null}
           <ViewModeToggle mode={mode} onChange={setViewMode} />
-          <TrailButton variant="secondary">Open in Cursor</TrailButton>
+          <TrailButton
+            variant="secondary"
+            data-tip="Open this worktree folder in Cursor"
+            data-tip-pos="below"
+            onClick={() => {
+              void (async () => {
+                setCursorOpenError(null);
+                const result = await window.trail?.openInCursor?.(context.path);
+                if (result && !result.ok) {
+                  setCursorOpenError(result.message);
+                }
+              })();
+            }}
+          >
+            Open in Cursor
+          </TrailButton>
           <TrailButton variant="secondary">Open pull request</TrailButton>
           <button
             type="button"

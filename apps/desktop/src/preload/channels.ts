@@ -53,6 +53,7 @@ export const PreloadIpcChannels = {
   windowClose: "window.close",
   shellOpenExternal: "shell.openExternal",
   shellOpenPath: "shell.openPath",
+  shellOpenInCursor: "shell.openInCursor",
   diagnosticsGetSnapshot: "diagnostics.getSnapshot",
   mcpConnection: "mcp.connection",
   mcpSettingsGet: "mcp.settings.get",

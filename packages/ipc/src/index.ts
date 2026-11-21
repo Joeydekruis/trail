@@ -55,6 +55,7 @@ export const IpcChannels = {
   windowClose: "window.close",
   shellOpenExternal: "shell.openExternal",
   shellOpenPath: "shell.openPath",
+  shellOpenInCursor: "shell.openInCursor",
   diagnosticsGetSnapshot: "diagnostics.getSnapshot",
   diagnosticsMarkRendererReady: "diagnostics.markRendererReady",
   diagnosticsReportWorkspaceSwitch: "diagnostics.reportWorkspaceSwitch",
