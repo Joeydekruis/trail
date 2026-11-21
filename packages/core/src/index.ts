@@ -91,6 +91,7 @@ export {
   issueSidesDiffer,
   mergeWorkspaceIssuesFromGitHub,
 } from "./issues/sync-merge.js";
+export { applyBoardColumnsToIssues } from "./issues/apply-board-columns.js";
 export {
   slugFromIssueTitle,
   branchNameForIssue,

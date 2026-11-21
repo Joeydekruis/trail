@@ -1,5 +1,10 @@
 import type { IssueCacheStore, IssueSyncConflictStore, WorkspaceStore } from "@trail/core";
-import { formatGitHubSyncErrorMessage, githubHttpFailure, mergeWorkspaceIssuesFromGitHub } from "@trail/core";
+import {
+  applyBoardColumnsToIssues,
+  formatGitHubSyncErrorMessage,
+  githubHttpFailure,
+  mergeWorkspaceIssuesFromGitHub,
+} from "@trail/core";
 import { clearGitHubRateLimitPause } from "./github-rate-limit-pause";
 import { fetchGitHubUser } from "./github-api";
 import { fetchWorkspaceIssues } from "./github-issues";
@@ -109,8 +114,18 @@ async function syncWorkspaceNowInner(
     };
   }
 
+  const statusField = readWorkspaceProjectStatusField(store, id);
+  const columns = await fetchIssueBoardColumns(token, owner, repo, statusField);
+
   if (fetched.notModified) {
     const syncedAt = new Date().toISOString();
+    if (columns.ok) {
+      const withColumns = applyBoardColumnsToIssues(
+        issueStore.listByWorkspace(id),
+        columns.byIssue,
+      );
+      issueStore.replaceWorkspaceIssues(id, withColumns);
+    }
     store.setLastSyncAt(id, syncedAt);
     clearGitHubRateLimitPause(id);
     const issueCount = issueStore.listByWorkspace(id).length;
@@ -118,18 +133,10 @@ async function syncWorkspaceNowInner(
     return { ok: true, syncedAt, issueCount, conflictCount };
   }
 
-  const statusField = readWorkspaceProjectStatusField(store, id);
-  const columns = await fetchIssueBoardColumns(token, owner, repo, statusField);
-  const issues = fetched.issues.map((issue) => {
-    if (!columns.ok) {
-      return issue;
-    }
-    const mapped = columns.byIssue.get(issue.number);
-    if (!mapped) {
-      return issue;
-    }
-    return { ...issue, boardColumn: mapped };
-  });
+  const issues =
+    columns.ok
+      ? applyBoardColumnsToIssues(fetched.issues, columns.byIssue)
+      : fetched.issues;
 
   const syncedAt = new Date().toISOString();
   const local = issueStore.listByWorkspace(id);

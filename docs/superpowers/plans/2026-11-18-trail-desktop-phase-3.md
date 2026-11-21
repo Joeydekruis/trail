@@ -9,6 +9,7 @@
 - [x] Amber banner **GitHub is not reachable** + Retry now (cache blijft bruikbaar)
 - [x] Rate limit — pauzeer background sync tot `Retry-After` / `X-RateLimit-Reset`; banner met Sync now anyway + Open settings
 - [x] Issue list polling met `If-None-Match` / 304 (background); **Sync now** forceert volledige fetch
+- [x] Bij 304: Projects v2 statusveld alsnog via GraphQL (boardkolommen in cache)
 - [x] Settings → GitHub: sync-interval + board mapping
 - [x] New task (form) → **Create on GitHub** (REST issue + type/priority labels)
 - [x] New task chat → local draft heuristics + approve + Create on GitHub

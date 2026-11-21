@@ -55,6 +55,7 @@ Implementation: `packages/mcp` · Phase plan: [docs/superpowers/plans/2026-11-18
 
 On **Sync now**, Trail merges GitHub issue data with the local cache instead of overwriting blindly. When state, board column, labels, or assignee differ, a row is stored in SQLite (`issue_sync_conflicts`).
 
+- Background sync uses **ETag** on the REST issue list; when GitHub returns **304**, Trail still refreshes **Projects v2 board columns** from GraphQL so column moves show up without a full refetch.
 - **Banner** in the app shell when any workspace has open conflicts.
 - **Board** cards show **Conflict**; **Pending** appears while a column drag is waiting on GitHub.
 - **Resolve sync conflict** modal picks GitHub vs Trail per field and pushes the resolution to GitHub.
