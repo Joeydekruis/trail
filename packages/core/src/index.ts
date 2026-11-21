@@ -99,6 +99,7 @@ export {
 } from "./decisions/store.js";
 export {
   releaseDecisionBlock,
+  stopDecisionBlockedWorktree,
   syncProposedDecisionBlocks,
 } from "./decisions/sync-blocks.js";
 export type {

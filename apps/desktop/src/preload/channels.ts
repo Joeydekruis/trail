@@ -38,6 +38,7 @@ export const PreloadIpcChannels = {
   decisionList: "decision.list",
   decisionGet: "decision.get",
   decisionAccept: "decision.accept",
+  decisionReject: "decision.reject",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",

@@ -3,12 +3,18 @@ import {
   IpcChannels,
   decisionAcceptPayload,
   decisionAcceptResult,
+  decisionRejectPayload,
+  decisionRejectResult,
   decisionGetPayload,
   decisionGetResult,
   decisionListPayload,
   decisionListResult,
 } from "@trail/ipc";
-import { releaseDecisionBlock, syncProposedDecisionBlocks } from "@trail/core";
+import {
+  releaseDecisionBlock,
+  stopDecisionBlockedWorktree,
+  syncProposedDecisionBlocks,
+} from "@trail/core";
 import { runAutopilotTick } from "./autopilot-service";
 import {
   getDecisionStore,
@@ -97,6 +103,28 @@ export function registerDecisionIpc(): void {
     return decisionAcceptResult.parse({
       ok: true,
       decision: toDetailDto(accepted, workspaceId),
+    });
+  });
+
+  ipcMain.handle(IpcChannels.decisionReject, (_event, raw: unknown) => {
+    const payload = decisionRejectPayload.parse(raw);
+    const workspaceId = resolveWorkspaceId(payload.workspaceId);
+    const decisions = getDecisionStore();
+    const before = decisions.get(workspaceId, payload.adrId);
+    const rejected = decisions.reject(workspaceId, payload.adrId);
+    if (!rejected) {
+      return decisionRejectResult.parse({
+        ok: false,
+        message: "Only proposed decisions can be rejected",
+      });
+    }
+    if (before?.blocksIssueNumber != null) {
+      stopDecisionBlockedWorktree(workspaceId, before.blocksIssueNumber, getWorktreeStore());
+    }
+    void runAutopilotTick(workspaceId);
+    return decisionRejectResult.parse({
+      ok: true,
+      decision: toDetailDto(rejected, workspaceId),
     });
   });
 }

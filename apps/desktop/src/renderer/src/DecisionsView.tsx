@@ -48,6 +48,7 @@ export function DecisionsView({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<DecisionDetailDto | null>(null);
   const [accepting, setAccepting] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
 
   const reloadList = useCallback(async () => {
     const api = window.trail;
@@ -112,6 +113,23 @@ export function DecisionsView({
       }
     } finally {
       setAccepting(false);
+    }
+  }
+
+  async function handleReject() {
+    const api = window.trail;
+    if (!api?.rejectDecision || !workspace?.id || !selectedId || rejecting) {
+      return;
+    }
+    setRejecting(true);
+    try {
+      const result = await api.rejectDecision({ workspaceId: workspace.id, adrId: selectedId });
+      if (result.ok) {
+        setDetail(result.decision);
+        await reloadList();
+      }
+    } finally {
+      setRejecting(false);
     }
   }
 
@@ -233,7 +251,13 @@ export function DecisionsView({
                   <TrailButton variant="primary" onClick={() => void handleAccept()} disabled={accepting}>
                     {accepting ? "Accepting…" : "Accept decision"}
                   </TrailButton>
-                  <TrailButton variant="secondary">Reject</TrailButton>
+                  <TrailButton
+                    variant="secondary"
+                    onClick={() => void handleReject()}
+                    disabled={rejecting}
+                  >
+                    {rejecting ? "Rejecting…" : "Reject"}
+                  </TrailButton>
                 </div>
               ) : null}
             </div>

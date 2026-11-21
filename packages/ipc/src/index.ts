@@ -40,6 +40,7 @@ export const IpcChannels = {
   decisionList: "decision.list",
   decisionGet: "decision.get",
   decisionAccept: "decision.accept",
+  decisionReject: "decision.reject",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -795,6 +796,14 @@ export const decisionAcceptResult = z.union([
 ]);
 
 export type DecisionAcceptResult = z.infer<typeof decisionAcceptResult>;
+
+export const decisionRejectPayload = decisionAcceptPayload;
+
+export type DecisionRejectPayload = z.infer<typeof decisionRejectPayload>;
+
+export const decisionRejectResult = decisionAcceptResult;
+
+export type DecisionRejectResult = z.infer<typeof decisionRejectResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

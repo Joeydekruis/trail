@@ -33,3 +33,18 @@ export function releaseDecisionBlock(
     worktrees.updateStatus(workspaceId, issueNumber, "queued");
   }
 }
+
+/** Stop a worktree when its blocking ADR is rejected (no longer pursue this path). */
+export function stopDecisionBlockedWorktree(
+  workspaceId: string,
+  issueNumber: number,
+  worktrees: WorktreeStore,
+): void {
+  const wt = worktrees.get(workspaceId, issueNumber);
+  if (!wt) {
+    return;
+  }
+  if (wt.status === "waiting" || wt.status === "queued" || wt.status === "running") {
+    worktrees.updateStatus(workspaceId, issueNumber, "stopped");
+  }
+}

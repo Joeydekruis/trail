@@ -148,6 +148,20 @@ export class DecisionStore {
     };
     return this.upsert(updated);
   }
+
+  reject(workspaceId: string, adrId: string): DecisionRecord | null {
+    const current = this.get(workspaceId, adrId);
+    if (!current || current.status !== "proposed") {
+      return null;
+    }
+    const updated: DecisionRecord = {
+      ...current,
+      status: "rejected",
+      blocksIssueNumber: null,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.upsert(updated);
+  }
 }
 
 export function openDecisionStore(db: SqliteDatabase): DecisionStore {
