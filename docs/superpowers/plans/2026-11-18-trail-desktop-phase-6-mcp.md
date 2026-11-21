@@ -9,4 +9,6 @@
 - [x] `trail-mcp` bin (`@trail/mcp`) proxies stdio MCP to HTTP
 - [x] Settings → MCP status + Cursor config snippet
 - [ ] Streamable HTTP transport (SDK) for clients that prefer URL over stdio
-- [ ] MCP write tools (fase 2) + per-workspace toggles persisted in SQLite
+- [x] MCP write: `create_decision` (conflict checks + optional issue block)
+- [ ] MCP write: update_task_status, resolve_pin, add_task_comment
+- [ ] Per-workspace MCP toggles persisted in SQLite

@@ -2,6 +2,7 @@ import type { IssueCacheStore } from "../issues/store.js";
 import type { DecisionStore } from "../decisions/store.js";
 import type { KnowledgeDocStore } from "../knowledge/store.js";
 import type { PreviewPinStore } from "../preview/pin-store.js";
+import type { WorktreeStore } from "../worktree/store.js";
 import type { WorkspaceStore } from "../workspace/store.js";
 import { decisionIdFromDoc, isDecisionDoc } from "./decisions.js";
 
@@ -10,6 +11,7 @@ export type TrailMcpStores = {
   issues: IssueCacheStore;
   knowledge: KnowledgeDocStore;
   decisions: DecisionStore;
+  worktrees: WorktreeStore;
   pins: PreviewPinStore;
 };
 

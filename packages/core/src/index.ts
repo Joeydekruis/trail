@@ -122,6 +122,8 @@ export {
   mcpListWorkspaces,
   mcpSearchDocs,
 } from "./mcp/read-api.js";
+export { mcpCreateDecision } from "./mcp/write-api.js";
+export type { McpCreateDecisionInput, McpCreateDecisionResult } from "./mcp/write-api.js";
 export {
   APP_SETTING_AUTOPILOT_GLOBAL_PAUSE,
   DEFAULT_AUTOPILOT_MAX_PARALLEL,

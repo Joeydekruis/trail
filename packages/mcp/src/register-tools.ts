@@ -138,3 +138,52 @@ export function registerTrailReadTools(
     },
   );
 }
+
+export function registerTrailWriteTools(
+  server: McpServer,
+  invoke: (
+    tool: TrailMcpToolName,
+    args: Record<string, unknown>,
+  ) => unknown | Promise<unknown>,
+): void {
+  const workspaceId = z.string().optional();
+  const decisionStatus = z.enum(["proposed", "accepted"]).optional();
+
+  server.registerTool(
+    "create_decision",
+    {
+      description:
+        "Create an ADR in Trail SQLite. Checks title/id conflicts; proposed decisions can block an issue (worktree waiting).",
+      inputSchema: z.object({
+        workspaceId,
+        adrId: z.string().optional(),
+        title: z.string().min(1).max(200),
+        contextMarkdown: z.string().min(1).max(50_000),
+        decisionMarkdown: z.string().min(1).max(50_000),
+        consequencesMarkdown: z.string().max(50_000).optional(),
+        status: decisionStatus,
+        blocksIssueNumber: z.number().int().positive().optional(),
+        author: z.string().max(120).optional(),
+        allowSimilarTitle: z.boolean().optional(),
+      }),
+    },
+    async (args) => {
+      try {
+        return ok(await Promise.resolve(invoke("create_decision", args)));
+      } catch (e) {
+        return err(e instanceof Error ? e.message : String(e));
+      }
+    },
+  );
+}
+
+export function registerTrailMcpTools(
+  server: McpServer,
+  invoke: (
+    tool: TrailMcpToolName,
+    args: Record<string, unknown>,
+  ) => unknown | Promise<unknown>,
+): void {
+  registerTrailReadTools(server, invoke);
+  registerTrailWriteTools(server, invoke);
+}

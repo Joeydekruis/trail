@@ -2,7 +2,7 @@ import { createServer, type Server } from "node:http";
 import type { TrailMcpStores } from "@trail/core";
 import { executeTrailMcpTool } from "./executor.js";
 import type { TrailMcpToolName } from "./tool-names.js";
-import { TRAIL_MCP_READ_TOOLS } from "./tool-names.js";
+import { TRAIL_MCP_TOOLS } from "./tool-names.js";
 
 export type TrailMcpHttpServer = {
   server: Server;
@@ -22,12 +22,17 @@ function readBody(req: import("node:http").IncomingMessage): Promise<string> {
 }
 
 function isToolName(value: string): value is TrailMcpToolName {
-  return (TRAIL_MCP_READ_TOOLS as readonly string[]).includes(value);
+  return (TRAIL_MCP_TOOLS as readonly string[]).includes(value);
 }
+
+export type TrailMcpHttpServerOptions = {
+  onToolSuccess?: (tool: TrailMcpToolName, result: unknown) => void;
+};
 
 export function startTrailMcpHttpServer(
   stores: TrailMcpStores,
   token: string,
+  options?: TrailMcpHttpServerOptions,
 ): Promise<TrailMcpHttpServer> {
   const server = createServer((req, res) => {
     void (async () => {
@@ -59,6 +64,7 @@ export function startTrailMcpHttpServer(
           }
         }
         const result = executeTrailMcpTool(stores, toolSegment, args);
+        options?.onToolSuccess?.(toolSegment, result);
         res.setHeader("content-type", "application/json");
         res.statusCode = 200;
         res.end(JSON.stringify(result));

@@ -9,8 +9,10 @@ import {
   getIssueCacheStore,
   getKnowledgeDocStore,
   getPreviewPinStore,
+  getWorktreeStore,
   getWorkspaceStore,
 } from "./database";
+import { runAutopilotTick } from "./autopilot-service";
 
 const MCP_TOKEN_KEY = "mcp_http_token";
 
@@ -22,6 +24,7 @@ function stores() {
     issues: getIssueCacheStore(),
     knowledge: getKnowledgeDocStore(),
     decisions: getDecisionStore(),
+    worktrees: getWorktreeStore(),
     pins: getPreviewPinStore(),
   };
 }
@@ -60,7 +63,21 @@ export async function startMcpServer(): Promise<void> {
     return;
   }
   const token = tokenForMcp();
-  httpServer = await startTrailMcpHttpServer(stores(), token);
+  httpServer = await startTrailMcpHttpServer(stores(), token, {
+    onToolSuccess: (tool, result) => {
+      if (tool !== "create_decision") {
+        return;
+      }
+      if (
+        result &&
+        typeof result === "object" &&
+        "ok" in result &&
+        (result as { ok: boolean }).ok
+      ) {
+        void runAutopilotTick();
+      }
+    },
+  });
   const connectionFile = writeMcpConnectionFile(httpServer.baseUrl, token);
   if (process.env.TRAIL_LOG_DEFERRED === "1") {
     console.info("[trail] MCP HTTP listening", httpServer.baseUrl, connectionFile);

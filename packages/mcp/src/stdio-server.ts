@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { registerTrailReadTools } from "./register-tools.js";
+import { registerTrailMcpTools } from "./register-tools.js";
 import type { McpConnectionFile } from "./connection-path.js";
 import { resolveMcpConnectionFile } from "./connection-path.js";
 import type { TrailMcpToolName } from "./tool-names.js";
@@ -50,10 +50,10 @@ export async function runTrailMcpStdioBridge(): Promise<void> {
     {
       capabilities: { tools: {} },
       instructions:
-        "Trail Desktop MCP (read). Product knowledge and tasks come from the running Trail app.",
+        "Trail Desktop MCP. Product knowledge and tasks come from the running Trail app (read + limited write).",
     },
   );
-  registerTrailReadTools(server, (tool, args) => {
+  registerTrailMcpTools(server, (tool, args) => {
     return invokeRemote(connection, tool, args);
   });
   const transport = new StdioServerTransport();
