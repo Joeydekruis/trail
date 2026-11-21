@@ -19,6 +19,7 @@
     "rebuild:native": "npx @electron/rebuild -w better-sqlite3 -f"
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.13.2",
     "better-sqlite3": "^11.8.1"
   },
   "devDependencies": {

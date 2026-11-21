@@ -4,7 +4,7 @@ import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
 import { useBatchedAgentLines } from "./use-batched-agent-lines";
 import { previewPinToChatLine } from "./preview-pin-chat";
 import { WorktreePreviewSurface } from "./worktree-preview-surface";
-import { ChatRow } from "./chat-row";
+import { AgentChatLog } from "./agent-chat-log";
 import { SelectButton, SyncStatus, TrailAvatar, TrailButton, TrailChip, TrailPanel, TrailProgressBar } from "./design/TrailUi";
 import type { WorktreeSessionContext } from "./worktree-session";
 
@@ -343,13 +343,7 @@ function ViewModeToggle({
 function ChatColumn({ messages }: { messages: ChatLine[] }) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: 1, minHeight: 0, overflow: "auto", padding: "8px 24px" }}>
-        <div style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}>
-          {messages.map((m, i) => (
-            <ChatRow key={`${m.time}-${i}`} message={m} />
-          ))}
-        </div>
-      </div>
+      <AgentChatLog messages={messages} padding="8px 24px" maxWidth={800} />
       <WorktreeComposerBar />
     </div>
   );
@@ -525,11 +519,7 @@ function PreviewSplit({
         >
           <span className="tr-overline">Chat</span>
         </div>
-        <div style={{ flex: 1, minHeight: 0, overflow: "auto", padding: "4px 14px" }}>
-          {messages.map((m, i) => (
-            <ChatRow key={`${m.time}-${i}`} message={m} />
-          ))}
-        </div>
+        <AgentChatLog messages={messages} padding="4px 14px" />
         <WorktreeComposerBar compact />
       </div>
     </>

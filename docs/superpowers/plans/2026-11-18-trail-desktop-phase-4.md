@@ -10,7 +10,7 @@
 - [x] Designs — lazy chunk + `design/` scan (`v{n}.html`) + iframe preview
 - [x] Docs/Roadmap/Decisions — lazy-loaded chunks
 - [x] Chat memo (`ChatRow`)
-- [ ] Lijstvirtualisatie (>100 items)
+- [x] Lijstvirtualisatie (>100 items) — board list, docs sidebar, agent chat
 - [x] Docs editor (Markdown, SQLite kennis, split preview)
 
 **Notities:** Comment-modus in de UI wacht op preview-preload; embedded view tekent boven renderer-HTML.

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { shouldVirtualizeList } from "./list-virtual-threshold";
+import { VirtualScrollList } from "./virtual-scroll-list";
 import type { KnowledgeDocDto, KnowledgeDocSummaryDto, WorkspaceDto } from "@trail/ipc";
 import { ViewPageHeader } from "./design/ViewPageHeader";
 import { MarkdownPreview } from "./markdown-preview";
@@ -97,6 +99,9 @@ export function DocsView({
     }
   };
 
+  const docListRef = useRef<HTMLDivElement>(null);
+  const docListVirtual = shouldVirtualizeList(docs.length);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <ViewPageHeader
@@ -125,6 +130,7 @@ export function DocsView({
       />
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start", minHeight: 420 }}>
         <div
+          ref={docListVirtual ? docListRef : undefined}
           style={{
             width: 260,
             flex: "0 0 260px",
@@ -137,36 +143,70 @@ export function DocsView({
             gap: 2,
             maxHeight: 520,
             overflow: "auto",
+            minHeight: 0,
           }}
         >
-          <span className="tr-overline" style={{ padding: "4px 8px" }}>
+          <span className="tr-overline" style={{ padding: "4px 8px", flex: "0 0 auto" }}>
             Knowledge
           </span>
-          {docs.map((doc) => (
-            <button
-              key={doc.slug}
-              type="button"
-              onClick={() => {
-                setSelectedSlug(doc.slug);
-                setEditing(false);
-              }}
-              style={{
-                width: "100%",
-                textAlign: "left",
-                border: "none",
-                borderRadius: 6,
-                padding: "6px 8px",
-                cursor: "pointer",
-                background: doc.slug === selectedSlug ? "var(--surface-hover)" : "transparent",
-                color: doc.slug === selectedSlug ? "var(--ink)" : "var(--ink-muted)",
-                font: "inherit",
-              }}
-            >
-              <span className="tr-mono" style={{ fontSize: 12 }}>
-                {doc.slug}.md
-              </span>
-            </button>
-          ))}
+          {docListVirtual ? (
+            <VirtualScrollList
+              scrollRef={docListRef}
+              items={docs}
+              estimateSize={30}
+              getItemKey={(doc) => doc.slug}
+              renderItem={(doc) => (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSlug(doc.slug);
+                    setEditing(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "6px 8px",
+                    cursor: "pointer",
+                    background: doc.slug === selectedSlug ? "var(--surface-hover)" : "transparent",
+                    color: doc.slug === selectedSlug ? "var(--ink)" : "var(--ink-muted)",
+                    font: "inherit",
+                  }}
+                >
+                  <span className="tr-mono" style={{ fontSize: 12 }}>
+                    {doc.slug}.md
+                  </span>
+                </button>
+              )}
+            />
+          ) : (
+            docs.map((doc) => (
+              <button
+                key={doc.slug}
+                type="button"
+                onClick={() => {
+                  setSelectedSlug(doc.slug);
+                  setEditing(false);
+                }}
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "6px 8px",
+                  cursor: "pointer",
+                  background: doc.slug === selectedSlug ? "var(--surface-hover)" : "transparent",
+                  color: doc.slug === selectedSlug ? "var(--ink)" : "var(--ink-muted)",
+                  font: "inherit",
+                }}
+              >
+                <span className="tr-mono" style={{ fontSize: 12 }}>
+                  {doc.slug}.md
+                </span>
+              </button>
+            ))
+          )}
         </div>
         <div
           style={{
