@@ -1,6 +1,5 @@
 import { createServer, type Server } from "node:http";
-import type { TrailMcpStores } from "@trail/core";
-import { executeTrailMcpTool } from "./executor.js";
+import { executeTrailMcpTool, type TrailMcpExecutorContext } from "./executor.js";
 import type { TrailMcpToolName } from "./tool-names.js";
 import { TRAIL_MCP_TOOLS } from "./tool-names.js";
 
@@ -30,7 +29,7 @@ export type TrailMcpHttpServerOptions = {
 };
 
 export function startTrailMcpHttpServer(
-  stores: TrailMcpStores,
+  context: TrailMcpExecutorContext,
   token: string,
   options?: TrailMcpHttpServerOptions,
 ): Promise<TrailMcpHttpServer> {
@@ -63,7 +62,7 @@ export function startTrailMcpHttpServer(
             args = parsed as Record<string, unknown>;
           }
         }
-        const result = executeTrailMcpTool(stores, toolSegment, args);
+        const result = await executeTrailMcpTool(context, toolSegment, args);
         options?.onToolSuccess?.(toolSegment, result);
         res.setHeader("content-type", "application/json");
         res.statusCode = 200;

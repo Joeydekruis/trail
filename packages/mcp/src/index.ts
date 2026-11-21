@@ -1,6 +1,10 @@
 export { TRAIL_MCP_PACKAGE } from "./constants.js";
 export { TRAIL_MCP_READ_TOOLS, TRAIL_MCP_WRITE_TOOLS, TRAIL_MCP_TOOLS } from "./tool-names.js";
-export { executeTrailMcpTool } from "./executor.js";
+export {
+  executeTrailMcpTool,
+  type TrailMcpExecutorContext,
+  type TrailMcpUpdateTaskStatusHook,
+} from "./executor.js";
 export {
   registerTrailMcpTools,
   registerTrailReadTools,

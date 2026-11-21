@@ -1,4 +1,4 @@
-import type { TrailMcpStores } from "@trail/core";
+import type { BoardColumnId, TrailMcpStores } from "@trail/core";
 import {
   mcpCreateDecision,
   mcpGetDecision,
@@ -8,16 +8,29 @@ import {
   mcpListTasks,
   mcpListWorkspaces,
   mcpSearchDocs,
+  resolveMcpUpdateTaskStatus,
 } from "@trail/core";
 import type { TrailMcpToolName } from "./tool-names.js";
 
 export type TrailMcpToolArgs = Record<string, unknown>;
 
-export function executeTrailMcpTool(
-  stores: TrailMcpStores,
+export type TrailMcpUpdateTaskStatusHook = (input: {
+  workspaceId: string;
+  issueNumber: number;
+  boardColumn: BoardColumnId;
+}) => Promise<unknown>;
+
+export type TrailMcpExecutorContext = {
+  stores: TrailMcpStores;
+  updateTaskStatus?: TrailMcpUpdateTaskStatusHook;
+};
+
+export async function executeTrailMcpTool(
+  context: TrailMcpExecutorContext,
   tool: TrailMcpToolName,
   args: TrailMcpToolArgs,
-): unknown {
+): Promise<unknown> {
+  const { stores } = context;
   switch (tool) {
     case "list_workspaces":
       return mcpListWorkspaces(stores);
@@ -79,6 +92,30 @@ export function executeTrailMcpTool(
           typeof args.blocksIssueNumber === "number" ? args.blocksIssueNumber : undefined,
         author: typeof args.author === "string" ? args.author : undefined,
         allowSimilarTitle: args.allowSimilarTitle === true,
+      });
+    }
+    case "update_task_status": {
+      const resolved = resolveMcpUpdateTaskStatus(stores, {
+        workspaceId: typeof args.workspaceId === "string" ? args.workspaceId : undefined,
+        number: typeof args.number === "number" ? args.number : undefined,
+        id: typeof args.id === "string" ? args.id : undefined,
+        boardColumn: typeof args.boardColumn === "string" ? args.boardColumn : undefined,
+        status: typeof args.status === "string" ? args.status : undefined,
+      });
+      if (!resolved.ok) {
+        return resolved;
+      }
+      if (!context.updateTaskStatus) {
+        return {
+          ok: false,
+          code: "unavailable",
+          message: "update_task_status is only available in Trail Desktop",
+        };
+      }
+      return context.updateTaskStatus({
+        workspaceId: resolved.workspaceId,
+        issueNumber: resolved.issueNumber,
+        boardColumn: resolved.boardColumn,
       });
     }
     default: {

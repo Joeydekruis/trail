@@ -634,7 +634,7 @@ export function SettingsView({
                   </pre>
                   <p className="tr-small" style={{ margin: 0 }}>
                     Tools: list_workspaces, list_tasks, get_task, list_decisions, get_decision, search_docs,
-                    list_open_pins, create_decision.
+                    list_open_pins, create_decision, update_task_status.
                   </p>
                 </SettingsBlock>
               ) : null}

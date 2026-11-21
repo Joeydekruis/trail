@@ -2,8 +2,9 @@ import { randomBytes } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { app } from "electron";
-import type { TrailMcpHttpServer } from "@trail/mcp";
+import type { TrailMcpExecutorContext, TrailMcpHttpServer } from "@trail/mcp";
 import { MCP_CONNECTION_FILENAME, startTrailMcpHttpServer } from "@trail/mcp";
+import { moveBoardIssue } from "./board-move-issue";
 import {
   getDecisionStore,
   getIssueCacheStore,
@@ -26,6 +27,32 @@ function stores() {
     decisions: getDecisionStore(),
     worktrees: getWorktreeStore(),
     pins: getPreviewPinStore(),
+  };
+}
+
+function mcpExecutorContext(): TrailMcpExecutorContext {
+  return {
+    stores: stores(),
+    updateTaskStatus: async ({ workspaceId, issueNumber, boardColumn }) => {
+      const move = await moveBoardIssue({
+        workspaces: getWorkspaceStore(),
+        issues: getIssueCacheStore(),
+        workspaceId,
+        issueNumber,
+        targetColumn: boardColumn,
+      });
+      if (!move.ok) {
+        return { ok: false as const, message: move.message };
+      }
+      const task = getIssueCacheStore().get(workspaceId, issueNumber);
+      return {
+        ok: true as const,
+        issueNumber,
+        boardColumn,
+        state: task?.state ?? "open",
+        title: task?.title ?? "",
+      };
+    },
   };
 }
 
@@ -63,7 +90,7 @@ export async function startMcpServer(): Promise<void> {
     return;
   }
   const token = tokenForMcp();
-  httpServer = await startTrailMcpHttpServer(stores(), token, {
+  httpServer = await startTrailMcpHttpServer(mcpExecutorContext(), token, {
     onToolSuccess: (tool, result) => {
       if (tool !== "create_decision") {
         return;

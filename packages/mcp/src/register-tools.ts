@@ -175,6 +175,28 @@ export function registerTrailWriteTools(
       }
     },
   );
+
+  server.registerTool(
+    "update_task_status",
+    {
+      description:
+        "Move a GitHub issue on the board (Projects v2 status when linked). Updates GitHub when connected.",
+      inputSchema: z.object({
+        workspaceId,
+        number: z.number().int().positive().optional(),
+        id: z.string().optional(),
+        boardColumn: z.string().optional(),
+        status: z.string().optional(),
+      }),
+    },
+    async (args) => {
+      try {
+        return ok(await Promise.resolve(invoke("update_task_status", args)));
+      } catch (e) {
+        return err(e instanceof Error ? e.message : String(e));
+      }
+    },
+  );
 }
 
 export function registerTrailMcpTools(

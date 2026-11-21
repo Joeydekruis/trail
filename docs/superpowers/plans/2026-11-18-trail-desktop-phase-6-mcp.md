@@ -10,5 +10,6 @@
 - [x] Settings → MCP status + Cursor config snippet
 - [ ] Streamable HTTP transport (SDK) for clients that prefer URL over stdio
 - [x] MCP write: `create_decision` (conflict checks + optional issue block)
-- [ ] MCP write: update_task_status, resolve_pin, add_task_comment
+- [x] MCP write: `update_task_status` (board column via GitHub Projects when linked)
+- [ ] MCP write: resolve_pin, add_task_comment
 - [ ] Per-workspace MCP toggles persisted in SQLite
