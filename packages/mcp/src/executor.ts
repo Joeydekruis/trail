@@ -7,7 +7,9 @@ import {
   mcpListOpenPins,
   mcpListTasks,
   mcpListWorkspaces,
+  mcpResolvePin,
   mcpSearchDocs,
+  resolveMcpAddTaskComment,
   resolveMcpUpdateTaskStatus,
 } from "@trail/core";
 import type { TrailMcpToolName } from "./tool-names.js";
@@ -20,9 +22,16 @@ export type TrailMcpUpdateTaskStatusHook = (input: {
   boardColumn: BoardColumnId;
 }) => Promise<unknown>;
 
+export type TrailMcpAddTaskCommentHook = (input: {
+  workspaceId: string;
+  issueNumber: number;
+  body: string;
+}) => Promise<unknown>;
+
 export type TrailMcpExecutorContext = {
   stores: TrailMcpStores;
   updateTaskStatus?: TrailMcpUpdateTaskStatusHook;
+  addTaskComment?: TrailMcpAddTaskCommentHook;
 };
 
 export async function executeTrailMcpTool(
@@ -116,6 +125,39 @@ export async function executeTrailMcpTool(
         workspaceId: resolved.workspaceId,
         issueNumber: resolved.issueNumber,
         boardColumn: resolved.boardColumn,
+      });
+    }
+    case "resolve_pin":
+      return mcpResolvePin(stores, {
+        workspaceId: typeof args.workspaceId === "string" ? args.workspaceId : undefined,
+        pinId: typeof args.pinId === "number" ? args.pinId : undefined,
+        issueNumber: typeof args.issueNumber === "number" ? args.issueNumber : undefined,
+        pinNumber: typeof args.pinNumber === "number" ? args.pinNumber : undefined,
+      });
+    case "add_task_comment": {
+      if (typeof args.body !== "string") {
+        throw new Error("add_task_comment requires body");
+      }
+      const resolved = resolveMcpAddTaskComment(stores, {
+        workspaceId: typeof args.workspaceId === "string" ? args.workspaceId : undefined,
+        number: typeof args.number === "number" ? args.number : undefined,
+        id: typeof args.id === "string" ? args.id : undefined,
+        body: args.body,
+      });
+      if (!resolved.ok) {
+        return resolved;
+      }
+      if (!context.addTaskComment) {
+        return {
+          ok: false,
+          code: "unavailable",
+          message: "add_task_comment is only available in Trail Desktop",
+        };
+      }
+      return context.addTaskComment({
+        workspaceId: resolved.workspaceId,
+        issueNumber: resolved.issueNumber,
+        body: args.body.trim(),
       });
     }
     default: {

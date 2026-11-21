@@ -197,6 +197,46 @@ export function registerTrailWriteTools(
       }
     },
   );
+
+  server.registerTool(
+    "resolve_pin",
+    {
+      description: "Mark a preview pin resolved by removing it from Trail SQLite.",
+      inputSchema: z.object({
+        workspaceId,
+        pinId: z.number().int().positive().optional(),
+        issueNumber: z.number().int().positive().optional(),
+        pinNumber: z.number().int().positive().optional(),
+      }),
+    },
+    async (args) => {
+      try {
+        return ok(await Promise.resolve(invoke("resolve_pin", args)));
+      } catch (e) {
+        return err(e instanceof Error ? e.message : String(e));
+      }
+    },
+  );
+
+  server.registerTool(
+    "add_task_comment",
+    {
+      description: "Post a comment on a GitHub issue (cached task) for the workspace.",
+      inputSchema: z.object({
+        workspaceId,
+        number: z.number().int().positive().optional(),
+        id: z.string().optional(),
+        body: z.string().min(1).max(65_000),
+      }),
+    },
+    async (args) => {
+      try {
+        return ok(await Promise.resolve(invoke("add_task_comment", args)));
+      } catch (e) {
+        return err(e instanceof Error ? e.message : String(e));
+      }
+    },
+  );
 }
 
 export function registerTrailMcpTools(

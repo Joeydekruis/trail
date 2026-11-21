@@ -3,6 +3,7 @@ export { TRAIL_MCP_READ_TOOLS, TRAIL_MCP_WRITE_TOOLS, TRAIL_MCP_TOOLS } from "./
 export {
   executeTrailMcpTool,
   type TrailMcpExecutorContext,
+  type TrailMcpAddTaskCommentHook,
   type TrailMcpUpdateTaskStatusHook,
 } from "./executor.js";
 export {

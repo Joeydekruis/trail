@@ -195,6 +195,13 @@ export class MemorySqlite implements SqliteDatabase {
           self.tables.set("decisions", next);
           return { changes: 1, lastInsertRowid: next.length };
         }
+        if (sql.includes("DELETE FROM preview_pins WHERE id")) {
+          const id = params[0];
+          const rows = self.tables.get("preview_pins") ?? [];
+          const next = rows.filter((r) => r.id !== id);
+          self.tables.set("preview_pins", next);
+          return { changes: rows.length - next.length };
+        }
         if (sql.includes("INSERT INTO preview_pins")) {
           const row = params[0] as Record<string, unknown>;
           const rows = self.tables.get("preview_pins") ?? [];
@@ -274,6 +281,9 @@ export class MemorySqlite implements SqliteDatabase {
             ?.find(
               (r) => r.workspace_id === params[0] && r.issue_number === params[1],
             );
+        }
+        if (sql.includes("FROM preview_pins WHERE id")) {
+          return self.tables.get("preview_pins")?.find((r) => r.id === params[0]);
         }
         if (sql.includes("MAX(pin_number)") && sql.includes("preview_pins")) {
           const rows =

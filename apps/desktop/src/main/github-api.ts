@@ -109,6 +109,33 @@ export async function fetchGitHubIssueComments(
   return { ok: true, comments };
 }
 
+export async function createGitHubIssueComment(
+  token: string,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  body: string,
+): Promise<
+  { ok: true; id: number; htmlUrl: string } | { ok: false; message: string }
+> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}/comments`,
+    {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ body }),
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await parseError(response) };
+  }
+  const row = (await response.json()) as { id: number; html_url: string };
+  if (!row.id || !row.html_url) {
+    return { ok: false, message: "GitHub did not return a comment" };
+  }
+  return { ok: true, id: row.id, htmlUrl: row.html_url };
+}
+
 export async function createGitHubIssue(
   token: string,
   owner: string,

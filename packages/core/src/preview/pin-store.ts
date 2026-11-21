@@ -117,6 +117,40 @@ export class PreviewPinStore {
       .all(workspaceId) as PinRow[];
     return rows.map(mapRow);
   }
+
+  getById(id: number): PreviewPinRecord | null {
+    const row = this.db
+      .prepare("SELECT * FROM preview_pins WHERE id = ?")
+      .get(id) as PinRow | undefined;
+    return row ? mapRow(row) : null;
+  }
+
+  /** Remove a pin after review (MCP resolve_pin / agent ack). */
+  resolve(input: {
+    workspaceId: string;
+    pinId?: number;
+    issueNumber?: number;
+    pinNumber?: number;
+  }): PreviewPinRecord | null {
+    if (input.pinId != null) {
+      const row = this.getById(input.pinId);
+      if (!row || row.workspaceId !== input.workspaceId) {
+        return null;
+      }
+      this.db.prepare("DELETE FROM preview_pins WHERE id = ?").run(row.id);
+      return row;
+    }
+    if (input.issueNumber == null || input.pinNumber == null) {
+      return null;
+    }
+    const rows = this.list(input.workspaceId, input.issueNumber);
+    const match = rows.find((row) => row.pinNumber === input.pinNumber);
+    if (!match) {
+      return null;
+    }
+    this.db.prepare("DELETE FROM preview_pins WHERE id = ?").run(match.id);
+    return match;
+  }
 }
 
 export function openPreviewPinStore(db: SqliteDatabase): PreviewPinStore {

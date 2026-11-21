@@ -128,6 +128,10 @@ export {
 } from "./mcp/read-api.js";
 export { mcpCreateDecision } from "./mcp/write-api.js";
 export type { McpCreateDecisionInput, McpCreateDecisionResult } from "./mcp/write-api.js";
+export { mcpResolvePin } from "./mcp/pins.js";
+export type { McpResolvePinInput, McpResolvePinResult } from "./mcp/pins.js";
+export { resolveMcpAddTaskComment } from "./mcp/task-comment.js";
+export type { McpAddTaskCommentInput, McpAddTaskCommentResult } from "./mcp/task-comment.js";
 export { resolveMcpUpdateTaskStatus } from "./mcp/task-status.js";
 export type {
   McpUpdateTaskStatusInput,

@@ -5,6 +5,7 @@ import { app } from "electron";
 import type { TrailMcpExecutorContext, TrailMcpHttpServer } from "@trail/mcp";
 import { MCP_CONNECTION_FILENAME, startTrailMcpHttpServer } from "@trail/mcp";
 import { moveBoardIssue } from "./board-move-issue";
+import { mcpAddTaskComment } from "./mcp-github-hooks";
 import {
   getDecisionStore,
   getIssueCacheStore,
@@ -52,6 +53,9 @@ function mcpExecutorContext(): TrailMcpExecutorContext {
         state: task?.state ?? "open",
         title: task?.title ?? "",
       };
+    },
+    addTaskComment: async ({ workspaceId, issueNumber, body }) => {
+      return mcpAddTaskComment({ workspaceId, issueNumber, body });
     },
   };
 }
