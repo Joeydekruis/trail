@@ -61,4 +61,6 @@ export const PreloadIpcChannels = {
   mcpSettingsSet: "mcp.settings.set",
   diagnosticsMarkRendererReady: "diagnostics.markRendererReady",
   diagnosticsReportWorkspaceSwitch: "diagnostics.reportWorkspaceSwitch",
+  appUpdateGet: "app.updateGet",
+  appUpdateInstall: "app.updateInstall",
 } as const;

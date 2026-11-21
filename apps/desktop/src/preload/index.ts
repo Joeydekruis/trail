@@ -320,6 +320,11 @@ export type TrailApi = {
   mcpSettingsSet: (
     input: import("@trail/ipc").McpSettingsSetPayload,
   ) => Promise<import("@trail/ipc").McpSettingsSetResult>;
+  getAppUpdate: () => Promise<import("@trail/ipc").AppUpdateStateDto>;
+  installAppUpdate: () => Promise<import("@trail/ipc").AppUpdateInstallResult>;
+  onAppUpdateState: (
+    listener: (payload: import("@trail/ipc").AppUpdateStateDto) => void,
+  ) => () => void;
 };
 
 const trailApi: TrailApi = {
@@ -651,6 +656,25 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.mcpSettingsSet, input) as Promise<
       import("@trail/ipc").McpSettingsSetResult
     >,
+  getAppUpdate: () =>
+    ipcRenderer.invoke(PreloadIpcChannels.appUpdateGet) as Promise<
+      import("@trail/ipc").AppUpdateStateDto
+    >,
+  installAppUpdate: () =>
+    ipcRenderer.invoke(PreloadIpcChannels.appUpdateInstall) as Promise<
+      import("@trail/ipc").AppUpdateInstallResult
+    >,
+  onAppUpdateState: (listener) => {
+    const channel = "trail.appUpdateState";
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: import("@trail/ipc").AppUpdateStateDto,
+    ) => {
+      listener(payload);
+    };
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
 };
 
 try {

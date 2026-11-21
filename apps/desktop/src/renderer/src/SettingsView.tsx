@@ -9,6 +9,7 @@ import {
 } from "@trail/core/client";
 import { TrailButton, TrailSelect, trailFieldStyle } from "./design/TrailUi";
 import { formatSyncLabel } from "./sync-label";
+import { AppUpdateSettingsBlock } from "./AppUpdateSettingsBlock";
 
 const PROJECT_STATUS_FIELD_PRESETS = [
   DEFAULT_PROJECT_STATUS_FIELD,
@@ -365,6 +366,7 @@ export function SettingsView({
         <div style={{ maxWidth: 760, margin: "0 auto", padding: "24px 24px 40px" }}>
           {section === "general" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <AppUpdateSettingsBlock />
               <div>
                 <h2 style={{ margin: 0, fontSize: 14, lineHeight: "20px", fontWeight: 600 }}>General</h2>
                 <p className="tr-small" style={{ marginTop: 6 }}>

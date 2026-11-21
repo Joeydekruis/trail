@@ -38,6 +38,7 @@ import { registerSyncConflictIpc } from "./sync-conflict-ipc";
 import { stopAutopilotScheduler } from "./autopilot-service";
 import { stopMcpServer } from "./mcp-server";
 import { registerAutoUpdater } from "./auto-updater";
+import { registerAppUpdateIpc } from "./app-update-ipc";
 
 const MIN_WIDTH = 1180;
 const MIN_HEIGHT = 640;
@@ -183,6 +184,7 @@ void app.whenReady().then(() => {
   registerMcpIpc();
   registerSyncConflictIpc();
   registerAutopilotIpc();
+  registerAppUpdateIpc();
   createWindow();
   registerAutoUpdater();
 

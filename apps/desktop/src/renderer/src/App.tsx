@@ -285,6 +285,11 @@ declare global {
         durationMs: number;
         openViewCount?: number;
       }) => Promise<{ ok: true }>;
+      getAppUpdate?: () => Promise<import("@trail/ipc").AppUpdateStateDto>;
+      installAppUpdate?: () => Promise<import("@trail/ipc").AppUpdateInstallResult>;
+      onAppUpdateState?: (
+        listener: (payload: import("@trail/ipc").AppUpdateStateDto) => void,
+      ) => () => void;
       mcpConnection?: () => Promise<import("@trail/ipc").McpConnectionResult>;
       mcpSettingsGet?: (workspaceId?: string) => Promise<import("@trail/ipc").McpSettingsGetResult>;
       mcpSettingsSet?: (

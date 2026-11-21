@@ -60,6 +60,8 @@ export const IpcChannels = {
   diagnosticsGetSnapshot: "diagnostics.getSnapshot",
   diagnosticsMarkRendererReady: "diagnostics.markRendererReady",
   diagnosticsReportWorkspaceSwitch: "diagnostics.reportWorkspaceSwitch",
+  appUpdateGet: "app.updateGet",
+  appUpdateInstall: "app.updateInstall",
   mcpConnection: "mcp.connection",
   mcpSettingsGet: "mcp.settings.get",
   mcpSettingsSet: "mcp.settings.set",
@@ -1118,3 +1120,33 @@ export type McpSettingsSetPayload = z.infer<typeof mcpSettingsSetPayload>;
 export const mcpSettingsSetResult = mcpWorkspaceSettingsDto;
 
 export type McpSettingsSetResult = z.infer<typeof mcpSettingsSetResult>;
+
+export const appUpdateStatus = z.enum([
+  "idle",
+  "checking",
+  "available",
+  "downloading",
+  "downloaded",
+  "not-available",
+  "error",
+]);
+
+export type AppUpdateStatus = z.infer<typeof appUpdateStatus>;
+
+export const appUpdateStateDto = z.object({
+  enabled: z.boolean(),
+  status: appUpdateStatus,
+  currentVersion: z.string().min(1),
+  version: z.string().min(1).nullable(),
+  deferredByRuns: z.boolean(),
+  errorMessage: z.string().min(1).nullable(),
+});
+
+export type AppUpdateStateDto = z.infer<typeof appUpdateStateDto>;
+
+export const appUpdateInstallResult = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type AppUpdateInstallResult = z.infer<typeof appUpdateInstallResult>;

@@ -38,6 +38,7 @@
 - [x] Zet `asar: true`, `compression: maximum`, `electronLanguages: ['en','nl']`, per-arch matrix in CI.
 - [x] Blockmaps voor electron-updater (differential updates).
 - [x] Runtime auto-update (`auto-updater.ts`); install pas na laatste agent run.
+- [x] Settings → General toont update-status en handmatige install-knop.
 - [x] Documenteer signing/notarisatie-pad (macOS + Windows) volgens bouwbriefing; smoke test op schone VM.
 
 ### Task 2: CI-groottebudgetten (nulmeting)
