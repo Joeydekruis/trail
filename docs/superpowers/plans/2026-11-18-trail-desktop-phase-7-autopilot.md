@@ -9,6 +9,6 @@
 - [x] Background scheduler + tick after GitHub sync
 - [x] Board autopilot toggle persisted
 - [x] Settings → Agents: parallel run limit
-- [ ] Move issue to In progress on GitHub when autopilot picks
+- [x] Move issue to In progress on GitHub when autopilot picks
 - [ ] Global pause autopilot / waiting-for-decision gate
 - [ ] Draft PR on successful run

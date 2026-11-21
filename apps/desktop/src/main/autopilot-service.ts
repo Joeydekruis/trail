@@ -16,6 +16,7 @@ import {
 } from "./database";
 import { readWorkspaceRepoRoot } from "./worktree-paths";
 import { createLocalWorktree } from "./worktree-create";
+import { moveBoardIssue } from "./board-move-issue";
 
 const TICK_MS = 20_000;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -101,6 +102,20 @@ export async function runAutopilotTick(workspaceId?: string): Promise<void> {
       const next = pickAutopilotIssue(issues, worktrees, settings.pickupLabels);
       if (!next) {
         break;
+      }
+      if (next.boardColumn === "todo") {
+        const moved = await moveBoardIssue({
+          workspaces: workspaceStore,
+          issues: issueStore,
+          workspaceId: id,
+          issueNumber: next.number,
+          targetColumn: "in-progress",
+        });
+        if (!moved.ok) {
+          console.warn("[trail] autopilot board move:", moved.message);
+          break;
+        }
+        next.boardColumn = "in-progress";
       }
       const created = createLocalWorktree({
         workspaceStore,
