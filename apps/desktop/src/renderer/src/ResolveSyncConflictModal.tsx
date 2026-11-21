@@ -170,7 +170,14 @@ export function ResolveSyncConflictModal({
               #{conflict.issueNumber} · {conflict.title}
             </p>
           </div>
-          <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: "transparent" }}>
+          <button
+            type="button"
+            aria-label="Close"
+            data-tip="Close"
+            data-tip-pos="below"
+            onClick={onClose}
+            style={{ border: 0, background: "transparent" }}
+          >
             <IconClose />
           </button>
         </div>

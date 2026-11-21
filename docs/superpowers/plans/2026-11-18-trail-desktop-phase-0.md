@@ -79,6 +79,7 @@
 - [x] `npm test && npm run typecheck` op repo-root.
 - [x] Lokale `electron-vite build` + size-limit groen.
 - [x] Handmatig: venster opent op theme-kleur, geen wit scherm (lokaal: `release-smoke/win-unpacked`).
+- [x] Lokale `dist:dir` smoke (`npm run smoke:unpacked --workspace=@trail/desktop`).
 - [ ] (Na signing) DMG/NSIS installeren op Mac + Windows smoke test.
 
 **Fase-gate:** Gesigneerde build installeert op beide platformen; CI size-checks actief; documentatie verwijst naar performance acceptatiecriteria voor latere fases (cache-first start, Playwright timings in fase 5).

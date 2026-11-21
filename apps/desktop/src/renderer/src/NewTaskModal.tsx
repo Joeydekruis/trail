@@ -213,6 +213,8 @@ export function NewTaskModal({
           <button
             type="button"
             aria-label="Close"
+            data-tip="Close"
+            data-tip-pos="below"
             onClick={onClose}
             style={{
               flex: "0 0 auto",

@@ -488,6 +488,9 @@ export function TrailShell({
             <button
               key={item}
               type="button"
+              aria-label={item === "Help" ? "Open diagnostics" : item}
+              data-tip={item === "Help" ? "Open diagnostics" : item}
+              data-tip-pos="below"
               onClick={() => {
                 if (item === "Help") {
                   onOpenDiagnostics?.();

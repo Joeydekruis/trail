@@ -8,6 +8,7 @@ Zie ook [bouwbriefing — Packaging, signing en auto-update](superpowers/specs/2
 npm run build:desktop
 npm run dist --workspace=@trail/desktop          # huidig platform/arch
 npm run dist:dir --workspace=@trail/desktop      # uitgepakte map (snelle smoke test)
+npm run smoke:unpacked --workspace=@trail/desktop # controleer app.asar (na dist:dir)
 ```
 
 Op Windows zonder codesigning-certificaat: `set CSC_IDENTITY_AUTO_DISCOVERY=false`. Als `dist:dir` faalt op een gelockte `app.asar`, sluit een draaiende Trail-app en verwijder `apps/desktop/release/`, of bouw naar een andere map: `npm run dist:dir --workspace=@trail/desktop -- --config.directories.output=release-smoke`.

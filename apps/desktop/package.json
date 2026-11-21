@@ -14,7 +14,8 @@
     "size-limit": "size-limit --config size-limit.config.js",
     "dist": "electron-builder --config electron-builder.yml",
     "dist:dir": "electron-builder --config electron-builder.yml --dir",
-    "test": "node --test scripts/installer-budget.test.mjs && vitest run",
+    "test": "node --test scripts/installer-budget.test.mjs && node --test scripts/smoke-unpacked.test.mjs && vitest run",
+    "smoke:unpacked": "node scripts/smoke-unpacked.mjs",
     "test:e2e": "playwright test",
     "verify:sqlite": "cross-env ELECTRON_RUN_AS_NODE=1 electron scripts/sqlite-smoke.cjs",
     "rebuild:native": "npx @electron/rebuild -w better-sqlite3 -f"
