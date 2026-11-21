@@ -19,3 +19,4 @@
 - [x] Worktree composer Send starts agent run with typed prompt; Stop ends run
 - [x] Composer follow-ups use stored session + Claude `--resume` (fresh session on Start run)
 - [x] Parallel run cap from Settings; overflow worktrees stay `queued` until a slot opens
+- [x] Claude runs use `stream-json`; `session_id` from CLI replaces the provisional worktree session

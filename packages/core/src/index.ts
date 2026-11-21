@@ -121,6 +121,7 @@ export {
   pickPreferredAgentBackend,
 } from "./agent/pick-backend.js";
 export { buildClaudeAgentArgs, planAgentSessionRun } from "./agent/claude-args.js";
+export { parseAgentStreamJsonLine } from "./agent/parse-stream-json.js";
 export {
   AGENT_PARALLEL_LIMIT_MESSAGE,
   canStartAnotherAgentRun,

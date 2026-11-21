@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import type { MessagePortMain } from "electron";
-import { buildClaudeAgentArgs } from "@trail/core";
+import { buildClaudeAgentArgs, parseAgentStreamJsonLine } from "@trail/core";
 
 type StartMessage = {
   type: "start";
@@ -40,10 +40,18 @@ type DoneMessage = {
   backend: "cursor" | "claude" | null;
 };
 
+type SessionMessage = {
+  type: "session";
+  runId: string;
+  workspaceId: string;
+  issueNumber: number;
+  sessionId: string;
+};
+
 const active = new Map<string, ChildProcess>();
 const streamPortByRun = new Map<string, MessagePortMain>();
 
-function postToParent(message: OutputMessage | DoneMessage): void {
+function postToParent(message: OutputMessage | DoneMessage | SessionMessage): void {
   const port = process.parentPort;
   if (!port) {
     return;
@@ -123,7 +131,21 @@ function attach(runId: string, message: StartMessage, child: ChildProcess): void
       if (!trimmed) {
         continue;
       }
-      postOutput({ type: "output", ...base, stream: "stdout", line: trimmed });
+      const parsed =
+        message.backend === "claude" ? parseAgentStreamJsonLine(trimmed) : { sessionId: null, displayLine: trimmed };
+      if (parsed.sessionId) {
+        const sessionMessage: SessionMessage = {
+          type: "session",
+          runId,
+          workspaceId: message.workspaceId,
+          issueNumber: message.issueNumber,
+          sessionId: parsed.sessionId,
+        };
+        postToParent(sessionMessage);
+      }
+      if (parsed.displayLine) {
+        postOutput({ type: "output", ...base, stream: "stdout", line: parsed.displayLine });
+      }
     }
   });
 

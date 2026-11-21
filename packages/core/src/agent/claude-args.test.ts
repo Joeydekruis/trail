@@ -2,12 +2,19 @@ import { describe, expect, it } from "vitest";
 import { buildClaudeAgentArgs, planAgentSessionRun } from "./claude-args.js";
 
 describe("buildClaudeAgentArgs", () => {
-  it("starts fresh with -p only", () => {
-    expect(buildClaudeAgentArgs({ prompt: "Fix tests" })).toEqual(["-p", "Fix tests"]);
+  it("starts fresh with stream-json and -p", () => {
+    expect(buildClaudeAgentArgs({ prompt: "Fix tests" })).toEqual([
+      "--output-format",
+      "stream-json",
+      "-p",
+      "Fix tests",
+    ]);
   });
 
   it("resumes an existing Claude session", () => {
     expect(buildClaudeAgentArgs({ prompt: "Why failed?", resumeSessionId: "sess-1" })).toEqual([
+      "--output-format",
+      "stream-json",
       "--resume",
       "sess-1",
       "-p",

@@ -4,6 +4,7 @@ import { detectAgentBackends } from "./agent-cli";
 import { resolveAgentRunnerUtilityPath } from "./agent-runner-path";
 import { createAgentStreamChannel, deliverAgentStreamPort } from "./agent-stream-port";
 import { finalizeAgentRun } from "./agent-draft-pr";
+import { getWorktreeStore } from "./database";
 import {
   broadcastAgentRunState,
   type StartAgentRunInput,
@@ -84,9 +85,25 @@ function handleUtilityMessage(message: unknown): void {
         issueNumber: number;
         exitCode: number;
         backend: "cursor" | "claude" | null;
+      }
+    | {
+        type: "session";
+        runId: string;
+        workspaceId: string;
+        issueNumber: number;
+        sessionId: string;
       };
 
   if (typed.type === "output") {
+    return;
+  }
+
+  if (typed.type === "session") {
+    const store = getWorktreeStore();
+    const record = store.get(typed.workspaceId, typed.issueNumber);
+    if (record && record.agentSessionId !== typed.sessionId) {
+      store.upsert({ ...record, agentSessionId: typed.sessionId });
+    }
     return;
   }
 

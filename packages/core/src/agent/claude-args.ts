@@ -3,12 +3,15 @@ import { randomUUID } from "node:crypto";
 export function buildClaudeAgentArgs(input: {
   prompt: string;
   resumeSessionId?: string | null;
+  streamJson?: boolean;
 }): string[] {
   const prompt = input.prompt.trim();
+  const streamJson = input.streamJson !== false;
+  const formatArgs = streamJson ? (["--output-format", "stream-json"] as const) : ([] as const);
   if (input.resumeSessionId?.trim()) {
-    return ["--resume", input.resumeSessionId.trim(), "-p", prompt];
+    return [...formatArgs, "--resume", input.resumeSessionId.trim(), "-p", prompt];
   }
-  return ["-p", prompt];
+  return [...formatArgs, "-p", prompt];
 }
 
 export function planAgentSessionRun(
