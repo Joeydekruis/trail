@@ -13,6 +13,7 @@ import {
 import { getIssueDetail, type IssueDetail } from "./design/issue-detail-fixture";
 import { FilterPill, IssueKanbanCard, SelectButton, SyncStatus, TrailButton } from "./design/TrailUi";
 import { IssueDetailModal } from "./IssueDetailModal";
+import { boardListRowFromCard, withCardSyncStatus } from "./board-card-sync";
 import { issueNumberFromRef, worktreeCtaForIssue } from "./worktree-session";
 
 type BoardViewProps = {
@@ -109,18 +110,7 @@ export function BoardView({
         name: column.name,
         tone: column.tone,
         count: column.count,
-        rows: column.cards.map((card) => {
-          const syncState = card.syncStatus ?? "synced";
-          return {
-            issue: card.issue,
-            title: card.title,
-            adr: "—",
-            pr: "—",
-            syncLabel: syncState === "conflict" ? "Conflict" : "Synced",
-            syncState,
-            by: "—",
-          };
-        }),
+        rows: column.cards.map((card) => boardListRowFromCard(card)),
       }));
       return {
         repo: liveBoard.repository ?? workspace?.repository ?? fixture.repo,
@@ -177,7 +167,7 @@ export function BoardView({
         return;
       }
 
-      setKanbanColumns(next);
+      setKanbanColumns(withCardSyncStatus(next, issueRef, "pending"));
       setMoveError(null);
       const result = await api.moveBoardIssue({
         workspaceId: workspace.id,
@@ -242,14 +232,7 @@ export function BoardView({
             name: column.name,
             tone: column.tone,
             count: column.count,
-            rows: column.cards.map((card) => ({
-              issue: card.issue,
-              title: card.title,
-              adr: "—",
-              pr: "—",
-              syncLabel: "Synced",
-              by: "—",
-            })),
+            rows: column.cards.map((card) => boardListRowFromCard(card)),
           })),
         }
       : boardData;

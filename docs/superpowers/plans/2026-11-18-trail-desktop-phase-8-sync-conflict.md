@@ -8,4 +8,4 @@
 - [x] IPC list/resolve + push state, Projects status, labels to GitHub
 - [x] Conflict banner + Resolve sync conflict modal
 - [x] Assignee field in issue cache + conflict resolve (GitHub PATCH assignees)
-- [x] Per-card sync status on board (`synced` / `conflict`; `pending` reserved)
+- [x] Per-card sync status on board (`synced` / `conflict` / `pending` while column move is in flight)

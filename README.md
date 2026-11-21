@@ -51,6 +51,16 @@ While Trail Desktop is running, the main process hosts a **loopback HTTP MCP ser
 
 Implementation: `packages/mcp` · Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-6-mcp.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-6-mcp.md).
 
+### Sync conflicts (Trail Desktop)
+
+On **Sync now**, Trail merges GitHub issue data with the local cache instead of overwriting blindly. When state, board column, labels, or assignee differ, a row is stored in SQLite (`issue_sync_conflicts`).
+
+- **Banner** in the app shell when any workspace has open conflicts.
+- **Board** cards show **Conflict**; **Pending** appears while a column drag is waiting on GitHub.
+- **Resolve sync conflict** modal picks GitHub vs Trail per field and pushes the resolution to GitHub.
+
+Phase plan: [docs/superpowers/plans/2026-11-18-trail-desktop-phase-8-sync-conflict.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-8-sync-conflict.md).
+
 ---
 
 ## Legacy CLI + local web UI
