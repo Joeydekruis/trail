@@ -3,7 +3,7 @@ import { DEFAULT_PREVIEW_URL, normalizePreviewUrl } from "@trail/core/client";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
 import { useBatchedAgentLines } from "./use-batched-agent-lines";
 import { userChatLine } from "./worktree-user-chat-line";
-import { previewPinToChatLine } from "./preview-pin-chat";
+import { previewPinToAgentPrompt, previewPinToChatLine } from "./preview-pin-chat";
 import { WorktreePreviewSurface } from "./worktree-preview-surface";
 import { AgentChatLog } from "./agent-chat-log";
 import { SelectButton, SyncStatus, TrailAvatar, TrailButton, TrailChip, TrailPanel, TrailProgressBar } from "./design/TrailUi";
@@ -197,8 +197,24 @@ function WorktreeViewBody({
       }
       setExtraMessages((prev) => [...prev, previewPinToChatLine(payload)]);
       setCommentMode(false);
+      if (!onSendAgentMessage) {
+        return;
+      }
+      if (context.status === "running") {
+        setComposerError(
+          "Pin added to chat. Stop the run or wait for it to finish, then send follow-up from the composer.",
+        );
+        return;
+      }
+      setComposerError(null);
+      void (async () => {
+        const result = await onSendAgentMessage(previewPinToAgentPrompt(payload));
+        if (!result.ok) {
+          setComposerError(result.message);
+        }
+      })();
     });
-  }, [workspaceId, context.issueNumber]);
+  }, [workspaceId, context.issueNumber, context.status, onSendAgentMessage]);
 
   const seededMessages = useMemo<ChatLine[]>(() => {
     const now = new Date();

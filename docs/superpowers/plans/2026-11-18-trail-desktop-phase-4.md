@@ -6,6 +6,7 @@
 
 - [x] Preview — `WebContentsView` per worktree, IPC attach/setBounds/detach, localhost URL bar
 - [x] Preview preload — pin overlay (shadow DOM) + Send to chat (SQLite anchors)
+- [x] Send to chat also starts agent follow-up with URL, element, and selector (when idle)
 - [x] Preview idle — embedded view naar `about:blank` na 10 min zichtbaar
 - [x] Preview dev-server — spawn per worktree uit `.trail/config.yml` (of `package.json` dev), stop bij detach
 - [x] Designs — lazy chunk + `design/` scan (`v{n}.html`) + iframe preview
