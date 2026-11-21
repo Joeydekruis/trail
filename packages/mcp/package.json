@@ -13,6 +13,11 @@
     "build": "tsup src/index.ts src/bin.ts --format esm --dts",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@trail/core": "*",
+    "zod": "^3.24.1"
+  },
   "devDependencies": {
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"

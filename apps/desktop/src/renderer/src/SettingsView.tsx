@@ -98,6 +98,8 @@ export function SettingsView({
   const [repoRootBusy, setRepoRootBusy] = useState(false);
   const [repoRootError, setRepoRootError] = useState<string | null>(null);
   const [agentBackends, setAgentBackends] = useState<AgentBackendStatusDto[]>([]);
+  const [mcpInfo, setMcpInfo] = useState<import("@trail/ipc").McpConnectionResult | null>(null);
+  const [mcpLoading, setMcpLoading] = useState(false);
   const [agentsLoading, setAgentsLoading] = useState(false);
   const name = workspace?.name ?? "Trail";
   const repoLine = workspace
@@ -558,6 +560,73 @@ export function SettingsView({
                   />
                 </label>
               </SettingsBlock>
+            </div>
+          ) : section === "mcp" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <SettingsBlock
+                title="Local MCP server"
+                lead="Read tools for Cursor and Claude Code. Start Trail Desktop first — trail-mcp talks to this app over loopback HTTP."
+              >
+                {mcpLoading ? (
+                  <p className="tr-small">Loading…</p>
+                ) : mcpInfo?.running ? (
+                  <>
+                    <p className="tr-small" style={{ margin: 0 }}>
+                      Listening at <span className="tr-mono">{mcpInfo.baseUrl}</span>
+                    </p>
+                    <p className="tr-small tr-mono" style={{ margin: 0, wordBreak: "break-all" }}>
+                      Connection file: {mcpInfo.connectionFile}
+                    </p>
+                  </>
+                ) : (
+                  <p className="tr-small" style={{ margin: 0 }}>
+                    Server starts a few seconds after the dashboard opens. Refresh if you just launched
+                    Trail.
+                  </p>
+                )}
+                <TrailButton
+                  variant="secondary"
+                  disabled={mcpLoading}
+                  onClick={() => {
+                    const api = window.trail;
+                    if (!api?.mcpConnection) {
+                      return;
+                    }
+                    setMcpLoading(true);
+                    void api
+                      .mcpConnection()
+                      .then(setMcpInfo)
+                      .finally(() => setMcpLoading(false));
+                  }}
+                >
+                  {mcpLoading ? "Refreshing…" : "Refresh status"}
+                </TrailButton>
+              </SettingsBlock>
+              {mcpInfo?.running ? (
+                <SettingsBlock
+                  title="Cursor / Claude Code (stdio)"
+                  lead="Add this MCP server entry. From the Trail repo: npm exec trail-mcp --workspace=@trail/mcp after npm run build --workspace=@trail/mcp."
+                >
+                  <pre
+                    className="tr-mono tr-small"
+                    style={{
+                      margin: 0,
+                      padding: 12,
+                      borderRadius: 8,
+                      border: "1px solid var(--line)",
+                      background: "var(--bg)",
+                      overflow: "auto",
+                      maxHeight: 220,
+                    }}
+                  >
+                    {mcpInfo.cursorConfigJson}
+                  </pre>
+                  <p className="tr-small" style={{ margin: 0 }}>
+                    Tools: list_workspaces, list_tasks, get_task, list_decisions, get_decision, search_docs,
+                    list_open_pins.
+                  </p>
+                </SettingsBlock>
+              ) : null}
             </div>
           ) : section === "agents" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

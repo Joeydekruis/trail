@@ -108,6 +108,15 @@ export class PreviewPinStore {
       .all(workspaceId, issueNumber) as PinRow[];
     return rows.map(mapRow);
   }
+
+  listByWorkspace(workspaceId: string): PreviewPinRecord[] {
+    const rows = this.db
+      .prepare(
+        "SELECT * FROM preview_pins WHERE workspace_id = ? ORDER BY issue_number, pin_number",
+      )
+      .all(workspaceId) as PinRow[];
+    return rows.map(mapRow);
+  }
 }
 
 export function openPreviewPinStore(db: SqliteDatabase): PreviewPinStore {

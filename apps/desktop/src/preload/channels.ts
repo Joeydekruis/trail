@@ -43,6 +43,7 @@ export const PreloadIpcChannels = {
   shellOpenExternal: "shell.openExternal",
   shellOpenPath: "shell.openPath",
   diagnosticsGetSnapshot: "diagnostics.getSnapshot",
+  mcpConnection: "mcp.connection",
   diagnosticsMarkRendererReady: "diagnostics.markRendererReady",
   diagnosticsReportWorkspaceSwitch: "diagnostics.reportWorkspaceSwitch",
 } as const;

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-console.error(
-  "trail-mcp: not implemented yet. Run Trail Desktop to host the MCP server.",
-);
-process.exit(1);
+import { runTrailMcpStdioBridge } from "./stdio-server.js";
+
+runTrailMcpStdioBridge().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+});

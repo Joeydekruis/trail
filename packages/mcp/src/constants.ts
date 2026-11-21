@@ -1,0 +1,1 @@
+export const TRAIL_MCP_PACKAGE = "@trail/mcp" as const;

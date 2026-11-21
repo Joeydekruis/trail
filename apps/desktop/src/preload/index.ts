@@ -262,6 +262,7 @@ export type TrailApi = {
     durationMs: number;
     openViewCount?: number;
   }) => Promise<{ ok: true }>;
+  mcpConnection: () => Promise<import("@trail/ipc").McpConnectionResult>;
 };
 
 const trailApi: TrailApi = {
@@ -512,6 +513,10 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.diagnosticsReportWorkspaceSwitch, input) as Promise<{
       ok: true;
     }>,
+  mcpConnection: () =>
+    ipcRenderer.invoke(PreloadIpcChannels.mcpConnection) as Promise<
+      import("@trail/ipc").McpConnectionResult
+    >,
 };
 
 try {

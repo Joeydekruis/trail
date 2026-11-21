@@ -47,6 +47,7 @@ export const IpcChannels = {
   diagnosticsGetSnapshot: "diagnostics.getSnapshot",
   diagnosticsMarkRendererReady: "diagnostics.markRendererReady",
   diagnosticsReportWorkspaceSwitch: "diagnostics.reportWorkspaceSwitch",
+  mcpConnection: "mcp.connection",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -779,3 +780,14 @@ export const diagnosticsGetSnapshotResult = z.object({
 });
 
 export type DiagnosticsGetSnapshotResult = z.infer<typeof diagnosticsGetSnapshotResult>;
+
+export const mcpConnectionResult = z.object({
+  running: z.boolean(),
+  baseUrl: z.string().nullable(),
+  token: z.string().nullable(),
+  connectionFile: z.string().min(1),
+  stdioCommand: z.string().min(1),
+  cursorConfigJson: z.string().min(2),
+});
+
+export type McpConnectionResult = z.infer<typeof mcpConnectionResult>;

@@ -97,3 +97,13 @@ export {
   PERF_BUDGET_WORKSPACE_SWITCH_MS,
   withinPerfBudget,
 } from "./diagnostics/perf-budgets.js";
+export type { TrailMcpStores } from "./mcp/read-api.js";
+export {
+  mcpGetDecision,
+  mcpGetTask,
+  mcpListDecisions,
+  mcpListOpenPins,
+  mcpListTasks,
+  mcpListWorkspaces,
+  mcpSearchDocs,
+} from "./mcp/read-api.js";

@@ -227,6 +227,7 @@ declare global {
         durationMs: number;
         openViewCount?: number;
       }) => Promise<{ ok: true }>;
+      mcpConnection?: () => Promise<import("@trail/ipc").McpConnectionResult>;
     };
   }
 }

@@ -6,6 +6,7 @@ on:
       - "apps/desktop/**"
       - "packages/core/**"
       - "packages/ipc/**"
+      - "packages/mcp/**"
       - ".github/workflows/desktop-ci.yml"
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - "apps/desktop/**"
       - "packages/core/**"
       - "packages/ipc/**"
+      - "packages/mcp/**"
 
 jobs:
   unit:
@@ -26,6 +28,7 @@ jobs:
       - run: npm run bootstrap:desktop
       - run: npm run build --workspace=@trail/ipc
       - run: npm run build --workspace=@trail/core
+      - run: npm run build --workspace=@trail/mcp
       - run: npm run build --workspace=@trail/desktop
       - run: npm run size-limit --workspace=@trail/desktop
       - run: npm test
@@ -42,6 +45,7 @@ jobs:
       - run: npm run bootstrap:desktop
       - run: npm run build --workspace=@trail/ipc
       - run: npm run build --workspace=@trail/core
+      - run: npm run build --workspace=@trail/mcp
       - run: npm run build --workspace=@trail/desktop
       - name: Install Playwright (for Electron driver)
         working-directory: apps/desktop

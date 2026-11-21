@@ -289,11 +289,20 @@ export class MemorySqlite implements SqliteDatabase {
             .sort((a, b) => (b.issue_number as number) - (a.issue_number as number));
         }
         if (sql.includes("FROM preview_pins WHERE workspace_id")) {
-          return [...(self.tables.get("preview_pins") ?? [])]
-            .filter(
-              (r) => r.workspace_id === params[0] && r.issue_number === params[1],
-            )
-            .sort((a, b) => (a.pin_number as number) - (b.pin_number as number));
+          let rows = [...(self.tables.get("preview_pins") ?? [])].filter(
+            (r) => r.workspace_id === params[0],
+          );
+          if (sql.includes("issue_number = ?")) {
+            rows = rows.filter((r) => r.issue_number === params[1]);
+            rows.sort((a, b) => (a.pin_number as number) - (b.pin_number as number));
+          } else {
+            rows.sort(
+              (a, b) =>
+                (a.issue_number as number) - (b.issue_number as number) ||
+                (a.pin_number as number) - (b.pin_number as number),
+            );
+          }
+          return rows;
         }
         if (sql.includes("FROM knowledge_docs WHERE workspace_id")) {
           return [...(self.tables.get("knowledge_docs") ?? [])]

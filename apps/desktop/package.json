@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.2",
+    "@trail/mcp": "*",
     "better-sqlite3": "^11.8.1"
   },
   "devDependencies": {

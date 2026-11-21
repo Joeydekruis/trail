@@ -25,6 +25,8 @@ import { disposeAllPreviews, onPreviewWindowClosed } from "./preview-host";
 import { markAppReady, markWindowShown } from "./startup-timing";
 import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
+import { registerMcpIpc } from "./mcp-ipc";
+import { stopMcpServer } from "./mcp-server";
 
 const MIN_WIDTH = 1180;
 const MIN_HEIGHT = 640;
@@ -158,6 +160,7 @@ void app.whenReady().then(() => {
   registerPreviewIpc();
   registerDesignIpc();
   registerKnowledgeIpc();
+  registerMcpIpc();
   createWindow();
 
   app.on("activate", () => {
@@ -176,4 +179,5 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   disposeAllPreviewDevServers();
   disposeAllPreviews();
+  void stopMcpServer();
 });

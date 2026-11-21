@@ -7,9 +7,9 @@
   ],
   "scripts": {
     "build": "npm run build --workspace=@trail-pm/cli && npm run build --workspace=@trail-pm/ui",
-    "build:desktop": "npm run build --workspace=@trail/ipc && npm run build --workspace=@trail/core && npm run build --workspace=@trail/desktop",
+    "build:desktop": "npm run build --workspace=@trail/ipc && npm run build --workspace=@trail/core && npm run build --workspace=@trail/mcp && npm run build --workspace=@trail/desktop",
     "test": "npm run test --workspace=@trail-pm/cli && npm run test --workspace=@trail/core && npm run test --workspace=@trail/ipc && npm run test --workspace=@trail/desktop",
-    "typecheck": "npm run build --workspace=@trail/ipc && npm run build --workspace=@trail/core && npm run typecheck --workspace=@trail-pm/cli && npm run typecheck --workspace=@trail/core --if-present && npm run typecheck --workspace=@trail/ipc --if-present && npm run typecheck --workspace=@trail/desktop --if-present",
+    "typecheck": "npm run build --workspace=@trail/ipc && npm run build --workspace=@trail/core && npm run build --workspace=@trail/mcp && npm run typecheck --workspace=@trail-pm/cli && npm run typecheck --workspace=@trail/core --if-present && npm run typecheck --workspace=@trail/ipc --if-present && npm run typecheck --workspace=@trail/mcp --if-present && npm run typecheck --workspace=@trail/desktop --if-present",
     "lint": "npm run lint --workspace=@trail-pm/cli",
     "ui:prepare": "npm run build --workspace=@trail-pm/cli && npm run build --workspace=@trail-pm/ui",
     "ui:dev": "npm run build --workspace=@trail-pm/cli && npm --prefix packages/ui run dev:all",
