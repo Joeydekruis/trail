@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { join } from "node:path";
 import { app } from "electron";
+import { seedE2eFixtures, shouldApplyE2eFixtures } from "./e2e-fixtures";
 import { setSqliteDatabasePath } from "./database-path";
 import {
   MemorySqlite,
@@ -64,6 +65,10 @@ function openStores(db: SqliteDatabase, label: string): void {
   worktreeStore = openWorktreeStore(db);
   previewPinStore = openPreviewPinStore(db);
   knowledgeDocStore = openKnowledgeDocStore(db);
+  if (shouldApplyE2eFixtures()) {
+    seedE2eFixtures(db, issueStore, worktreeStore);
+    console.info("[trail] E2E fixtures seeded");
+  }
   console.info("[trail] workspace cache:", label);
 }
 

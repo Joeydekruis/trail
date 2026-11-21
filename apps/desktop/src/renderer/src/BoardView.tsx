@@ -487,6 +487,7 @@ function KanbanColumn({
   return (
     <div
       className="bd-col"
+      data-e2e-board-column={column.id}
       style={{ flex: "0 0 272px", height: "100%", minHeight: 0, borderRadius: 14, ...ring, ...dropHighlight }}
       onDragOver={(event) => {
         if (!canDrag) {
@@ -737,6 +738,7 @@ function BoardCardRow({
         </span>
       ) : null}
       <div
+        data-e2e-board-card={card.issue}
         draggable={draggable}
         onDragStart={(event) => {
           if (!draggable) {

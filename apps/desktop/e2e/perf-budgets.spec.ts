@@ -1,11 +1,12 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { test, expect, _electron as electron } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import {
   PERF_BUDGET_COLD_START_MS,
   PERF_BUDGET_WORKSPACE_SWITCH_MS,
   withinPerfBudget,
 } from "../../../packages/core/dist/index.js";
+import { launchTrailApp } from "./electron-app";
 
 const mainEntry = path.resolve("out/main/index.js");
 
@@ -18,19 +19,8 @@ test.describe("desktop perf budgets", () => {
   });
 
   test("cold start and workspace switch within briefing budgets", async () => {
-    const app = await electron.launch({
-      args: [mainEntry],
-      cwd: path.resolve("."),
-      env: {
-        ...process.env,
-        TRAIL_E2E: "1",
-        ELECTRON_DISABLE_SECURITY_WARNINGS: "true",
-      },
-    });
+    const { app, page } = await launchTrailApp();
     try {
-      const page = await app.firstWindow();
-      await page.waitForSelector(".trail-app[data-trail-ready]", { timeout: 20_000 });
-
       const coldStart = await page.evaluate(async () => {
         const snap = await window.trail?.getDiagnosticsSnapshot?.();
         return snap?.startup.coldStartMs ?? null;

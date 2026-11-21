@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
 import {
@@ -28,6 +28,18 @@ import { registerWorkspaceIpc } from "./workspace-ipc";
 
 const MIN_WIDTH = 1180;
 const MIN_HEIGHT = 640;
+
+if (process.env.TRAIL_E2E === "1") {
+  const userData = join(app.getPath("temp"), "trail-e2e-playwright");
+  app.setPath("userData", userData);
+  for (const suffix of ["", "-wal", "-shm"]) {
+    try {
+      rmSync(join(userData, `trail.sqlite${suffix}`), { force: true });
+    } catch {
+      // best-effort fresh cache per e2e launch
+    }
+  }
+}
 
 function resolvePreloadPath(): string {
   const candidate = join(__dirname, "../preload/index.js");

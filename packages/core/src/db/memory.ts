@@ -74,6 +74,26 @@ export class MemorySqlite implements SqliteDatabase {
             rows.filter((r) => r.workspace_id !== params[0]),
           );
         }
+        if (sql.includes("UPDATE workspaces SET repository")) {
+          const repository = params[0];
+          const id = params[1];
+          const row = self.tables.get("workspaces")?.find((r) => r.id === id);
+          if (row) {
+            row.repository = repository;
+            return { changes: 1 };
+          }
+          return { changes: 0 };
+        }
+        if (sql.includes("UPDATE workspaces SET repository")) {
+          const repository = params[0];
+          const id = params[1];
+          const row = self.tables.get("workspaces")?.find((r) => r.id === id);
+          if (row) {
+            row.repository = repository;
+            return { changes: 1 };
+          }
+          return { changes: 0 };
+        }
         if (sql.includes("INSERT INTO workspaces")) {
           const row = params[0] as Record<string, unknown>;
           self.tables.get("workspaces")?.push({

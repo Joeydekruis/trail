@@ -58,13 +58,22 @@ export function registerBoardIpc(): void {
     const workspace = workspaces.list().find((row) => row.id === id);
     const repository = workspace?.repository;
 
-    if (!repository) {
-      return boardMoveIssueResult.parse({ ok: false, message: "Workspace is not linked to GitHub" });
-    }
-
     const cached = issues.get(id, issueNumber);
     if (!cached) {
       return boardMoveIssueResult.parse({ ok: false, message: "Issue not in cache — sync first" });
+    }
+
+    if (process.env.TRAIL_E2E === "1") {
+      const updated = issues.updateBoardColumn(id, issueNumber, targetColumn);
+      return boardMoveIssueResult.parse(
+        updated
+          ? { ok: true }
+          : { ok: false, message: "Could not update issue column in cache" },
+      );
+    }
+
+    if (!repository) {
+      return boardMoveIssueResult.parse({ ok: false, message: "Workspace is not linked to GitHub" });
     }
 
     const token = readGitHubToken();
