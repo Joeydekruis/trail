@@ -26,6 +26,8 @@ export function resolveMcpConnectionFile(): string {
 
 export type McpConnectionFile = {
   baseUrl: string;
+  /** Streamable HTTP MCP endpoint (MCP SDK transport). */
+  streamableUrl: string;
   token: string;
   updatedAt: string;
 };

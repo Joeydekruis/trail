@@ -1,7 +1,10 @@
 import { createServer, type Server } from "node:http";
 import { executeTrailMcpTool, type TrailMcpExecutorContext } from "./executor.js";
+import { handleStreamableMcpRequest } from "./streamable-http.js";
 import type { TrailMcpToolName } from "./tool-names.js";
 import { TRAIL_MCP_TOOLS } from "./tool-names.js";
+
+export const TRAIL_MCP_STREAMABLE_PATH = "/mcp";
 
 export type TrailMcpHttpServer = {
   server: Server;
@@ -35,19 +38,36 @@ export function startTrailMcpHttpServer(
 ): Promise<TrailMcpHttpServer> {
   const server = createServer((req, res) => {
     void (async () => {
-      if (req.method !== "POST" || !req.url?.startsWith("/tools/")) {
+      const url = req.url?.split("?")[0] ?? "";
+      const auth = req.headers.authorization ?? "";
+      const expected = `Bearer ${token}`;
+      if (!url.startsWith("/tools/") && url !== TRAIL_MCP_STREAMABLE_PATH) {
         res.statusCode = 404;
         res.end("Not found");
         return;
       }
-      const auth = req.headers.authorization ?? "";
-      const expected = `Bearer ${token}`;
       if (auth !== expected) {
         res.statusCode = 401;
         res.end("Unauthorized");
         return;
       }
-      const toolSegment = req.url.slice("/tools/".length).split("?")[0] ?? "";
+
+      if (url === TRAIL_MCP_STREAMABLE_PATH) {
+        if (req.method !== "GET" && req.method !== "POST") {
+          res.statusCode = 405;
+          res.end("Method not allowed");
+          return;
+        }
+        await handleStreamableMcpRequest(context, req, res, options);
+        return;
+      }
+
+      if (req.method !== "POST") {
+        res.statusCode = 405;
+        res.end("Method not allowed");
+        return;
+      }
+      const toolSegment = url.slice("/tools/".length);
       if (!isToolName(toolSegment)) {
         res.statusCode = 404;
         res.end("Unknown tool");

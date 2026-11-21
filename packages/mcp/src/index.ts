@@ -11,8 +11,12 @@ export {
   registerTrailReadTools,
   registerTrailWriteTools,
 } from "./register-tools.js";
-export { startTrailMcpHttpServer } from "./http-server.js";
+export {
+  startTrailMcpHttpServer,
+  TRAIL_MCP_STREAMABLE_PATH,
+} from "./http-server.js";
 export type { TrailMcpHttpServer, TrailMcpHttpServerOptions } from "./http-server.js";
+export { handleStreamableMcpRequest } from "./streamable-http.js";
 export {
   MCP_CONNECTION_FILENAME,
   defaultTrailDesktopUserDataDir,

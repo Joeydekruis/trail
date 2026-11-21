@@ -619,8 +619,14 @@ export function SettingsView({
                 ) : mcpInfo?.running ? (
                   <>
                     <p className="tr-small" style={{ margin: 0 }}>
-                      Listening at <span className="tr-mono">{mcpInfo.baseUrl}</span>
+                      Legacy tool shim: <span className="tr-mono">{mcpInfo.baseUrl}</span>
                     </p>
+                    {mcpInfo.streamableUrl ? (
+                      <p className="tr-small" style={{ margin: 0 }}>
+                        Streamable HTTP MCP:{" "}
+                        <span className="tr-mono">{mcpInfo.streamableUrl}</span>
+                      </p>
+                    ) : null}
                     <p className="tr-small tr-mono" style={{ margin: 0, wordBreak: "break-all" }}>
                       Connection file: {mcpInfo.connectionFile}
                     </p>

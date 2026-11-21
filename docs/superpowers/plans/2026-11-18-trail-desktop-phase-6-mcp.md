@@ -8,7 +8,7 @@
 - [x] Loopback HTTP shim in main + `mcp-connection.json` for `trail-mcp` stdio bridge
 - [x] `trail-mcp` bin (`@trail/mcp`) proxies stdio MCP to HTTP
 - [x] Settings → MCP status + Cursor config snippet
-- [ ] Streamable HTTP transport (SDK) for clients that prefer URL over stdio
+- [x] Streamable HTTP transport (SDK) at `/mcp` for URL-based MCP clients
 - [x] MCP write: `create_decision` (conflict checks + optional issue block)
 - [x] MCP write: `update_task_status` (board column via GitHub Projects when linked)
 - [x] MCP write: `resolve_pin` (delete pin from SQLite)

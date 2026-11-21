@@ -942,6 +942,7 @@ export type DiagnosticsGetSnapshotResult = z.infer<typeof diagnosticsGetSnapshot
 export const mcpConnectionResult = z.object({
   running: z.boolean(),
   baseUrl: z.string().nullable(),
+  streamableUrl: z.string().url().nullable(),
   token: z.string().nullable(),
   connectionFile: z.string().min(1),
   stdioCommand: z.string().min(1),

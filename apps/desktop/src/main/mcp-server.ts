@@ -3,7 +3,11 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { app } from "electron";
 import type { TrailMcpExecutorContext, TrailMcpHttpServer } from "@trail/mcp";
-import { MCP_CONNECTION_FILENAME, startTrailMcpHttpServer } from "@trail/mcp";
+import {
+  MCP_CONNECTION_FILENAME,
+  startTrailMcpHttpServer,
+  TRAIL_MCP_STREAMABLE_PATH,
+} from "@trail/mcp";
 import { moveBoardIssue } from "./board-move-issue";
 import { mcpAddTaskComment } from "./mcp-github-hooks";
 import {
@@ -78,6 +82,7 @@ export function writeMcpConnectionFile(baseUrl: string, token: string): string {
     JSON.stringify(
       {
         baseUrl,
+        streamableUrl: `${baseUrl}${TRAIL_MCP_STREAMABLE_PATH}`,
         token,
         updatedAt: new Date().toISOString(),
       },

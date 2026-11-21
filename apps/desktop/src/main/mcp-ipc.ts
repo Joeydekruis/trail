@@ -12,7 +12,7 @@ import {
   mcpSettingsSetResult,
 } from "@trail/ipc";
 import { getWorkspaceStore } from "./database";
-import { resolveMcpConnectionFile } from "@trail/mcp";
+import { resolveMcpConnectionFile, TRAIL_MCP_STREAMABLE_PATH } from "@trail/mcp";
 import { getMcpConnectionSnapshot } from "./mcp-server";
 
 function resolveWorkspaceId(explicit?: string): string {
@@ -45,6 +45,10 @@ export function registerMcpIpc(): void {
     const snap = getMcpConnectionSnapshot();
     const connectionFile = snap.connectionFile || resolveMcpConnectionFile();
     const stdioCommand = "npx trail-mcp";
+    const streamableUrl =
+      snap.baseUrl != null
+        ? `${snap.baseUrl}${TRAIL_MCP_STREAMABLE_PATH}`
+        : null;
     const cursorConfigJson = JSON.stringify(
       {
         mcpServers: {
@@ -52,6 +56,16 @@ export function registerMcpIpc(): void {
             command: "npx",
             args: ["trail-mcp"],
           },
+          ...(streamableUrl && snap.token
+            ? {
+                "trail-streamable-http": {
+                  url: streamableUrl,
+                  headers: {
+                    Authorization: `Bearer ${snap.token}`,
+                  },
+                },
+              }
+            : {}),
         },
       },
       null,
@@ -59,6 +73,7 @@ export function registerMcpIpc(): void {
     );
     return mcpConnectionResult.parse({
       ...snap,
+      streamableUrl,
       connectionFile,
       stdioCommand,
       cursorConfigJson,
