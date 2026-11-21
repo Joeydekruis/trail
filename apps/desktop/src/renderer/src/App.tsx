@@ -210,6 +210,10 @@ declare global {
       createDecision?: (
         input: import("@trail/ipc").DecisionCreatePayload,
       ) => Promise<import("@trail/ipc").DecisionCreateResult>;
+      exportDecisionMarkdown?: (input?: {
+        workspaceId?: string;
+        adrId?: string;
+      }) => Promise<import("@trail/ipc").DecisionExportMarkdownResult>;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;

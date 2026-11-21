@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DecisionDetailDto, DecisionSummaryDto, WorkspaceDto } from "@trail/ipc";
+import { downloadMarkdownFile } from "./download-markdown";
 import { NewDecisionModal } from "./NewDecisionModal";
 import { ViewPageHeader } from "./design/ViewPageHeader";
 import {
@@ -51,6 +52,8 @@ export function DecisionsView({
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const reloadList = useCallback(async () => {
     const api = window.trail;
@@ -118,6 +121,28 @@ export function DecisionsView({
     }
   }
 
+  async function handleExport() {
+    const api = window.trail;
+    if (!api?.exportDecisionMarkdown || !workspace?.id || exporting) {
+      return;
+    }
+    setExporting(true);
+    setExportError(null);
+    try {
+      const result = await api.exportDecisionMarkdown({
+        workspaceId: workspace.id,
+        adrId: selectedId ?? undefined,
+      });
+      if (!result.ok) {
+        setExportError(result.message);
+        return;
+      }
+      downloadMarkdownFile(result.filename, result.markdown);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function handleReject() {
     const api = window.trail;
     if (!api?.rejectDecision || !workspace?.id || !selectedId || rejecting) {
@@ -142,13 +167,24 @@ export function DecisionsView({
         subtitle={`${repoLabel} · ${rows.length} decisions`}
         actions={
           <>
-            <TrailButton variant="secondary">Export to Markdown</TrailButton>
+            <TrailButton
+              variant="secondary"
+              disabled={exporting || rows.length === 0}
+              onClick={() => void handleExport()}
+            >
+              {exporting ? "Exporting…" : "Export to Markdown"}
+            </TrailButton>
             <TrailButton variant="primary" onClick={() => setNewOpen(true)}>
               New decision
             </TrailButton>
           </>
         }
       />
+      {exportError ? (
+        <p className="tr-small" style={{ margin: 0, color: "var(--red)" }}>
+          {exportError}
+        </p>
+      ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         <FilterPill label="All" count={statusCounts.all} active />
         <FilterPill label="Accepted" count={statusCounts.accepted} />

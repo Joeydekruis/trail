@@ -42,6 +42,7 @@ export const IpcChannels = {
   decisionAccept: "decision.accept",
   decisionReject: "decision.reject",
   decisionCreate: "decision.create",
+  decisionExportMarkdown: "decision.exportMarkdown",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -829,6 +830,24 @@ export const decisionCreateResult = z.union([
 ]);
 
 export type DecisionCreateResult = z.infer<typeof decisionCreateResult>;
+
+export const decisionExportMarkdownPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  adrId: z.string().min(1).optional(),
+});
+
+export type DecisionExportMarkdownPayload = z.infer<typeof decisionExportMarkdownPayload>;
+
+export const decisionExportMarkdownResult = z.union([
+  z.object({
+    ok: z.literal(true),
+    filename: z.string().min(1),
+    markdown: z.string(),
+  }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type DecisionExportMarkdownResult = z.infer<typeof decisionExportMarkdownResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

@@ -5,6 +5,8 @@ import {
   decisionAcceptResult,
   decisionCreatePayload,
   decisionCreateResult,
+  decisionExportMarkdownPayload,
+  decisionExportMarkdownResult,
   decisionRejectPayload,
   decisionRejectResult,
   decisionGetPayload,
@@ -13,6 +15,8 @@ import {
   decisionListResult,
 } from "@trail/ipc";
 import {
+  formatDecisionMarkdown,
+  formatDecisionsBundleMarkdown,
   mcpCreateDecision,
   releaseDecisionBlock,
   stopDecisionBlockedWorktree,
@@ -77,6 +81,41 @@ function toDetailDto(record: {
 }
 
 export function registerDecisionIpc(): void {
+  ipcMain.handle(IpcChannels.decisionExportMarkdown, (_event, raw: unknown) => {
+    const payload = decisionExportMarkdownPayload.parse(raw ?? {});
+    const workspaceId = resolveWorkspaceId(payload.workspaceId);
+    const store = getDecisionStore();
+    if (payload.adrId) {
+      const record = store.get(workspaceId, payload.adrId);
+      if (!record) {
+        return decisionExportMarkdownResult.parse({
+          ok: false,
+          message: "Decision not found",
+        });
+      }
+      return decisionExportMarkdownResult.parse({
+        ok: true,
+        filename: `${record.adrId}.md`,
+        markdown: formatDecisionMarkdown(record),
+      });
+    }
+    const records = store
+      .list(workspaceId)
+      .map((row) => store.get(workspaceId, row.adrId))
+      .filter((row): row is NonNullable<typeof row> => row != null);
+    if (records.length === 0) {
+      return decisionExportMarkdownResult.parse({
+        ok: false,
+        message: "No decisions to export",
+      });
+    }
+    return decisionExportMarkdownResult.parse({
+      ok: true,
+      filename: `decisions-${workspaceId}.md`,
+      markdown: formatDecisionsBundleMarkdown(records),
+    });
+  });
+
   ipcMain.handle(IpcChannels.decisionCreate, (_event, raw: unknown) => {
     const payload = decisionCreatePayload.parse(raw);
     const workspaceId = resolveWorkspaceId(payload.workspaceId);

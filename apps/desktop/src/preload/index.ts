@@ -240,6 +240,10 @@ export type TrailApi = {
   createDecision: (
     input: import("@trail/ipc").DecisionCreatePayload,
   ) => Promise<import("@trail/ipc").DecisionCreateResult>;
+  exportDecisionMarkdown: (input?: {
+    workspaceId?: string;
+    adrId?: string;
+  }) => Promise<import("@trail/ipc").DecisionExportMarkdownResult>;
   onPreviewPin: (
     listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
   ) => () => void;
@@ -472,6 +476,10 @@ const trailApi: TrailApi = {
   createDecision: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.decisionCreate, input) as Promise<
       import("@trail/ipc").DecisionCreateResult
+    >,
+  exportDecisionMarkdown: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.decisionExportMarkdown, input ?? {}) as Promise<
+      import("@trail/ipc").DecisionExportMarkdownResult
     >,
   onPreviewPin: (listener) => {
     const channel = "trail.previewPin";

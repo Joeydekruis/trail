@@ -108,6 +108,10 @@ export type {
   DecisionSummary,
 } from "./decisions/types.js";
 export {
+  formatDecisionMarkdown,
+  formatDecisionsBundleMarkdown,
+} from "./decisions/markdown.js";
+export {
   PERF_BUDGET_COLD_START_MS,
   PERF_BUDGET_WORKSPACE_SWITCH_MS,
   withinPerfBudget,
