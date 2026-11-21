@@ -9,8 +9,8 @@
 - [x] SQLite in main (`userData/trail.sqlite`, WAL)
 - [x] Renderer: strip, accent CSS-vars, Cmd/Ctrl+1–3
 - [x] Deferred startup stub (sync, runner, MCP, updates na first paint)
-- [ ] GitHub koppeling + echte workspace-records
-- [ ] Onboarding schrijft naar cache
-- [ ] `@electron/rebuild` in release CI voor better-sqlite3
+- [x] GitHub koppeling (PAT + keychain) + workspace-records met repository
+- [x] Onboarding schrijft eerste gekoppelde workspace naar cache
+- [x] `@electron/rebuild` in CI/release via `bootstrap:desktop`
 
 **Native module:** `better-sqlite3` zit op `@trail/desktop`. Lokaal op Windows: Node **22** (repo engines) en prebuild, of MSVC build tools. CI gebruikt Node 22 op ubuntu/windows runners.

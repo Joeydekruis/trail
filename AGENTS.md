@@ -42,7 +42,7 @@ docs/superpowers/specs/    — Design specifications
 ## Key patterns (desktop)
 
 - Zod schemas in `packages/ipc` (and later `packages/core`) are contracts for IPC and domain data
-- Renderer: no Node — only `window.trail` via `contextBridge`
+- Renderer: no Node — only `window.trail` via `contextBridge`; import shared UI logic from `@trail/core/client`, never the full `@trail/core` barrel (Node-only code breaks Vite)
 - GitHub/git/agents run in **main** or **utility** processes, not in renderer
 - GitHub is source of truth for tasks; SQLite is local cache only
 - Errors are typed. Never throw untyped strings.

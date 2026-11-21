@@ -43,6 +43,17 @@ body,
   margin-top: 16px;
 }
 
+.trail-secret-input::placeholder {
+  color: var(--ink-muted);
+  -webkit-text-fill-color: var(--ink-muted);
+  opacity: 1;
+}
+
+.trail-app select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+
 .onboarding {
   width: 100%;
   max-width: 640px;

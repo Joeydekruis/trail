@@ -1,13 +1,45 @@
-import { existsSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
-import { IpcChannels, syncNowPayload } from "@trail/ipc";
-import { initDatabase } from "./database";
+import {
+  IpcChannels,
+  shellOpenExternalPayload,
+  shellOpenPathPayload,
+  shellOpenPathResult,
+  syncNowPayload,
+  syncNowResult,
+} from "@trail/ipc";
+import { getIssueCacheStore, getWorkspaceStore, initDatabase } from "./database";
+import { syncWorkspaceNow } from "./sync-now";
 import { scheduleDeferredStartup } from "./deferred-startup";
+import { registerBoardIpc } from "./board-ipc";
+import { registerIssueIpc } from "./issue-ipc";
+import { registerWorktreeIpc } from "./worktree-ipc";
+import { registerAgentIpc } from "./agent-ipc";
+import { registerDesignIpc } from "./design-ipc";
+import { registerKnowledgeIpc } from "./knowledge-ipc";
+import { registerPreviewIpc } from "./preview-ipc";
+import { registerDiagnosticsIpc } from "./diagnostics-ipc";
+import { disposeAllPreviewDevServers } from "./preview-dev-server";
+import { disposeAllPreviews, onPreviewWindowClosed } from "./preview-host";
+import { markAppReady, markWindowShown } from "./startup-timing";
+import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
 
 const MIN_WIDTH = 1180;
 const MIN_HEIGHT = 640;
+
+if (process.env.TRAIL_E2E === "1") {
+  const userData = join(app.getPath("temp"), "trail-e2e-playwright");
+  app.setPath("userData", userData);
+  for (const suffix of ["", "-wal", "-shm"]) {
+    try {
+      rmSync(join(userData, `trail.sqlite${suffix}`), { force: true });
+    } catch {
+      // best-effort fresh cache per e2e launch
+    }
+  }
+}
 
 function resolvePreloadPath(): string {
   const candidate = join(__dirname, "../preload/index.js");
@@ -42,8 +74,13 @@ function createWindow(): void {
   });
 
   win.on("ready-to-show", () => {
+    markWindowShown();
     win.show();
     scheduleDeferredStartup();
+  });
+
+  win.on("closed", () => {
+    onPreviewWindowClosed(win);
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -64,9 +101,28 @@ function createWindow(): void {
   }
 }
 
-ipcMain.handle(IpcChannels.syncNow, (_event, raw: unknown) => {
-  syncNowPayload.parse(raw);
-  return { ok: true as const };
+ipcMain.handle(IpcChannels.shellOpenExternal, (_event, raw: unknown) => {
+  const { url } = shellOpenExternalPayload.parse(raw);
+  void shell.openExternal(url);
+});
+
+ipcMain.handle(IpcChannels.shellOpenPath, (_event, raw: unknown) => {
+  const { path } = shellOpenPathPayload.parse(raw);
+  const error = shell.openPath(path);
+  if (error) {
+    return shellOpenPathResult.parse({ ok: false, message: error });
+  }
+  return shellOpenPathResult.parse({ ok: true });
+});
+
+ipcMain.handle(IpcChannels.syncNow, async (_event, raw: unknown) => {
+  const { workspaceId } = syncNowPayload.parse(raw);
+  const result = await syncWorkspaceNow(
+    getWorkspaceStore(),
+    getIssueCacheStore(),
+    workspaceId,
+  );
+  return syncNowResult.parse(result);
 });
 
 ipcMain.handle(IpcChannels.windowMinimize, (event) => {
@@ -90,8 +146,18 @@ ipcMain.handle(IpcChannels.windowClose, (event) => {
 });
 
 void app.whenReady().then(() => {
+  markAppReady();
   initDatabase();
+  registerDiagnosticsIpc();
   registerWorkspaceIpc();
+  registerGitHubIpc();
+  registerBoardIpc();
+  registerIssueIpc();
+  registerWorktreeIpc();
+  registerAgentIpc();
+  registerPreviewIpc();
+  registerDesignIpc();
+  registerKnowledgeIpc();
   createWindow();
 
   app.on("activate", () => {
@@ -105,4 +171,9 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
+});
+
+app.on("before-quit", () => {
+  disposeAllPreviewDevServers();
+  disposeAllPreviews();
 });

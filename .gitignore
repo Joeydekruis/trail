@@ -152,6 +152,10 @@ dist/
 apps/desktop/release
 apps/desktop/release-*
 
+# Playwright (desktop e2e)
+apps/desktop/test-results/
+apps/desktop/playwright-report/
+
 
 template/**/* 
 template/**/.*

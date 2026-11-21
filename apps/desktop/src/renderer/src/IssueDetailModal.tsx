@@ -9,9 +9,19 @@ type IssueDetailModalProps = {
   modKey: string;
   onClose: () => void;
   onOpenWorktree?: () => void;
+  worktreeActionLabel?: string;
+  worktreeActionBusy?: boolean;
 };
 
-export function IssueDetailModal({ open, detail, modKey, onClose, onOpenWorktree }: IssueDetailModalProps) {
+export function IssueDetailModal({
+  open,
+  detail,
+  modKey,
+  onClose,
+  onOpenWorktree,
+  worktreeActionLabel,
+  worktreeActionBusy = false,
+}: IssueDetailModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -79,15 +89,23 @@ export function IssueDetailModal({ open, detail, modKey, onClose, onOpenWorktree
             <h2 style={{ margin: 0, fontSize: 18, lineHeight: "24px", fontWeight: 600 }}>{detail.title}</h2>
           </div>
           <span style={{ flex: "0 0 auto", display: "inline-flex", alignItems: "center", gap: 8 }}>
-            <TrailButton variant="secondary">Open on GitHub</TrailButton>
             <TrailButton
-              variant="primary"
+              variant="secondary"
+              disabled={!detail.htmlUrl}
               onClick={() => {
-                onOpenWorktree?.();
-                onClose();
+                if (detail.htmlUrl) {
+                  void window.trail?.openExternal?.(detail.htmlUrl);
+                }
               }}
             >
-              {detail.cta}
+              Open on GitHub
+            </TrailButton>
+            <TrailButton
+              variant="primary"
+              disabled={worktreeActionBusy}
+              onClick={() => void onOpenWorktree?.()}
+            >
+              {worktreeActionBusy ? "Working…" : worktreeActionLabel ?? detail.cta}
             </TrailButton>
           </span>
           <button

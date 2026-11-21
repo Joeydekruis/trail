@@ -1,28 +1,174 @@
-import { useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { DEFAULT_PREVIEW_URL, normalizePreviewUrl } from "@trail/core/client";
 import { getWorktreeFixture, type ChatLine } from "./design/worktree-fixture";
+import { useBatchedAgentLines } from "./use-batched-agent-lines";
+import { previewPinToChatLine } from "./preview-pin-chat";
+import { WorktreePreviewSurface } from "./worktree-preview-surface";
+import { AgentChatLog } from "./agent-chat-log";
 import { SelectButton, SyncStatus, TrailAvatar, TrailButton, TrailChip, TrailPanel, TrailProgressBar } from "./design/TrailUi";
-
-const PREVIEW_URL = "localhost:3000/sign-in";
-const INITIAL_PINS = [{ n: 1, x: 72, y: 63 }];
-
-type PreviewPin = { n: number; x: number; y: number };
-type PreviewDraft = { n: number; x: number; y: number; el: string };
+import type { WorktreeSessionContext } from "./worktree-session";
 
 type WorktreeViewProps = {
+  context?: WorktreeSessionContext | null;
+  workspaceId?: string;
   onOpenIssue?: (issue: string, title: string) => void;
+  runError?: string | null;
+  onStartAgentRun?: () => void;
+  onStopAgentRun?: () => void;
+  startRunBusy?: boolean;
 };
 
-export function WorktreeView({ onOpenIssue }: WorktreeViewProps) {
+export function WorktreeView({
+  context,
+  workspaceId,
+  onOpenIssue,
+  runError,
+  onStartAgentRun,
+  onStopAgentRun,
+  startRunBusy = false,
+}: WorktreeViewProps) {
+  if (!context) {
+    return (
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 32,
+        }}
+      >
+        <p className="tr-small" style={{ maxWidth: 420, textAlign: "center", margin: 0 }}>
+          Select a worktree in the sidebar, or choose <strong>Start in worktree</strong> on a board card.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <WorktreeViewBody
+      context={context}
+      workspaceId={workspaceId}
+      onOpenIssue={onOpenIssue}
+      runError={runError}
+      onStartAgentRun={onStartAgentRun}
+      onStopAgentRun={onStopAgentRun}
+      startRunBusy={startRunBusy}
+    />
+  );
+}
+
+function WorktreeViewBody({
+  context,
+  workspaceId,
+  onOpenIssue,
+  runError,
+  onStartAgentRun,
+  onStopAgentRun,
+  startRunBusy,
+}: {
+  context: WorktreeSessionContext;
+  workspaceId?: string;
+  onOpenIssue?: (issue: string, title: string) => void;
+  runError?: string | null;
+  onStartAgentRun?: () => void;
+  onStopAgentRun?: () => void;
+  startRunBusy?: boolean;
+}) {
   const fixture = getWorktreeFixture();
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [mode, setMode] = useState<"chat" | "preview">("chat");
   const [commentMode, setCommentMode] = useState(false);
-  const [pins, setPins] = useState<PreviewPin[]>(INITIAL_PINS);
-  const [draft, setDraft] = useState<PreviewDraft | null>(null);
-  const [draftText, setDraftText] = useState("");
   const [extraMessages, setExtraMessages] = useState<ChatLine[]>([]);
+  const [previewUrl, setPreviewUrl] = useState(DEFAULT_PREVIEW_URL);
+  const [previewUrlDraft, setPreviewUrlDraft] = useState(DEFAULT_PREVIEW_URL);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewDevBusy, setPreviewDevBusy] = useState(false);
 
-  const messages = useMemo(() => [...fixture.messages, ...extraMessages], [fixture.messages, extraMessages]);
+  useBatchedAgentLines(workspaceId, context.issueNumber, setExtraMessages);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (mode !== "preview" || !workspaceId || !api?.previewEnsureDevServer) {
+      return;
+    }
+    let cancelled = false;
+    setPreviewDevBusy(true);
+    void api
+      .previewEnsureDevServer({
+        workspaceId,
+        issueNumber: context.issueNumber,
+      })
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+        if (result.ok) {
+          setPreviewUrl(result.url);
+          setPreviewUrlDraft(result.url);
+          setPreviewError(null);
+        } else {
+          setPreviewError(result.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPreviewDevBusy(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, workspaceId, context.issueNumber]);
+
+  useEffect(() => {
+    if (!workspaceId) {
+      return;
+    }
+    const enabled = mode === "preview" && commentMode;
+    void window.trail?.previewSetCommentMode?.({
+      workspaceId,
+      issueNumber: context.issueNumber,
+      enabled,
+    });
+  }, [commentMode, context.issueNumber, mode, workspaceId]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.onPreviewPin || !workspaceId) {
+      return;
+    }
+    return api.onPreviewPin((payload) => {
+      if (
+        payload.workspaceId !== workspaceId ||
+        payload.issueNumber !== context.issueNumber
+      ) {
+        return;
+      }
+      setExtraMessages((prev) => [...prev, previewPinToChatLine(payload)]);
+      setCommentMode(false);
+    });
+  }, [workspaceId, context.issueNumber]);
+
+  const seededMessages = useMemo<ChatLine[]>(() => {
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    return [
+      {
+        who: "Trail",
+        initials: "TR",
+        tone: "mint",
+        time,
+        body: "Worktree is ready. Use Preview for the dev server (default port 3000) and Start run for agents.",
+        monoLines: [context.branch, context.path],
+      },
+    ];
+  }, [context.branch, context.path]);
+
+  const messages = useMemo(
+    () => [...seededMessages, ...extraMessages],
+    [seededMessages, extraMessages],
+  );
 
   const setViewMode = (next: "chat" | "preview") => {
     setMode(next);
@@ -40,30 +186,6 @@ export function WorktreeView({ onOpenIssue }: WorktreeViewProps) {
     setDetailsOpen((v) => !v);
   };
 
-  const sendDraft = () => {
-    const text = draftText.trim();
-    if (!text || !draft) return;
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const where = `${PREVIEW_URL} · x ${draft.x.toFixed(0)}%, y ${draft.y.toFixed(0)}% · ${draft.el}`;
-    setPins((prev) => [...prev, { n: draft.n, x: draft.x, y: draft.y }]);
-    setExtraMessages((prev) => [
-      ...prev,
-      {
-        who: "You",
-        initials: "JK",
-        tone: "mint",
-        time,
-        chip: { text: "From preview comment", tone: "violet" },
-        body: `Pin ${draft.n}: "${text}"`,
-        monoLines: [where],
-      },
-    ]);
-    setDraft(null);
-    setDraftText("");
-    setCommentMode(false);
-  };
-
   return (
     <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
       <div
@@ -78,13 +200,38 @@ export function WorktreeView({ onOpenIssue }: WorktreeViewProps) {
         }}
       >
         <h1 style={{ margin: 0, fontSize: 15, lineHeight: "22px", fontWeight: 600 }}>
-          <span className="tr-mono tr-faint">{fixture.issue}</span> {fixture.title}
+          <span className="tr-mono tr-faint">{context.issueRef}</span> {context.title}
         </h1>
-        <TrailChip tone="mint">{fixture.statusChip}</TrailChip>
+        <TrailChip tone="mint">{context.statusLabel}</TrailChip>
         <span className="tr-mono tr-faint" style={{ fontSize: 12 }}>
-          {fixture.meta}
+          {context.branch}
         </span>
         <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <TrailButton
+            variant="secondary"
+            onClick={() => void window.trail?.openPath?.(context.path)}
+          >
+            Open folder
+          </TrailButton>
+          {runError ? (
+            <span className="tr-small" style={{ color: "var(--warning)" }}>
+              {runError}
+            </span>
+          ) : null}
+          {onStartAgentRun && context.status !== "running" ? (
+            <TrailButton
+              variant="primary"
+              disabled={startRunBusy}
+              onClick={onStartAgentRun}
+            >
+              {startRunBusy ? "Starting…" : "Start run"}
+            </TrailButton>
+          ) : null}
+          {onStopAgentRun && context.status === "running" ? (
+            <TrailButton variant="secondary" onClick={onStopAgentRun}>
+              Stop run
+            </TrailButton>
+          ) : null}
           <ViewModeToggle mode={mode} onChange={setViewMode} />
           <TrailButton variant="secondary">Open in Cursor</TrailButton>
           <TrailButton variant="secondary">Open pull request</TrailButton>
@@ -115,22 +262,34 @@ export function WorktreeView({ onOpenIssue }: WorktreeViewProps) {
           <ChatColumn messages={messages} />
         ) : (
           <PreviewSplit
+            workspaceId={workspaceId ?? ""}
+            issueNumber={context.issueNumber}
+            previewUrl={previewUrl}
+            previewUrlDraft={previewUrlDraft}
+            previewError={previewError}
+            previewDevBusy={previewDevBusy}
+            onPreviewUrlDraft={setPreviewUrlDraft}
+            onCommitPreviewUrl={async () => {
+              const normalized = normalizePreviewUrl(previewUrlDraft);
+              if (!normalized.ok) {
+                setPreviewError(normalized.message);
+                return;
+              }
+              setPreviewError(null);
+              setPreviewUrl(normalized.url);
+              setPreviewUrlDraft(normalized.url);
+              const nav = await window.trail?.previewNavigate?.({
+                workspaceId: workspaceId ?? "",
+                issueNumber: context.issueNumber,
+                url: normalized.url,
+              });
+              if (nav && !nav.ok) {
+                setPreviewError(nav.message);
+              }
+            }}
             messages={messages}
             commentMode={commentMode}
             onToggleComment={() => setCommentMode((v) => !v)}
-            pins={pins}
-            draft={draft}
-            draftText={draftText}
-            onDraftText={setDraftText}
-            onCancelDraft={() => {
-              setDraft(null);
-              setDraftText("");
-            }}
-            onSendDraft={sendDraft}
-            onCanvasClick={(x, y) => {
-              if (!commentMode || draft) return;
-              setDraft({ n: pins.length + 1, x, y, el: "Sign in button" });
-            }}
           />
         )}
         {detailsOpen && mode === "chat" ? (
@@ -220,13 +379,7 @@ function ViewModeToggle({
 function ChatColumn({ messages }: { messages: ChatLine[] }) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: 1, minHeight: 0, overflow: "auto", padding: "8px 24px" }}>
-        <div style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}>
-          {messages.map((m, i) => (
-            <ChatRow key={`${m.time}-${i}`} message={m} />
-          ))}
-        </div>
-      </div>
+      <AgentChatLog messages={messages} padding="8px 24px" maxWidth={800} />
       <WorktreeComposerBar />
     </div>
   );
@@ -289,69 +442,31 @@ function WorktreeComposerBar({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function ChatRow({ message: m }: { message: ChatLine }) {
-  return (
-    <div style={{ display: "flex", gap: 10, padding: "12px 0" }}>
-      <TrailAvatar initials={m.initials} name={m.who} tone={m.tone === "blue" ? "blue" : "mint"} />
-      <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontWeight: 500 }}>{m.who}</span>
-          <span className="tr-small">{m.time}</span>
-          {m.chip ? (
-            <span style={{ marginLeft: "auto" }}>
-              <TrailChip tone={m.chip.tone}>{m.chip.text}</TrailChip>
-            </span>
-          ) : null}
-        </div>
-        <span style={{ color: "var(--ink-soft)", whiteSpace: "pre-line" }}>{m.body}</span>
-        {m.monoLines?.map((line) => (
-          <span key={line} className="tr-mono tr-faint" style={{ fontSize: 12, lineHeight: "16px" }}>
-            {line}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function PreviewSplit({
+  workspaceId,
+  issueNumber,
+  previewUrl,
+  previewUrlDraft,
+  previewError,
+  previewDevBusy,
+  onPreviewUrlDraft,
+  onCommitPreviewUrl,
   messages,
   commentMode,
   onToggleComment,
-  pins,
-  draft,
-  draftText,
-  onDraftText,
-  onCancelDraft,
-  onSendDraft,
-  onCanvasClick,
 }: {
+  workspaceId: string;
+  issueNumber: number;
+  previewUrl: string;
+  previewUrlDraft: string;
+  previewError: string | null;
+  previewDevBusy: boolean;
+  onPreviewUrlDraft: (value: string) => void;
+  onCommitPreviewUrl: () => void;
   messages: ChatLine[];
   commentMode: boolean;
   onToggleComment: () => void;
-  pins: PreviewPin[];
-  draft: PreviewDraft | null;
-  draftText: string;
-  onDraftText: (t: string) => void;
-  onCancelDraft: () => void;
-  onSendDraft: () => void;
-  onCanvasClick: (x: number, y: number) => void;
 }) {
-  const handleCanvas = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target instanceof HTMLElement && e.target.closest('[role="dialog"]')) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    onCanvasClick(x, y);
-  };
-
-  const draftPos =
-    draft && draft.x > 55
-      ? { right: `calc(${100 - draft.x}% + 16px)`, top: `${draft.y}%` }
-      : draft
-        ? { left: `calc(${draft.x}% + 16px)`, top: `${draft.y}%` }
-        : undefined;
-
   return (
     <>
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", background: "var(--bg)" }}>
@@ -366,159 +481,63 @@ function PreviewSplit({
             background: "var(--surface)",
           }}
         >
-          <span className="tr-mono" style={{
-            flex: 1,
-            minWidth: 0,
-            height: 28,
-            display: "inline-flex",
-            alignItems: "center",
-            padding: "0 10px",
-            background: "var(--bg)",
-            border: "1px solid var(--line-strong)",
-            borderRadius: 8,
-            fontSize: 12,
-            color: "var(--ink-muted)",
-          }}>
-            {PREVIEW_URL}
-          </span>
-          <SyncStatus state="synced" label="Dev server running" />
+          <input
+            className="tr-mono"
+            aria-label="Preview URL"
+            value={previewUrlDraft}
+            onChange={(e) => onPreviewUrlDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void onCommitPreviewUrl();
+              }
+            }}
+            onBlur={() => void onCommitPreviewUrl()}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              height: 28,
+              padding: "0 10px",
+              background: "var(--bg)",
+              border: "1px solid var(--line-strong)",
+              borderRadius: 8,
+              fontSize: 12,
+              color: "var(--ink-muted)",
+            }}
+          />
+          <SyncStatus
+            state={previewDevBusy ? "pending" : "synced"}
+            label={previewDevBusy ? "Starting dev server…" : "Embedded preview"}
+          />
+          {previewError ? (
+            <span className="tr-small" style={{ color: "var(--warning)" }}>
+              {previewError}
+            </span>
+          ) : null}
           <button
             type="button"
             className={commentMode ? "tr-btn tr-btn-secondary is-on" : "tr-btn tr-btn-secondary"}
             aria-pressed={commentMode}
-            data-tip="Comment mode: click anywhere on the page to send feedback to the chat"
+            data-tip="Click on the page to place a pin and send feedback to chat"
             data-tip-pos="below"
             onClick={onToggleComment}
             style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
           >
             Comment
           </button>
-          <TrailButton variant="secondary">Open in browser</TrailButton>
+          <TrailButton
+            variant="secondary"
+            onClick={() => void window.trail?.openExternal?.(previewUrl)}
+          >
+            Open in browser
+          </TrailButton>
         </div>
-        <div
-          data-preview-canvas=""
-          onClick={handleCanvas}
-          style={{
-            position: "relative",
-            flex: 1,
-            minHeight: 0,
-            background: "#e5e7eb",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "auto",
-            padding: 24,
-            cursor: commentMode && !draft ? "crosshair" : "default",
-          }}
-        >
-          <SignInMockCard />
-          {pins.map((p) => (
-            <span
-              key={p.n}
-              style={{
-                position: "absolute",
-                left: `calc(${p.x}% - 12px)`,
-                top: `calc(${p.y}% - 12px)`,
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                background: "var(--accent)",
-                color: "var(--on-accent)",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 600,
-                boxShadow: "0 0 0 3px rgba(0,0,0,0.25)",
-                pointerEvents: "none",
-              }}
-            >
-              {p.n}
-            </span>
-          ))}
-          {draft ? (
-            <>
-              <span
-                style={{
-                  position: "absolute",
-                  left: `calc(${draft.x}% - 12px)`,
-                  top: `calc(${draft.y}% - 12px)`,
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  border: "2px dashed var(--accent)",
-                  background: "rgba(0,0,0,0.35)",
-                  color: "#fff",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  pointerEvents: "none",
-                }}
-              >
-                {draft.n}
-              </span>
-              <div
-                role="dialog"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  position: "absolute",
-                  ...draftPos,
-                  width: 320,
-                  boxSizing: "border-box",
-                  padding: 12,
-                  background: "var(--surface-raised)",
-                  border: "1px solid var(--accent)",
-                  borderRadius: 10,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
-                  zIndex: 2,
-                }}
-              >
-                <span style={{ fontWeight: 500, fontSize: 13 }}>New comment · pin {draft.n}</span>
-                <textarea
-                  id="pincomment"
-                  rows={4}
-                  autoFocus
-                  value={draftText}
-                  onChange={(e) => onDraftText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                      e.preventDefault();
-                      onSendDraft();
-                    }
-                  }}
-                  placeholder="What should change?"
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    padding: "8px 10px",
-                    border: "1px solid var(--line-strong)",
-                    borderRadius: 8,
-                    background: "var(--bg)",
-                    color: "var(--ink)",
-                    font: "inherit",
-                    fontSize: 13,
-                    lineHeight: "20px",
-                    resize: "none",
-                    outline: 0,
-                  }}
-                />
-                <span style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                  <TrailButton variant="ghost" onClick={onCancelDraft}>
-                    Cancel
-                  </TrailButton>
-                  <TrailButton variant="primary" onClick={onSendDraft}>
-                    Send to chat
-                  </TrailButton>
-                </span>
-              </div>
-            </>
-          ) : null}
-        </div>
+        <WorktreePreviewSurface
+          workspaceId={workspaceId}
+          issueNumber={issueNumber}
+          url={previewUrl}
+          active={Boolean(workspaceId)}
+        />
       </div>
       <div
         style={{
@@ -541,69 +560,10 @@ function PreviewSplit({
         >
           <span className="tr-overline">Chat</span>
         </div>
-        <div style={{ flex: 1, minHeight: 0, overflow: "auto", padding: "4px 14px" }}>
-          {messages.map((m, i) => (
-            <ChatRow key={`${m.time}-${i}`} message={m} />
-          ))}
-        </div>
+        <AgentChatLog messages={messages} padding="4px 14px" />
         <WorktreeComposerBar compact />
       </div>
     </>
-  );
-}
-
-function SignInMockCard() {
-  return (
-    <div
-      data-preview-canvas=""
-      style={{
-        position: "relative",
-        width: 340,
-        padding: 24,
-        background: "#fff",
-        borderRadius: 12,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-        color: "#111827",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-      }}
-    >
-      <span style={{ fontSize: 20, fontWeight: 600 }}>Sign in</span>
-      <FakeField>Email</FakeField>
-      <FakeField>Password</FakeField>
-      <div
-        style={{
-          height: 38,
-          borderRadius: 8,
-          background: "#111827",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        Sign in
-      </div>
-    </div>
-  );
-}
-
-function FakeField({ children }: { children: string }) {
-  return (
-    <div
-      style={{
-        height: 36,
-        border: "1px solid #d1d5db",
-        borderRadius: 8,
-        padding: "0 12px",
-        display: "flex",
-        alignItems: "center",
-        color: "#6b7280",
-      }}
-    >
-      {children}
-    </div>
   );
 }
 

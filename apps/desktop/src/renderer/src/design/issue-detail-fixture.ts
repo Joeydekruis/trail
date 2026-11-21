@@ -18,6 +18,7 @@ export type IssueDetail = {
   comments: { who: string; initials: string; tone: "mint" | "blue"; when: string; text: string }[];
   activity: { when: string; text: string }[];
   cta: string;
+  htmlUrl?: string;
 };
 
 const DETAILS: Record<string, IssueDetail> = {

@@ -11,5 +11,6 @@ export type WorkspaceRecord = {
   shortLabel: string;
   repository: string | null;
   integrationBranch: string;
+  productionBranch: string;
   sortOrder: number;
 } & WorkspaceAccent;
