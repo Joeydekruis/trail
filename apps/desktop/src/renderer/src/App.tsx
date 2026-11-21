@@ -293,6 +293,11 @@ export function App() {
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncRateLimitUntil, setSyncRateLimitUntil] = useState<number | null>(null);
   const [, setRateLimitClock] = useState(0);
+  const [agentAutopilotBlocked, setAgentAutopilotBlocked] = useState(false);
+  const [agentRunFailure, setAgentRunFailure] = useState<{
+    issueNumber: number;
+    exitCode: number;
+  } | null>(null);
   const [syncConflicts, setSyncConflicts] = useState<
     import("@trail/ipc").SyncConflictDto[]
   >([]);
@@ -459,11 +464,61 @@ export function App() {
       return;
     }
     return api.onAgentRunState((payload) => {
-      if (payload.workspaceId === activeWorkspaceId) {
-        void refreshWorktrees();
+      if (payload.workspaceId !== activeWorkspaceId) {
+        return;
       }
+      if (payload.state === "running") {
+        setAgentRunFailure(null);
+      } else if (
+        payload.state === "stopped" &&
+        payload.exitCode !== undefined &&
+        payload.exitCode !== 0
+      ) {
+        setAgentRunFailure({
+          issueNumber: payload.issueNumber,
+          exitCode: payload.exitCode,
+        });
+      }
+      void refreshWorktrees();
     });
   }, [activeWorkspaceId, refreshWorktrees]);
+
+  const refreshAutopilotAgentState = useCallback(async () => {
+    const api = window.trail;
+    if (!api?.autopilotGet || !activeWorkspace?.id) {
+      setAgentAutopilotBlocked(false);
+      return;
+    }
+    const result = await api.autopilotGet(activeWorkspace.id);
+    setAgentAutopilotBlocked(result.enabled && result.agentCliMissing);
+  }, [activeWorkspace?.id]);
+
+  useEffect(() => {
+    void refreshAutopilotAgentState();
+  }, [refreshAutopilotAgentState, boardRefreshKey, worktrees]);
+
+  const retryAgentRun = useCallback(
+    async (issueNumber: number) => {
+      const api = window.trail;
+      if (!api?.startAgentRun || !activeWorkspace?.id) {
+        return;
+      }
+      const worktree = worktrees.find((row) => row.issueNumber === issueNumber);
+      const result = await api.startAgentRun({
+        workspaceId: activeWorkspace.id,
+        issueNumber,
+        prompt: worktree?.title
+          ? `Implement GitHub issue #${issueNumber}: ${worktree.title}`
+          : undefined,
+      });
+      if (!result.ok) {
+        return;
+      }
+      setAgentRunFailure(null);
+      void refreshWorktrees();
+    },
+    [activeWorkspace?.id, refreshWorktrees, worktrees],
+  );
 
   const refreshWorkspaces = useCallback(async () => {
     const api = window.trail;
@@ -623,6 +678,10 @@ export function App() {
       onRefreshWorktrees={() => void refreshWorktrees()}
       onOpenDiagnostics={() => setDiagnosticsOpen(true)}
       onShellUiMetrics={(metrics) => setOpenViewCount(metrics.openViewCount)}
+      agentAutopilotBlocked={agentAutopilotBlocked}
+      agentRunFailure={agentRunFailure}
+      onRetryAgentRun={(issueNumber) => void retryAgentRun(issueNumber)}
+      onClearAgentRunFailure={() => setAgentRunFailure(null)}
     />
     <DiagnosticsView
       open={diagnosticsOpen}

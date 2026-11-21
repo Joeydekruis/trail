@@ -1,4 +1,5 @@
 import { utilityProcess, type UtilityProcess } from "electron";
+import { AGENT_CLI_MISSING_MESSAGE, pickPreferredAgentBackend } from "@trail/core";
 import { detectAgentBackends } from "./agent-cli";
 import { resolveAgentRunnerUtilityPath } from "./agent-runner-path";
 import { createAgentStreamChannel, deliverAgentStreamPort } from "./agent-stream-port";
@@ -121,10 +122,11 @@ function startOnUtility(
     return;
   }
 
-  const backends = detectAgentBackends();
-  const cursor = backends.find((b) => b.id === "cursor" && b.found);
-  const claude = backends.find((b) => b.id === "claude" && b.found);
-  const preferred = claude ?? cursor;
+  const preferred = pickPreferredAgentBackend(detectAgentBackends());
+  if (!preferred) {
+    resolve({ ok: false, message: AGENT_CLI_MISSING_MESSAGE });
+    return;
+  }
 
   const runId = `${key}:${Date.now()}`;
   runIdByKey.set(key, runId);
@@ -134,7 +136,7 @@ function startOnUtility(
     workspaceId: input.workspaceId,
     issueNumber: input.issueNumber,
     state: "running",
-    backend: preferred?.id ?? null,
+    backend: preferred.id,
   });
 
   const streamChannel = createAgentStreamChannel();
@@ -147,8 +149,8 @@ function startOnUtility(
       workspaceId: input.workspaceId,
       issueNumber: input.issueNumber,
       cwd: input.cwd,
-      backend: preferred?.id ?? null,
-      binary: preferred?.binary ?? null,
+      backend: preferred.id,
+      binary: preferred.binary,
       prompt: input.prompt,
     },
     [streamChannel.port1],

@@ -579,6 +579,7 @@ export const autopilotGetResult = z.object({
   queueBlocked: z.boolean(),
   maxParallel: z.number().int().min(1).max(5),
   pickupLabels: z.array(z.string().min(1)),
+  agentCliMissing: z.boolean(),
 });
 
 export type AutopilotGetResult = z.infer<typeof autopilotGetResult>;

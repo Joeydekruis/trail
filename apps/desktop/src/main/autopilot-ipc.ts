@@ -7,6 +7,8 @@ import {
   IpcChannels,
 } from "@trail/ipc";
 import { getWorkspaceStore } from "./database";
+import { anyAgentBackendAvailable } from "@trail/core";
+import { detectAgentBackends } from "./agent-cli";
 import {
   readAutopilotSettings,
   runAutopilotTick,
@@ -22,7 +24,11 @@ export function registerAutopilotIpc(): void {
     const { workspaceId: requested } = autopilotGetPayload.parse(raw ?? {});
     const workspaceId = resolveWorkspaceId(requested);
     const settings = readAutopilotSettings(workspaceId);
-    return autopilotGetResult.parse({ workspaceId, ...settings });
+    return autopilotGetResult.parse({
+      workspaceId,
+      ...settings,
+      agentCliMissing: !anyAgentBackendAvailable(detectAgentBackends()),
+    });
   });
 
   ipcMain.handle(IpcChannels.autopilotSet, async (_event, raw: unknown) => {
@@ -37,6 +43,10 @@ export function registerAutopilotIpc(): void {
     if (settings.enabled) {
       void runAutopilotTick(workspaceId);
     }
-    return autopilotSetResult.parse({ workspaceId, ...settings });
+    return autopilotSetResult.parse({
+      workspaceId,
+      ...settings,
+      agentCliMissing: !anyAgentBackendAvailable(detectAgentBackends()),
+    });
   });
 }

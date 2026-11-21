@@ -1,6 +1,7 @@
 import {
   APP_SETTING_AUTOPILOT_GLOBAL_PAUSE,
   autopilotQueueBlockedByDecisions,
+  anyAgentBackendAvailable,
   pickAutopilotIssue,
   syncProposedDecisionBlocks,
   resolveAutopilotEnabled,
@@ -11,6 +12,7 @@ import {
   workspaceAutopilotMaxParallelKey,
   workspaceAutopilotPickupLabelsKey,
 } from "@trail/core";
+import { detectAgentBackends } from "./agent-cli";
 import { countActiveAgentRuns } from "./agent-runner-bridge";
 import { startAgentRun } from "./agent-run";
 import {
@@ -109,7 +111,16 @@ export async function runAutopilotTick(workspaceId?: string): Promise<void> {
     syncProposedDecisionBlocks(id, getDecisionStore(), worktreeStore);
     const worktrees = worktreeStore.listByWorkspace(id);
     const settings = readAutopilotSettings(id);
-    if (!settings.enabled || settings.globallyPaused) {
+    if (!settings.enabled) {
+      return;
+    }
+    if (!anyAgentBackendAvailable(detectAgentBackends())) {
+      if (!settings.globallyPaused) {
+        writeAutopilotSettings(id, { globallyPaused: true });
+      }
+      return;
+    }
+    if (settings.globallyPaused) {
       return;
     }
     if (settings.queueBlocked || autopilotQueueBlockedByDecisions(worktrees)) {

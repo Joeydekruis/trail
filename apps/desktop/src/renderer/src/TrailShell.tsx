@@ -90,6 +90,10 @@ export type TrailShellProps = {
   onRefreshWorktrees?: () => void;
   onOpenDiagnostics?: () => void;
   onShellUiMetrics?: (metrics: { openViewCount: number }) => void;
+  agentAutopilotBlocked?: boolean;
+  agentRunFailure?: { issueNumber: number; exitCode: number } | null;
+  onRetryAgentRun?: (issueNumber: number) => void;
+  onClearAgentRunFailure?: () => void;
 };
 
 const MENU = ["File", "Edit", "View", "Go", "Agents", "Help"] as const;
@@ -144,6 +148,10 @@ export function TrailShell({
   onRefreshWorktrees,
   onOpenDiagnostics,
   onShellUiMetrics,
+  agentAutopilotBlocked = false,
+  agentRunFailure = null,
+  onRetryAgentRun,
+  onClearAgentRunFailure,
 }: TrailShellProps) {
   const [centerView, setCenterView] = useState<CenterView>("dashboard");
   const [worktreeTabOpen, setWorktreeTabOpen] = useState(true);
@@ -739,6 +747,32 @@ export function TrailShell({
               <TrailButton variant="secondary" onClick={() => setCenterView("settings")}>
                 Open Settings
               </TrailButton>
+            </div>
+          ) : null}
+          {agentAutopilotBlocked ? (
+            <div style={{ padding: "8px 16px 0" }}>
+              <ConflictBanner action="Open settings" onAction={() => setCenterView("settings")}>
+                Autopilot is paused because no agent CLI was found. Install Cursor CLI or Claude Code in
+                Settings → Agents, then resume autopilot.
+              </ConflictBanner>
+            </div>
+          ) : null}
+          {agentRunFailure ? (
+            <div style={{ padding: "8px 16px 0" }}>
+              <ConflictBanner
+                action="Retry"
+                onAction={() => {
+                  openWorktree(agentRunFailure.issueNumber);
+                  onRetryAgentRun?.(agentRunFailure.issueNumber);
+                }}
+                secondaryAction="Open worktree"
+                onSecondaryAction={() => {
+                  openWorktree(agentRunFailure.issueNumber);
+                  onClearAgentRunFailure?.();
+                }}
+              >
+                Agent run failed for #{agentRunFailure.issueNumber} (exit code {agentRunFailure.exitCode}).
+              </ConflictBanner>
             </div>
           ) : null}
           {syncError && isGitHubRateLimitError(syncError) ? (
