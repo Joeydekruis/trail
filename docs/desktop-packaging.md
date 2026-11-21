@@ -58,4 +58,4 @@ Alternatief: klassiek OV-code signing-certificaat (`CSC_LINK` / `CSC_KEY_PASSWOR
 
 ## Auto-update
 
-Runtime: `electron-updater` (later in main-process). Builds publiceren naar het GitHub-releasekanaal van dit repo; ZIP (macOS) en NSIS (Windows) plus blockmaps voor delta-downloads.
+Runtime: `electron-updater` in `apps/desktop/src/main/auto-updater.ts` (alleen in gepackagde builds). Downloads volgen GitHub Releases; geïnstalleerde updates wachten tot er geen actieve agent runs meer zijn voordat `quitAndInstall` draait. Dev (`npm run desktop:dev`) en E2E slaan checks over.

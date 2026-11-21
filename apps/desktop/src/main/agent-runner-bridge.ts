@@ -115,6 +115,7 @@ function handleUtilityMessage(message: unknown): void {
         exitCode: typed.exitCode,
         durationMs,
       });
+      void import("./auto-updater.js").then((mod) => mod.tryInstallDownloadedUpdate());
     });
   }
 }
@@ -201,5 +202,6 @@ export function stopAgentRunViaUtility(workspaceId: string, issueNumber: number)
   runIdByKey.delete(key);
   keyByRunId.delete(runId);
   runStartedAtMs.delete(key);
+  void import("./auto-updater.js").then((mod) => mod.tryInstallDownloadedUpdate());
   return true;
 }
