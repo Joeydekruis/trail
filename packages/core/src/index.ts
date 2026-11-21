@@ -107,3 +107,15 @@ export {
   mcpListWorkspaces,
   mcpSearchDocs,
 } from "./mcp/read-api.js";
+export {
+  DEFAULT_AUTOPILOT_MAX_PARALLEL,
+  DEFAULT_AUTOPILOT_PICKUP_LABELS,
+  resolveAutopilotEnabled,
+  resolveAutopilotMaxParallel,
+  resolveAutopilotPickupLabels,
+  serializeAutopilotPickupLabels,
+  workspaceAutopilotEnabledKey,
+  workspaceAutopilotMaxParallelKey,
+  workspaceAutopilotPickupLabelsKey,
+} from "./autopilot/settings.js";
+export { pickAutopilotIssue, issueHasPickupLabel } from "./autopilot/pick-next.js";

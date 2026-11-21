@@ -108,6 +108,10 @@ declare global {
         workspaceId?: string;
         issueNumber: number;
       }) => Promise<{ stopped: boolean }>;
+      autopilotGet?: (workspaceId?: string) => Promise<import("@trail/ipc").AutopilotGetResult>;
+      autopilotSet?: (
+        input: import("@trail/ipc").AutopilotSetPayload,
+      ) => Promise<import("@trail/ipc").AutopilotSetResult>;
       onAgentStreamOutput?: (
         listener: (payload: {
           workspaceId: string;

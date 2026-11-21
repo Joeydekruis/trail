@@ -40,7 +40,7 @@ export function BoardView({
 }: BoardViewProps) {
   const fixture = getBoardFixture(workspace);
   const [boardMode, setBoardMode] = useState(true);
-  const [autopilot, setAutopilot] = useState(true);
+  const [autopilot, setAutopilot] = useState(false);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
   const [liveBoard, setLiveBoard] = useState<BoardSnapshotResult | null>(null);
   const [kanbanColumns, setKanbanColumns] = useState<BoardColumn[] | null>(null);
@@ -57,6 +57,25 @@ export function BoardView({
     }
     void api.getBoardSnapshot(workspace?.id).then(setLiveBoard);
   }, [workspace?.id, syncing, boardRefreshKey]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.autopilotGet || !workspace?.id) {
+      return;
+    }
+    void api.autopilotGet(workspace.id).then((result) => setAutopilot(result.enabled));
+  }, [workspace?.id]);
+
+  const toggleAutopilot = () => {
+    const api = window.trail;
+    if (!api?.autopilotSet || !workspace?.id) {
+      setAutopilot((value) => !value);
+      return;
+    }
+    const next = !autopilot;
+    setAutopilot(next);
+    void api.autopilotSet({ workspaceId: workspace.id, enabled: next });
+  };
 
   useEffect(() => {
     if (liveBoard?.source === "cache") {
@@ -298,7 +317,7 @@ export function BoardView({
               role="switch"
               aria-checked={autopilot}
               aria-label="Autopilot"
-              onClick={() => setAutopilot((v) => !v)}
+              onClick={toggleAutopilot}
               style={{
                 position: "relative",
                 width: 34,

@@ -7,6 +7,10 @@ export {
   DEFAULT_PROJECT_STATUS_FIELD,
   DEFAULT_SYNC_INTERVAL_SEC,
 } from "./workspace/settings.js";
+export {
+  DEFAULT_AUTOPILOT_MAX_PARALLEL,
+  DEFAULT_AUTOPILOT_PICKUP_LABELS,
+} from "./autopilot/settings.js";
 export { formatWorkspaceRepoLine } from "./workspace/format.js";
 export {
   draftIssueFromPrompt,

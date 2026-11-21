@@ -136,6 +136,10 @@ export type TrailApi = {
     workspaceId?: string;
     issueNumber: number;
   }) => Promise<{ stopped: boolean }>;
+  autopilotGet: (workspaceId?: string) => Promise<import("@trail/ipc").AutopilotGetResult>;
+  autopilotSet: (
+    input: import("@trail/ipc").AutopilotSetPayload,
+  ) => Promise<import("@trail/ipc").AutopilotSetResult>;
   onAgentStreamOutput: (
     listener: (payload: {
       workspaceId: string;
@@ -381,6 +385,14 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.agentRunStop, input) as Promise<{
       stopped: boolean;
     }>,
+  autopilotGet: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.autopilotGet, { workspaceId }) as Promise<
+      import("@trail/ipc").AutopilotGetResult
+    >,
+  autopilotSet: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.autopilotSet, input) as Promise<
+      import("@trail/ipc").AutopilotSetResult
+    >,
   previewAttach: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.previewAttach, input) as Promise<
       { ok: true; url: string } | { ok: false; message: string }

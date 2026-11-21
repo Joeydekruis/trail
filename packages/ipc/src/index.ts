@@ -22,6 +22,8 @@ export const IpcChannels = {
   agentStatus: "agent.status",
   agentRunStart: "agent.runStart",
   agentRunStop: "agent.runStop",
+  autopilotGet: "autopilot.get",
+  autopilotSet: "autopilot.set",
   previewAttach: "preview.attach",
   previewSetBounds: "preview.setBounds",
   previewDetach: "preview.detach",
@@ -485,6 +487,32 @@ export const agentRunStopResult = z.object({
 });
 
 export type AgentRunStopResult = z.infer<typeof agentRunStopResult>;
+
+export const autopilotGetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export const autopilotGetResult = z.object({
+  workspaceId: z.string().min(1),
+  enabled: z.boolean(),
+  maxParallel: z.number().int().min(1).max(5),
+  pickupLabels: z.array(z.string().min(1)),
+});
+
+export type AutopilotGetResult = z.infer<typeof autopilotGetResult>;
+
+export const autopilotSetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  enabled: z.boolean().optional(),
+  maxParallel: z.number().int().min(1).max(5).optional(),
+  pickupLabels: z.array(z.string().min(1)).optional(),
+});
+
+export type AutopilotSetPayload = z.infer<typeof autopilotSetPayload>;
+
+export const autopilotSetResult = autopilotGetResult;
+
+export type AutopilotSetResult = z.infer<typeof autopilotSetResult>;
 
 export const previewWorktreeRef = z.object({
   workspaceId: z.string().min(1),

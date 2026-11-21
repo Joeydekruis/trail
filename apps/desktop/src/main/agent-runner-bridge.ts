@@ -173,6 +173,10 @@ export function startAgentRunViaUtility(
   });
 }
 
+export function countActiveAgentRuns(): number {
+  return runIdByKey.size;
+}
+
 export function stopAgentRunViaUtility(workspaceId: string, issueNumber: number): boolean {
   const key = runKey(workspaceId, issueNumber);
   const runId = runIdByKey.get(key);

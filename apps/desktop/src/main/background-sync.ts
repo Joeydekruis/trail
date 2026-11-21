@@ -2,6 +2,7 @@ import { BrowserWindow } from "electron";
 import { getIssueCacheStore, getWorkspaceStore } from "./database";
 import { readGitHubToken } from "./github-token-store";
 import { syncWorkspaceNow } from "./sync-now";
+import { runAutopilotTick } from "./autopilot-service";
 import { readWorkspaceSyncIntervalSec } from "./workspace-github-settings";
 
 const BACKGROUND_SYNC_CHANNEL = "trail.backgroundSync";
@@ -75,6 +76,7 @@ async function runBackgroundSync(): Promise<void> {
         syncedAt: result.syncedAt,
         issueCount: result.issueCount,
       });
+      void runAutopilotTick(workspaceId);
     }
   } finally {
     syncInFlight = false;

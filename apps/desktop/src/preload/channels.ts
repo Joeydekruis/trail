@@ -20,6 +20,8 @@ export const PreloadIpcChannels = {
   agentStatus: "agent.status",
   agentRunStart: "agent.runStart",
   agentRunStop: "agent.runStop",
+  autopilotGet: "autopilot.get",
+  autopilotSet: "autopilot.set",
   previewAttach: "preview.attach",
   previewSetBounds: "preview.setBounds",
   previewDetach: "preview.detach",

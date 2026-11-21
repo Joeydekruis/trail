@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { AgentBackendStatusDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import {
+  DEFAULT_AUTOPILOT_MAX_PARALLEL,
+  DEFAULT_AUTOPILOT_PICKUP_LABELS,
   DEFAULT_PROJECT_STATUS_FIELD,
   DEFAULT_SYNC_INTERVAL_SEC,
   formatWorkspaceRepoLine,
@@ -100,6 +102,8 @@ export function SettingsView({
   const [agentBackends, setAgentBackends] = useState<AgentBackendStatusDto[]>([]);
   const [mcpInfo, setMcpInfo] = useState<import("@trail/ipc").McpConnectionResult | null>(null);
   const [mcpLoading, setMcpLoading] = useState(false);
+  const [autopilotMaxParallel, setAutopilotMaxParallel] = useState(DEFAULT_AUTOPILOT_MAX_PARALLEL);
+  const [autopilotBusy, setAutopilotBusy] = useState(false);
   const [agentsLoading, setAgentsLoading] = useState(false);
   const name = workspace?.name ?? "Trail";
   const repoLine = workspace
@@ -130,7 +134,12 @@ export function SettingsView({
       .agentStatus()
       .then((result) => setAgentBackends(result.backends))
       .finally(() => setAgentsLoading(false));
-  }, [section]);
+    if (workspace?.id && api.autopilotGet) {
+      void api.autopilotGet(workspace.id).then((result) => {
+        setAutopilotMaxParallel(result.maxParallel);
+      });
+    }
+  }, [section, workspace?.id]);
 
   useEffect(() => {
     const api = window.trail;
@@ -630,6 +639,38 @@ export function SettingsView({
             </div>
           ) : section === "agents" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <SettingsBlock
+                title="Autopilot"
+                lead={`Picks Todo issues with labels ${DEFAULT_AUTOPILOT_PICKUP_LABELS.join(" or ")} by priority, creates worktrees, and starts agent runs up to the parallel limit.`}
+              >
+                <label style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 420 }}>
+                  <span style={{ fontWeight: 500 }}>Parallel runs</span>
+                  <TrailSelect
+                    aria-label="Autopilot parallel runs"
+                    value={String(autopilotMaxParallel)}
+                    options={["1", "2", "3", "4", "5"]}
+                    disabled={autopilotBusy || !workspace}
+                    onChange={(value) => {
+                      const maxParallel = Number.parseInt(value, 10);
+                      if (!workspace?.id || !Number.isFinite(maxParallel)) {
+                        return;
+                      }
+                      setAutopilotMaxParallel(maxParallel);
+                      const api = window.trail;
+                      if (!api?.autopilotSet) {
+                        return;
+                      }
+                      setAutopilotBusy(true);
+                      void api
+                        .autopilotSet({ workspaceId: workspace.id, maxParallel })
+                        .finally(() => setAutopilotBusy(false));
+                    }}
+                  />
+                  <span className="tr-small">
+                    Toggle autopilot on the board. Requires a linked repo path and agent CLI on PATH.
+                  </span>
+                </label>
+              </SettingsBlock>
               <SettingsBlock
                 title="Coding agents"
                 lead="Trail detects CLIs on your PATH. Claude Code runs via -p when available; cursor-agent uses a preview runner until Trail wires its flags."
