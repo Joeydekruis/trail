@@ -30,6 +30,7 @@ docs/superpowers/specs/    — Design specifications
 3. Desktop bootstrap: Node **22** (`.nvmrc`). Close any running Electron/Trail app, then `npm run bootstrap:desktop` (not plain `npm ci` on Windows).
 4. Run `npm test` (legacy CLI + new package tests)
 5. Desktop dev: `npm run desktop:dev`
+6. Optional before desktop UI changes: `npm run build --workspace=@trail/desktop && npm run test:e2e --workspace=@trail/desktop` (`TRAIL_E2E=1` in CI)
 
 ## How to make changes
 
@@ -37,7 +38,7 @@ docs/superpowers/specs/    — Design specifications
 - One logical change per commit
 - Commit messages: imperative mood, explain why not just what
 - Every new function gets at least one test
-- Run `npm test && npm run typecheck` before committing
+- Run `npm test && npm run typecheck` before committing; desktop PRs get `.github/workflows/desktop-ci.yml` (unit on Ubuntu, Playwright on macOS)
 
 ## Key patterns (desktop)
 

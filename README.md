@@ -13,7 +13,8 @@
 | Fase 0 plan | [docs/superpowers/plans/2026-11-18-trail-desktop-phase-0.md](docs/superpowers/plans/2026-11-18-trail-desktop-phase-0.md) |
 | Design reference | [design/desktop-dashboard/v1.html](design/desktop-dashboard/v1.html) |
 | Dev | Node **22** (see `.nvmrc`), then `npm run bootstrap:desktop` and `npm run desktop:dev` |
-| Verify locally | `npm test` and `npm run typecheck` before you commit (no CI workflow in this repo yet) |
+| Verify locally | `npm test` and `npm run typecheck` before you commit |
+| Desktop E2E | After build: `npm run build --workspace=@trail/desktop && npm run test:e2e --workspace=@trail/desktop` (set `TRAIL_E2E=1` for full flows; CI: [.github/workflows/desktop-ci.yml](.github/workflows/desktop-ci.yml)) |
 | Blank window? | Renderer must use `@trail/core/client`; rebuild with `npm run build --workspace=@trail/core` then restart `npm run desktop:dev` |
 
 **Windows:** Sluit Trail/Electron vóór `npm ci` (anders `EBUSY` op `electron/dist/*`). Gebruik **`npm run bootstrap:desktop`** i.p.v. kale `npm ci` — `better-sqlite3` faalt vaak op Node 25 zonder MSVC; `--ignore-scripts` + `desktop:postinstall` werkt wel.
