@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { join } from "node:path";
 import { app } from "electron";
+import { setSqliteDatabasePath } from "./database-path";
 import {
   MemorySqlite,
   openIssueCacheStore,
@@ -69,10 +70,12 @@ function openStores(db: SqliteDatabase, label: string): void {
 export function initDatabase(): void {
   try {
     const dbPath = join(app.getPath("userData"), "trail.sqlite");
+    setSqliteDatabasePath(dbPath);
     const db = new Database(dbPath);
     db.pragma("journal_mode = WAL");
     openStores(db as unknown as SqliteDatabase, dbPath);
   } catch (error) {
+    setSqliteDatabasePath(null);
     console.warn("[trail] SQLite unavailable — in-memory demo cache. Run npm run bootstrap:desktop to fix better-sqlite3:", error);
     openStores(new MemorySqlite(), "memory");
   }

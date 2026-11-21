@@ -92,3 +92,8 @@ export {
 } from "./knowledge/store.js";
 export { slugFromTitle, knowledgeDocId } from "./knowledge/slug.js";
 export type { KnowledgeDocRecord, KnowledgeDocSummary } from "./knowledge/types.js";
+export {
+  PERF_BUDGET_COLD_START_MS,
+  PERF_BUDGET_WORKSPACE_SWITCH_MS,
+  withinPerfBudget,
+} from "./diagnostics/perf-budgets.js";

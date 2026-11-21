@@ -19,8 +19,10 @@ import { registerAgentIpc } from "./agent-ipc";
 import { registerDesignIpc } from "./design-ipc";
 import { registerKnowledgeIpc } from "./knowledge-ipc";
 import { registerPreviewIpc } from "./preview-ipc";
+import { registerDiagnosticsIpc } from "./diagnostics-ipc";
 import { disposeAllPreviewDevServers } from "./preview-dev-server";
 import { disposeAllPreviews, onPreviewWindowClosed } from "./preview-host";
+import { markAppReady, markWindowShown } from "./startup-timing";
 import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
 
@@ -60,6 +62,7 @@ function createWindow(): void {
   });
 
   win.on("ready-to-show", () => {
+    markWindowShown();
     win.show();
     scheduleDeferredStartup();
   });
@@ -131,7 +134,9 @@ ipcMain.handle(IpcChannels.windowClose, (event) => {
 });
 
 void app.whenReady().then(() => {
+  markAppReady();
   initDatabase();
+  registerDiagnosticsIpc();
   registerWorkspaceIpc();
   registerGitHubIpc();
   registerBoardIpc();

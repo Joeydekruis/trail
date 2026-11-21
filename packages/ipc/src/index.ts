@@ -43,6 +43,9 @@ export const IpcChannels = {
   windowClose: "window.close",
   shellOpenExternal: "shell.openExternal",
   shellOpenPath: "shell.openPath",
+  diagnosticsGetSnapshot: "diagnostics.getSnapshot",
+  diagnosticsMarkRendererReady: "diagnostics.markRendererReady",
+  diagnosticsReportWorkspaceSwitch: "diagnostics.reportWorkspaceSwitch",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -717,3 +720,54 @@ export const workspaceRepoRootPickResult = z.union([
 ]);
 
 export type WorkspaceRepoRootPickResult = z.infer<typeof workspaceRepoRootPickResult>;
+
+export const diagnosticsMarkRendererReadyPayload = z.object({
+  at: z.number().finite().optional(),
+});
+
+export type DiagnosticsMarkRendererReadyPayload = z.infer<
+  typeof diagnosticsMarkRendererReadyPayload
+>;
+
+export const diagnosticsReportWorkspaceSwitchPayload = z.object({
+  durationMs: z.number().finite().nonnegative(),
+  openViewCount: z.number().int().nonnegative().optional(),
+});
+
+export type DiagnosticsReportWorkspaceSwitchPayload = z.infer<
+  typeof diagnosticsReportWorkspaceSwitchPayload
+>;
+
+export const diagnosticsProcessMetricDto = z.object({
+  type: z.string(),
+  cpu: z.number(),
+  memoryMb: z.number(),
+});
+
+export type DiagnosticsProcessMetricDto = z.infer<typeof diagnosticsProcessMetricDto>;
+
+export const diagnosticsGetSnapshotPayload = z.object({
+  openViewCount: z.number().int().nonnegative().optional(),
+});
+
+export type DiagnosticsGetSnapshotPayload = z.infer<typeof diagnosticsGetSnapshotPayload>;
+
+export const diagnosticsGetSnapshotResult = z.object({
+  collectedAt: z.string().datetime({ offset: true }),
+  startup: z.object({
+    appReadyAt: z.number().nullable(),
+    windowShownAt: z.number().nullable(),
+    rendererReadyAt: z.number().nullable(),
+    coldStartMs: z.number().nullable(),
+    lastWorkspaceSwitchMs: z.number().nullable(),
+  }),
+  sqlitePath: z.string().nullable(),
+  sqliteBytes: z.number().int().nonnegative().nullable(),
+  workspacesCount: z.number().int().nonnegative(),
+  activeWorkspaceId: z.string().min(1),
+  openIssueCount: z.number().int().nonnegative(),
+  openViewCount: z.number().int().nonnegative().nullable(),
+  processes: z.array(diagnosticsProcessMetricDto),
+});
+
+export type DiagnosticsGetSnapshotResult = z.infer<typeof diagnosticsGetSnapshotResult>;

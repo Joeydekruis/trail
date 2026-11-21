@@ -80,6 +80,8 @@ export type TrailShellProps = {
   worktreesLive?: boolean;
   localRepoRoot?: string | null;
   onRefreshWorktrees?: () => void;
+  onOpenDiagnostics?: () => void;
+  onShellUiMetrics?: (metrics: { openViewCount: number }) => void;
 };
 
 const MENU = ["File", "Edit", "View", "Go", "Agents", "Help"] as const;
@@ -129,6 +131,8 @@ export function TrailShell({
   worktreesLive = false,
   localRepoRoot = null,
   onRefreshWorktrees,
+  onOpenDiagnostics,
+  onShellUiMetrics,
 }: TrailShellProps) {
   const [centerView, setCenterView] = useState<CenterView>("dashboard");
   const [worktreeTabOpen, setWorktreeTabOpen] = useState(true);
@@ -170,6 +174,13 @@ export function TrailShell({
   const worktreeTabLabel = activeWorktreeSession
     ? `${activeWorktreeSession.issueRef} ${activeWorktreeSession.title}`
     : "Worktree";
+
+  const pageTabActive = isShellViewCenter(centerView) && centerView !== "dashboard";
+  const openViewCount = 1 + (worktreeTabOpen ? 1 : 0) + (pageTabActive ? 1 : 0);
+
+  useEffect(() => {
+    onShellUiMetrics?.({ openViewCount });
+  }, [openViewCount, onShellUiMetrics]);
 
   const openWorktree = (issueNumber?: number) => {
     if (issueNumber !== undefined) {
@@ -317,6 +328,7 @@ export function TrailShell({
   return (
     <div
       className="trail-app"
+      data-trail-ready={workspaces.length > 0 ? "" : undefined}
       style={
         {
           position: "relative",
@@ -356,6 +368,11 @@ export function TrailShell({
             <button
               key={item}
               type="button"
+              onClick={() => {
+                if (item === "Help") {
+                  onOpenDiagnostics?.();
+                }
+              }}
               style={{
                 height: 24,
                 padding: "0 8px",

@@ -36,6 +36,8 @@ export type GithubRepoDto = {
 
 export type TrailApi = {
   platform: NodeJS.Platform;
+  /** Set when main runs with TRAIL_E2E=1 (Playwright perf budgets). */
+  e2eMode: boolean;
   listWorkspaces: () => Promise<WorkspaceListResult>;
   switchWorkspace: (workspaceId: string) => Promise<WorkspaceSwitchResult>;
   createWorkspace: (input: {
@@ -247,10 +249,19 @@ export type TrailApi = {
   close: () => Promise<void>;
   openExternal: (url: string) => Promise<void>;
   openPath: (path: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  getDiagnosticsSnapshot: (input?: {
+    openViewCount?: number;
+  }) => Promise<import("@trail/ipc").DiagnosticsGetSnapshotResult>;
+  diagnosticsMarkRendererReady: (input?: { at?: number }) => Promise<{ ok: true }>;
+  diagnosticsReportWorkspaceSwitch: (input: {
+    durationMs: number;
+    openViewCount?: number;
+  }) => Promise<{ ok: true }>;
 };
 
 const trailApi: TrailApi = {
   platform: process.platform,
+  e2eMode: process.env.TRAIL_E2E === "1",
   listWorkspaces: () =>
     ipcRenderer.invoke(PreloadIpcChannels.workspaceList) as Promise<WorkspaceListResult>,
   switchWorkspace: (workspaceId) =>
@@ -480,6 +491,18 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.shellOpenPath, { path }) as Promise<
       { ok: true } | { ok: false; message: string }
     >,
+  getDiagnosticsSnapshot: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.diagnosticsGetSnapshot, input ?? {}) as Promise<
+      import("@trail/ipc").DiagnosticsGetSnapshotResult
+    >,
+  diagnosticsMarkRendererReady: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.diagnosticsMarkRendererReady, input ?? {}) as Promise<{
+      ok: true;
+    }>,
+  diagnosticsReportWorkspaceSwitch: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.diagnosticsReportWorkspaceSwitch, input) as Promise<{
+      ok: true;
+    }>,
 };
 
 try {

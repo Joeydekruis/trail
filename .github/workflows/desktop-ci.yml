@@ -1,0 +1,49 @@
+name: Desktop CI
+
+on:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "packages/core/**"
+      - "packages/ipc/**"
+      - ".github/workflows/desktop-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/desktop/**"
+      - "packages/core/**"
+      - "packages/ipc/**"
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm run bootstrap:desktop
+      - run: npm test
+      - run: npm run typecheck
+
+  perf-e2e:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm run bootstrap:desktop
+      - run: npm run build --workspace=@trail/ipc
+      - run: npm run build --workspace=@trail/core
+      - run: npm run build --workspace=@trail/desktop
+      - name: Install Playwright (for Electron driver)
+        working-directory: apps/desktop
+        run: npx playwright install
+      - name: Perf budgets (Electron)
+        working-directory: apps/desktop
+        env:
+          TRAIL_E2E: "1"
+        run: npm run test:e2e

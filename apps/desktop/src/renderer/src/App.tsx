@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WorktreeDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
+import { DiagnosticsView } from "./DiagnosticsView";
 import { OnboardingView } from "./OnboardingView";
 import { TrailShell } from "./TrailShell";
 import { isElectronRenderer, waitForTrail } from "./wait-for-trail";
@@ -9,6 +10,7 @@ declare global {
   interface Window {
     trail?: {
       platform: string;
+      e2eMode?: boolean;
       listWorkspaces: () => Promise<{
         workspaces: WorkspaceDto[];
         activeWorkspaceId: string;
@@ -217,6 +219,14 @@ declare global {
       minimize?: () => Promise<void>;
       maximize?: () => Promise<void>;
       close?: () => Promise<void>;
+      getDiagnosticsSnapshot?: (input?: {
+        openViewCount?: number;
+      }) => Promise<import("@trail/ipc").DiagnosticsGetSnapshotResult>;
+      diagnosticsMarkRendererReady?: (input?: { at?: number }) => Promise<{ ok: true }>;
+      diagnosticsReportWorkspaceSwitch?: (input: {
+        durationMs: number;
+        openViewCount?: number;
+      }) => Promise<{ ok: true }>;
     };
   }
 }
@@ -237,7 +247,21 @@ export function App() {
   const [worktrees, setWorktrees] = useState<WorktreeDto[]>([]);
   const [worktreesLive, setWorktreesLive] = useState(false);
   const [localRepoRoot, setLocalRepoRoot] = useState<string | null>(null);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [openViewCount, setOpenViewCount] = useState(1);
   const initialOnboardingGate = useRef(true);
+  const rendererReadySent = useRef(false);
+
+  const markDashboardReady = useCallback(() => {
+    if (rendererReadySent.current) {
+      return;
+    }
+    rendererReadySent.current = true;
+    if (typeof performance !== "undefined") {
+      performance.mark("trail-dashboard-ready");
+    }
+    void window.trail?.diagnosticsMarkRendererReady?.({ at: Date.now() });
+  }, []);
 
   const applyActive = useCallback((active: WorkspaceDto) => {
     setActiveWorkspaceId(active.id);
@@ -250,14 +274,23 @@ export function App() {
       if (!api) {
         return;
       }
+      const started = performance.now();
       const result = await api.switchWorkspace(workspaceId);
       setWorkspaces(result.workspaces);
       applyActive(result.active);
       const snapshot = await api.listWorkspaces();
       setGithub(snapshot.github);
       setActiveLastSyncedAt(snapshot.activeLastSyncedAt);
+      const durationMs = Math.round(performance.now() - started);
+      if (typeof performance !== "undefined") {
+        performance.mark("trail-workspace-switch-end");
+      }
+      void api.diagnosticsReportWorkspaceSwitch?.({
+        durationMs,
+        openViewCount,
+      });
     },
-    [applyActive],
+    [applyActive, openViewCount],
   );
 
   const applyWorkspaceSnapshot = useCallback(
@@ -276,12 +309,13 @@ export function App() {
       if (active) {
         applyActive(active);
       }
-      if (initialOnboardingGate.current && data.needsOnboarding) {
+      markDashboardReady();
+      if (initialOnboardingGate.current && data.needsOnboarding && !window.trail?.e2eMode) {
         setView("onboarding");
         initialOnboardingGate.current = false;
       }
     },
-    [applyActive],
+    [applyActive, markDashboardReady],
   );
 
   useEffect(() => {
@@ -453,6 +487,7 @@ export function App() {
   }
 
   return (
+    <>
     <TrailShell
       workspaces={workspaces}
       activeWorkspace={activeWorkspace}
@@ -476,6 +511,14 @@ export function App() {
       worktreesLive={worktreesLive}
       localRepoRoot={localRepoRoot}
       onRefreshWorktrees={() => void refreshWorktrees()}
+      onOpenDiagnostics={() => setDiagnosticsOpen(true)}
+      onShellUiMetrics={(metrics) => setOpenViewCount(metrics.openViewCount)}
     />
+    <DiagnosticsView
+      open={diagnosticsOpen}
+      onClose={() => setDiagnosticsOpen(false)}
+      openViewCount={openViewCount}
+    />
+    </>
   );
 }
