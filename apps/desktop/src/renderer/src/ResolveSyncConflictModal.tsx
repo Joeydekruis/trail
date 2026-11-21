@@ -10,6 +10,7 @@ type FieldPicks = {
   state: SidePick;
   boardColumn: SidePick;
   labels: SidePick;
+  assignee: SidePick;
 };
 
 const overlay: CSSProperties = {
@@ -42,17 +43,21 @@ const tableStyle: CSSProperties = {
   fontSize: 13,
 };
 
-function defaultPicks(conflict: SyncConflictDto): FieldPicks {
+function defaultPicks(_conflict: SyncConflictDto): FieldPicks {
   return {
-    state: conflict.github.state === conflict.trail.state ? "github" : "github",
-    boardColumn:
-      conflict.github.boardColumn === conflict.trail.boardColumn ? "github" : "github",
+    state: "github",
+    boardColumn: "github",
     labels: "github",
+    assignee: "github",
   };
 }
 
 function formatLabels(labels: string[]): string {
   return labels.length > 0 ? labels.join(", ") : "—";
+}
+
+function formatAssignee(login: string | null): string {
+  return login ? `@${login}` : "Unassigned";
 }
 
 function columnLabel(id: string): string {
@@ -136,6 +141,7 @@ export function ResolveSyncConflictModal({
             state: picks.state,
             boardColumn: picks.boardColumn,
             labels: picks.labels,
+            assignee: picks.assignee,
           },
     });
     setBusy(false);
@@ -209,6 +215,12 @@ export function ResolveSyncConflictModal({
                   formatLabels(conflict.github.labels),
                   formatLabels(conflict.trail.labels),
                 ] as const,
+                [
+                  "assignee",
+                  "Assignee",
+                  formatAssignee(conflict.github.assigneeLogin),
+                  formatAssignee(conflict.trail.assigneeLogin),
+                ] as const,
               ] as const
             ).map(([field, label, githubValue, trailValue]) => (
               <tr key={field} style={{ borderTop: "1px solid var(--line-soft)" }}>
@@ -253,10 +265,6 @@ export function ResolveSyncConflictModal({
             ))}
           </tbody>
         </table>
-
-        <p className="tr-small" style={{ margin: 0, color: "var(--ink-muted)" }}>
-          Assignee is not tracked in Trail yet — only state, board column, and labels are synced.
-        </p>
 
         {error ? <p className="tr-conflict-text">{error}</p> : null}
 

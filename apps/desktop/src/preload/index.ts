@@ -124,6 +124,7 @@ export type TrailApi = {
       state?: "github" | "trail";
       boardColumn?: "github" | "trail";
       labels?: "github" | "trail";
+      assignee?: "github" | "trail";
     };
   }) => Promise<{ ok: true } | { ok: false; message: string }>;
   listWorktrees: (workspaceId?: string) => Promise<{

@@ -45,6 +45,12 @@ CREATE TABLE IF NOT EXISTS issue_sync_conflicts (
 `);
     version = 9;
   }
+  if (version < 10) {
+    db.exec("ALTER TABLE issue_cache ADD COLUMN assignee_login TEXT");
+    db.exec("ALTER TABLE issue_sync_conflicts ADD COLUMN github_assignee_login TEXT");
+    db.exec("ALTER TABLE issue_sync_conflicts ADD COLUMN trail_assignee_login TEXT");
+    version = 10;
+  }
   if (version > schemaVersion) {
     db.prepare("DELETE FROM schema_version").run();
     db.prepare("INSERT INTO schema_version (version) VALUES (?)").run(version);

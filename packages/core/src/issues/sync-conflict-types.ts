@@ -4,6 +4,7 @@ export type IssueSyncConflictSide = {
   state: string;
   boardColumn: BoardColumnId;
   labels: string[];
+  assigneeLogin: string | null;
   updatedAt: string;
 };
 
@@ -16,7 +17,7 @@ export type IssueSyncConflictRecord = {
   detectedAt: string;
 };
 
-export type SyncConflictField = "state" | "boardColumn" | "labels";
+export type SyncConflictField = "state" | "boardColumn" | "labels" | "assignee";
 
 export type SyncConflictResolutionPicks = Partial<
   Record<SyncConflictField, "github" | "trail">

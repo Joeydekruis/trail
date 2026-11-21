@@ -34,6 +34,7 @@ describe("resolveMcpAddTaskComment", () => {
         updatedAt: new Date().toISOString(),
         htmlUrl: "https://github.com/o/r/issues/1",
         body: "",
+        assigneeLogin: null,
       },
     ]);
     const ok = resolveMcpAddTaskComment(stores, { workspaceId: ws.id, id: "#1", body: "Ship it" });

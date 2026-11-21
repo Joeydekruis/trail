@@ -12,4 +12,6 @@ export type IssueCacheRecord = {
   updatedAt: string;
   htmlUrl: string;
   body: string | null;
+  /** GitHub user login; null when unassigned. */
+  assigneeLogin: string | null;
 };

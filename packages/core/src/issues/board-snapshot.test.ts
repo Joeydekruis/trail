@@ -14,6 +14,7 @@ function issue(number: number, column: IssueCacheRecord["boardColumn"]): IssueCa
     updatedAt: "2026-01-01T00:00:00.000Z",
     htmlUrl: `https://github.com/o/r/issues/${number}`,
     body: null,
+    assigneeLogin: null,
   };
 }
 

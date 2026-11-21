@@ -37,6 +37,7 @@ export function seedE2eFixtures(
       updatedAt: now,
       htmlUrl: "https://github.com/trail/demo/issues/42",
       body: "Seeded for Playwright",
+      assigneeLogin: null,
     },
     {
       workspaceId: E2E_WORKSPACE_ID,
@@ -49,6 +50,7 @@ export function seedE2eFixtures(
       updatedAt: now,
       htmlUrl: "https://github.com/trail/demo/issues/43",
       body: null,
+      assigneeLogin: null,
     },
   ]);
 

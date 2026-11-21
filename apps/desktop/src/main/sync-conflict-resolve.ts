@@ -1,7 +1,11 @@
 import type { BoardColumnId, IssueCacheStore, IssueSyncConflictStore, WorkspaceStore } from "@trail/core";
 import { applySyncConflictPicks, type SyncConflictResolutionPicks } from "@trail/core";
 import { moveBoardIssue } from "./board-move-issue";
-import { setGitHubIssueLabels, setGitHubIssueState } from "./github-api";
+import {
+  setGitHubIssueAssignees,
+  setGitHubIssueLabels,
+  setGitHubIssueState,
+} from "./github-api";
 import { readGitHubToken } from "./github-token-store";
 
 function parseRepository(fullName: string): { owner: string; repo: string } | null {
@@ -52,6 +56,7 @@ export async function resolveIssueSyncConflict(input: {
       state: resolved.state,
       boardColumn: resolved.boardColumn,
       labels: resolved.labels,
+      assigneeLogin: resolved.assigneeLogin,
       updatedAt: new Date().toISOString(),
     });
     conflicts.deleteConflict(workspaceId, issueNumber);
@@ -108,7 +113,22 @@ export async function resolveIssueSyncConflict(input: {
     });
   }
 
-  const labelsKey = [...cached.labels].sort().join(",");
+  const afterPartial = issues.get(workspaceId, issueNumber) ?? cached;
+  const nextAssignee = resolved.assigneeLogin;
+  if ((afterPartial.assigneeLogin ?? null) !== (nextAssignee ?? null)) {
+    const assigneeResult = await setGitHubIssueAssignees(
+      token,
+      parts.owner,
+      parts.repo,
+      issueNumber,
+      nextAssignee ? [nextAssignee] : [],
+    );
+    if (!assigneeResult.ok) {
+      return assigneeResult;
+    }
+  }
+
+  const labelsKey = [...afterPartial.labels].sort().join(",");
   const resolvedLabelsKey = [...resolved.labels].sort().join(",");
   if (labelsKey !== resolvedLabelsKey) {
     const labelResult = await setGitHubIssueLabels(
@@ -138,6 +158,7 @@ export async function resolveIssueSyncConflict(input: {
       state: resolved.state,
       boardColumn: resolved.boardColumn,
       labels: resolved.labels,
+      assigneeLogin: resolved.assigneeLogin,
       updatedAt: new Date().toISOString(),
     });
   }

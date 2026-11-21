@@ -198,6 +198,27 @@ export async function createDraftPullRequest(
   return { ok: true, number: row.number, htmlUrl: row.html_url };
 }
 
+export async function setGitHubIssueAssignees(
+  token: string,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  assigneeLogins: string[],
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}`,
+    {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify({ assignees: assigneeLogins }),
+    },
+  );
+  if (!response.ok) {
+    return { ok: false, message: await parseError(response) };
+  }
+  return { ok: true };
+}
+
 export async function setGitHubIssueLabels(
   token: string,
   owner: string,

@@ -145,6 +145,7 @@ const syncConflictSideDto = z.object({
   state: z.string(),
   boardColumn: boardColumnId,
   labels: z.array(z.string()),
+  assigneeLogin: z.string().nullable(),
   updatedAt: z.string(),
 });
 
@@ -177,6 +178,7 @@ export const syncConflictResolvePayload = z.object({
       state: syncConflictSidePick.optional(),
       boardColumn: syncConflictSidePick.optional(),
       labels: syncConflictSidePick.optional(),
+      assignee: syncConflictSidePick.optional(),
     })
     .optional(),
 });

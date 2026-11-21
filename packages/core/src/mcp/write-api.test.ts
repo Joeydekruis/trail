@@ -64,6 +64,7 @@ describe("mcpCreateDecision", () => {
         updatedAt: new Date().toISOString(),
         htmlUrl: "https://github.com/o/r/issues/99",
         body: "",
+        assigneeLogin: null,
       },
     ]);
     stores.worktrees.upsert({

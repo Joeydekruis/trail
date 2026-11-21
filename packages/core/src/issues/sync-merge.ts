@@ -14,8 +14,13 @@ function sideFromIssue(issue: IssueCacheRecord): IssueSyncConflictSide {
     state: issue.state,
     boardColumn: issue.boardColumn,
     labels: [...issue.labels],
+    assigneeLogin: issue.assigneeLogin,
     updatedAt: issue.updatedAt,
   };
+}
+
+function assigneesEqual(a: string | null, b: string | null): boolean {
+  return (a ?? null) === (b ?? null);
 }
 
 export function issueSidesDiffer(
@@ -28,7 +33,10 @@ export function issueSidesDiffer(
   if (local.boardColumn !== remote.boardColumn) {
     return true;
   }
-  return labelsKey(local.labels) !== labelsKey(remote.labels);
+  if (labelsKey(local.labels) !== labelsKey(remote.labels)) {
+    return true;
+  }
+  return !assigneesEqual(local.assigneeLogin, remote.assigneeLogin);
 }
 
 export function mergeWorkspaceIssuesFromGitHub(
@@ -81,7 +89,12 @@ export function applySyncConflictPicks(
   conflict: IssueSyncConflictRecord,
   picks: SyncConflictResolutionPicks,
   useGitHubForAll: boolean,
-): { state: string; boardColumn: IssueSyncConflictSide["boardColumn"]; labels: string[] } {
+): {
+  state: string;
+  boardColumn: IssueSyncConflictSide["boardColumn"];
+  labels: string[];
+  assigneeLogin: string | null;
+} {
   const pick = (field: keyof SyncConflictResolutionPicks): "github" | "trail" => {
     if (useGitHubForAll) {
       return "github";
@@ -98,5 +111,6 @@ export function applySyncConflictPicks(
     state: from(pick("state")).state,
     boardColumn: from(pick("boardColumn")).boardColumn,
     labels: [...from(pick("labels")).labels],
+    assigneeLogin: from(pick("assignee")).assigneeLogin,
   };
 }

@@ -23,6 +23,7 @@ describe("finalizeAgentRun", () => {
           labels: [],
           updatedAt: new Date().toISOString(),
           htmlUrl: "https://github.com/o/r/issues/42",
+          assigneeLogin: null,
           body: null,
         },
       ]);

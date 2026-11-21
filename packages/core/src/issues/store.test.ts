@@ -25,6 +25,7 @@ describe("IssueCacheStore", () => {
         updatedAt: "2026-01-01T00:00:00Z",
         htmlUrl: "https://example/1",
         body: "Body one",
+        assigneeLogin: null,
       },
       {
         workspaceId: "trail",
@@ -37,6 +38,7 @@ describe("IssueCacheStore", () => {
         updatedAt: "2026-01-02T00:00:00Z",
         htmlUrl: "https://example/2",
         body: null,
+        assigneeLogin: "octocat",
       },
     ]);
 

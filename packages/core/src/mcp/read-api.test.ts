@@ -31,6 +31,7 @@ describe("mcp read-api", () => {
         updatedAt: new Date().toISOString(),
         htmlUrl: "https://github.com/o/r/issues/42",
         body: "Body",
+        assigneeLogin: null,
       },
     ]);
     const rows = mcpListTasks({ workspaces, issues, knowledge, decisions, worktrees, pins });

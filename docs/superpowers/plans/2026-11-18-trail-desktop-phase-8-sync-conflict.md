@@ -7,5 +7,5 @@
 - [x] SQLite `issue_sync_conflicts` + merge on sync (state, board column, labels)
 - [x] IPC list/resolve + push state, Projects status, labels to GitHub
 - [x] Conflict banner + Resolve sync conflict modal
-- [ ] Assignee field (not in issue cache yet)
+- [x] Assignee field in issue cache + conflict resolve (GitHub PATCH assignees)
 - [x] Per-card sync status on board (`synced` / `conflict`; `pending` reserved)

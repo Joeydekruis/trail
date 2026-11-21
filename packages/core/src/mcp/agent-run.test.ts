@@ -37,6 +37,7 @@ describe("resolveMcpStartAgentRun", () => {
         updatedAt: new Date().toISOString(),
         htmlUrl: "https://github.com/o/r/issues/7",
         body: "",
+        assigneeLogin: null,
       },
     ]);
     const missing = resolveMcpStartAgentRun(stores, { number: 7 });
@@ -82,6 +83,7 @@ describe("resolveMcpStartAgentRun", () => {
         updatedAt: new Date().toISOString(),
         htmlUrl: "https://github.com/o/r/issues/8",
         body: "",
+        assigneeLogin: null,
       },
     ]);
     stores.worktrees.upsert({

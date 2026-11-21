@@ -67,6 +67,7 @@ export class MemorySqlite implements SqliteDatabase {
             updated_at: row.updatedAt,
             html_url: row.htmlUrl,
             body: row.body ?? null,
+            assignee_login: row.assigneeLogin ?? null,
           });
         }
         if (sql.includes("DELETE FROM issue_cache WHERE workspace_id")) {
@@ -110,6 +111,8 @@ export class MemorySqlite implements SqliteDatabase {
             trail_labels_json: row.trailLabelsJson,
             github_updated_at: row.githubUpdatedAt,
             trail_updated_at: row.trailUpdatedAt,
+            github_assignee_login: row.githubAssigneeLogin ?? null,
+            trail_assignee_login: row.trailAssigneeLogin ?? null,
             detected_at: row.detectedAt,
           };
           const next = rows.filter(
@@ -138,6 +141,7 @@ export class MemorySqlite implements SqliteDatabase {
               updated_at: row.updatedAt,
               html_url: row.htmlUrl,
               body: row.body ?? null,
+              assignee_login: row.assigneeLogin ?? null,
             });
             return { changes: 1 };
           }

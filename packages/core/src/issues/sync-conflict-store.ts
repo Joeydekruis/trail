@@ -15,6 +15,8 @@ type ConflictRow = {
   github_updated_at: string;
   trail_updated_at: string;
   detected_at: string;
+  github_assignee_login: string | null;
+  trail_assignee_login: string | null;
 };
 
 function parseSide(
@@ -22,11 +24,13 @@ function parseSide(
   boardColumn: string,
   labelsJson: string,
   updatedAt: string,
+  assigneeLogin: string | null | undefined,
 ): IssueSyncConflictSide {
   return {
     state,
     boardColumn: boardColumn as BoardColumnId,
     labels: JSON.parse(labelsJson) as string[],
+    assigneeLogin: assigneeLogin ?? null,
     updatedAt,
   };
 }
@@ -41,12 +45,14 @@ function mapRow(row: ConflictRow): IssueSyncConflictRecord {
       row.github_board_column,
       row.github_labels_json,
       row.github_updated_at,
+      row.github_assignee_login,
     ),
     trail: parseSide(
       row.trail_state,
       row.trail_board_column,
       row.trail_labels_json,
       row.trail_updated_at,
+      row.trail_assignee_login,
     ),
     detectedAt: row.detected_at,
   };
@@ -66,6 +72,8 @@ function rowFromRecord(record: IssueSyncConflictRecord): ConflictRow {
     github_updated_at: record.github.updatedAt,
     trail_updated_at: record.trail.updatedAt,
     detected_at: record.detectedAt,
+    github_assignee_login: record.github.assigneeLogin,
+    trail_assignee_login: record.trail.assigneeLogin,
   };
 }
 
@@ -110,6 +118,7 @@ export class IssueSyncConflictStore {
         github_board_column, trail_board_column,
         github_labels_json, trail_labels_json,
         github_updated_at, trail_updated_at,
+        github_assignee_login, trail_assignee_login,
         detected_at
       ) VALUES (
         @workspaceId, @issueNumber, @title,
@@ -117,6 +126,7 @@ export class IssueSyncConflictStore {
         @githubBoardColumn, @trailBoardColumn,
         @githubLabelsJson, @trailLabelsJson,
         @githubUpdatedAt, @trailUpdatedAt,
+        @githubAssigneeLogin, @trailAssigneeLogin,
         @detectedAt
       )
     `);
@@ -137,6 +147,8 @@ export class IssueSyncConflictStore {
           trailLabelsJson: row.trail_labels_json,
           githubUpdatedAt: row.github_updated_at,
           trailUpdatedAt: row.trail_updated_at,
+          githubAssigneeLogin: row.github_assignee_login,
+          trailAssigneeLogin: row.trail_assignee_login,
           detectedAt: row.detected_at,
         });
       }

@@ -14,6 +14,7 @@ type IssueRow = {
   updated_at: string;
   html_url: string;
   body: string | null;
+  assignee_login: string | null;
 };
 
 function parseRow(row: IssueRow): IssueCacheRecord {
@@ -28,6 +29,7 @@ function parseRow(row: IssueRow): IssueCacheRecord {
     updatedAt: row.updated_at,
     htmlUrl: row.html_url,
     body: row.body ?? null,
+    assigneeLogin: row.assignee_login ?? null,
   };
 }
 
@@ -39,10 +41,10 @@ export class IssueCacheStore {
     const insert = this.db.prepare(`
       INSERT INTO issue_cache (
         workspace_id, number, title, state, board_column, priority,
-        labels_json, updated_at, html_url, body
+        labels_json, updated_at, html_url, body, assignee_login
       ) VALUES (
         @workspaceId, @number, @title, @state, @boardColumn, @priority,
-        @labelsJson, @updatedAt, @htmlUrl, @body
+        @labelsJson, @updatedAt, @htmlUrl, @body, @assigneeLogin
       )
     `);
 
@@ -60,6 +62,7 @@ export class IssueCacheStore {
           updatedAt: issue.updatedAt,
           htmlUrl: issue.htmlUrl,
           body: issue.body,
+          assigneeLogin: issue.assigneeLogin,
         });
       }
     });
@@ -128,6 +131,7 @@ export class IssueCacheStore {
           updatedAt: issue.updatedAt,
           htmlUrl: issue.htmlUrl,
           body: issue.body,
+          assigneeLogin: issue.assigneeLogin,
         });
       return;
     }
@@ -141,7 +145,8 @@ export class IssueCacheStore {
           labels_json = @labelsJson,
           updated_at = @updatedAt,
           html_url = @htmlUrl,
-          body = @body
+          body = @body,
+          assignee_login = @assigneeLogin
         WHERE workspace_id = @workspaceId AND number = @number
       `)
       .run({
@@ -155,6 +160,7 @@ export class IssueCacheStore {
         updatedAt: issue.updatedAt,
         htmlUrl: issue.htmlUrl,
         body: issue.body,
+        assigneeLogin: issue.assigneeLogin,
       });
   }
 

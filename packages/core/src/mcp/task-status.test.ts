@@ -32,6 +32,7 @@ describe("resolveMcpUpdateTaskStatus", () => {
         updatedAt: new Date().toISOString(),
         htmlUrl: "https://github.com/o/r/issues/7",
         body: "",
+        assigneeLogin: null,
       },
     ]);
     const resolved = resolveMcpUpdateTaskStatus(stores, {

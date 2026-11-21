@@ -22,6 +22,7 @@ describe("moveBoardIssue", () => {
           labels: ["agent-ready"],
           updatedAt: new Date().toISOString(),
           htmlUrl: "https://github.com/o/r/issues/7",
+          assigneeLogin: null,
           body: null,
         },
       ]);

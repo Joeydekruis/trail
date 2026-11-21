@@ -14,6 +14,7 @@ function issue(partial: Partial<IssueCacheRecord> & { number: number }): IssueCa
     updatedAt: new Date().toISOString(),
     htmlUrl: `https://github.com/o/r/issues/${partial.number}`,
     body: null,
+    assigneeLogin: null,
     ...partial,
   };
 }

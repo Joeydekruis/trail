@@ -19,6 +19,7 @@ function issue(
     updatedAt: "2026-01-01T00:00:00.000Z",
     htmlUrl: `https://github.com/o/r/issues/${number}`,
     body: null,
+    assigneeLogin: null,
   };
 }
 
@@ -51,5 +52,11 @@ describe("mergeWorkspaceIssuesFromGitHub", () => {
     );
     expect(conflicts).toHaveLength(0);
     expect(merged[0]).toEqual(remote[0]);
+  });
+
+  it("detects assignee drift", () => {
+    const local = [{ ...issue(5, "open", "todo"), assigneeLogin: "dev-a" }];
+    const remote = [{ ...issue(5, "open", "todo"), assigneeLogin: "dev-b" }];
+    expect(issueSidesDiffer(local[0], remote[0])).toBe(true);
   });
 });

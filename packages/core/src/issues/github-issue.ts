@@ -10,6 +10,7 @@ export type GitHubIssuePayload = {
   updated_at: string;
   html_url: string;
   body?: string | null;
+  assignee?: { login: string } | null;
   pull_request?: unknown;
 };
 
@@ -35,5 +36,6 @@ export function mapGitHubIssueToCache(
     updatedAt: issue.updated_at,
     htmlUrl: issue.html_url,
     body: issue.body ?? null,
+    assigneeLogin: issue.assignee?.login?.trim() || null,
   };
 }
