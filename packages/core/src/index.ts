@@ -62,6 +62,13 @@ export {
   workspaceWorktreeRootKey,
   defaultWorktreeRootForWorkspace,
 } from "./worktree/settings.js";
+export {
+  parseTrailPreviewConfigYaml,
+  previewConfigFromPackageJsonScripts,
+  preferredPortFromPreviewUrl,
+  previewUrlWithPort,
+  type TrailPreviewConfig,
+} from "./workspace/trail-preview-config.js";
 export { WorktreeStore, openWorktreeStore, worktreeId } from "./worktree/store.js";
 export { parseAgentVersionOutput } from "./agent/parse-version.js";
 export type { AgentBackendId, AgentBackendStatus } from "./agent/types.js";

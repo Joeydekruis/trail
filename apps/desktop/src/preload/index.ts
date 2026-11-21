@@ -177,6 +177,13 @@ export type TrailApi = {
     workspaceId: string;
     issueNumber: number;
   }) => Promise<void>;
+  previewEnsureDevServer: (input: {
+    workspaceId: string;
+    issueNumber: number;
+  }) => Promise<
+    | { ok: true; url: string; started: boolean }
+    | { ok: false; message: string }
+  >;
   previewNavigate: (input: {
     workspaceId: string;
     issueNumber: number;
@@ -365,6 +372,11 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.previewSetBounds, input) as Promise<void>,
   previewDetach: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.previewDetach, input) as Promise<void>,
+  previewEnsureDevServer: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.previewEnsureDevServer, input) as Promise<
+      | { ok: true; url: string; started: boolean }
+      | { ok: false; message: string }
+    >,
   previewNavigate: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.previewNavigate, input) as Promise<
       { ok: true; url: string } | { ok: false; message: string }

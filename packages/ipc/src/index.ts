@@ -25,6 +25,7 @@ export const IpcChannels = {
   previewAttach: "preview.attach",
   previewSetBounds: "preview.setBounds",
   previewDetach: "preview.detach",
+  previewEnsureDevServer: "preview.ensureDevServer",
   previewNavigate: "preview.navigate",
   previewCommentMode: "preview.commentMode",
   previewPinSubmit: "preview.pinSubmit",
@@ -512,6 +513,21 @@ export type PreviewSetBoundsPayload = z.infer<typeof previewSetBoundsPayload>;
 export const previewDetachPayload = previewWorktreeRef;
 
 export type PreviewDetachPayload = z.infer<typeof previewDetachPayload>;
+
+export const previewEnsureDevServerPayload = previewWorktreeRef;
+
+export type PreviewEnsureDevServerPayload = z.infer<typeof previewEnsureDevServerPayload>;
+
+export const previewEnsureDevServerResult = z.union([
+  z.object({
+    ok: z.literal(true),
+    url: z.string().url(),
+    started: z.boolean(),
+  }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type PreviewEnsureDevServerResult = z.infer<typeof previewEnsureDevServerResult>;
 
 export const previewNavigatePayload = previewWorktreeRef.extend({
   url: z.string().min(1),

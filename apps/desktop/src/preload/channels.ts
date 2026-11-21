@@ -23,6 +23,7 @@ export const PreloadIpcChannels = {
   previewAttach: "preview.attach",
   previewSetBounds: "preview.setBounds",
   previewDetach: "preview.detach",
+  previewEnsureDevServer: "preview.ensureDevServer",
   previewNavigate: "preview.navigate",
   previewCommentMode: "preview.commentMode",
   previewPinSubmit: "preview.pinSubmit",

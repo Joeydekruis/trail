@@ -83,8 +83,43 @@ function WorktreeViewBody({
   const [previewUrl, setPreviewUrl] = useState(DEFAULT_PREVIEW_URL);
   const [previewUrlDraft, setPreviewUrlDraft] = useState(DEFAULT_PREVIEW_URL);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewDevBusy, setPreviewDevBusy] = useState(false);
 
   useBatchedAgentLines(workspaceId, context.issueNumber, setExtraMessages);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (mode !== "preview" || !workspaceId || !api?.previewEnsureDevServer) {
+      return;
+    }
+    let cancelled = false;
+    setPreviewDevBusy(true);
+    void api
+      .previewEnsureDevServer({
+        workspaceId,
+        issueNumber: context.issueNumber,
+      })
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+        if (result.ok) {
+          setPreviewUrl(result.url);
+          setPreviewUrlDraft(result.url);
+          setPreviewError(null);
+        } else {
+          setPreviewError(result.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPreviewDevBusy(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, workspaceId, context.issueNumber]);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -232,6 +267,7 @@ function WorktreeViewBody({
             previewUrl={previewUrl}
             previewUrlDraft={previewUrlDraft}
             previewError={previewError}
+            previewDevBusy={previewDevBusy}
             onPreviewUrlDraft={setPreviewUrlDraft}
             onCommitPreviewUrl={async () => {
               const normalized = normalizePreviewUrl(previewUrlDraft);
@@ -412,6 +448,7 @@ function PreviewSplit({
   previewUrl,
   previewUrlDraft,
   previewError,
+  previewDevBusy,
   onPreviewUrlDraft,
   onCommitPreviewUrl,
   messages,
@@ -423,6 +460,7 @@ function PreviewSplit({
   previewUrl: string;
   previewUrlDraft: string;
   previewError: string | null;
+  previewDevBusy: boolean;
   onPreviewUrlDraft: (value: string) => void;
   onCommitPreviewUrl: () => void;
   messages: ChatLine[];
@@ -467,7 +505,10 @@ function PreviewSplit({
               color: "var(--ink-muted)",
             }}
           />
-          <SyncStatus state="synced" label="Embedded preview" />
+          <SyncStatus
+            state={previewDevBusy ? "pending" : "synced"}
+            label={previewDevBusy ? "Starting dev server…" : "Embedded preview"}
+          />
           {previewError ? (
             <span className="tr-small" style={{ color: "var(--warning)" }}>
               {previewError}

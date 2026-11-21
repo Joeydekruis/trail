@@ -6,7 +6,8 @@
 
 - [x] Preview — `WebContentsView` per worktree, IPC attach/setBounds/detach, localhost URL bar
 - [x] Preview preload — pin overlay (shadow DOM) + Send to chat (SQLite anchors)
-- [x] Preview idle — embedded view naar `about:blank` na 10 min zichtbaar (dev-server spawn volgt config)
+- [x] Preview idle — embedded view naar `about:blank` na 10 min zichtbaar
+- [x] Preview dev-server — spawn per worktree uit `.trail/config.yml` (of `package.json` dev), stop bij detach
 - [x] Designs — lazy chunk + `design/` scan (`v{n}.html`) + iframe preview
 - [x] Docs/Roadmap/Decisions — lazy-loaded chunks
 - [x] Chat memo (`ChatRow`)

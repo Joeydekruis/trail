@@ -149,6 +149,13 @@ declare global {
         workspaceId: string;
         issueNumber: number;
       }) => Promise<void>;
+      previewEnsureDevServer?: (input: {
+        workspaceId: string;
+        issueNumber: number;
+      }) => Promise<
+        | { ok: true; url: string; started: boolean }
+        | { ok: false; message: string }
+      >;
       previewNavigate?: (input: {
         workspaceId: string;
         issueNumber: number;

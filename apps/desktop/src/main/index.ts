@@ -19,6 +19,7 @@ import { registerAgentIpc } from "./agent-ipc";
 import { registerDesignIpc } from "./design-ipc";
 import { registerKnowledgeIpc } from "./knowledge-ipc";
 import { registerPreviewIpc } from "./preview-ipc";
+import { disposeAllPreviewDevServers } from "./preview-dev-server";
 import { disposeAllPreviews, onPreviewWindowClosed } from "./preview-host";
 import { registerGitHubIpc } from "./github-ipc";
 import { registerWorkspaceIpc } from "./workspace-ipc";
@@ -156,5 +157,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  disposeAllPreviewDevServers();
   disposeAllPreviews();
 });

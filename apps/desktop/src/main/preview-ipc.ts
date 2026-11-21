@@ -5,6 +5,8 @@ import {
   previewAttachResult,
   previewCommentModePayload,
   previewDetachPayload,
+  previewEnsureDevServerPayload,
+  previewEnsureDevServerResult,
   previewNavigatePayload,
   previewNavigateResult,
   previewPinSubmitPayload,
@@ -22,6 +24,7 @@ import {
   setPreviewCommentMode,
 } from "./preview-host";
 import { broadcastPreviewPin } from "./preview-pin-shared";
+import { ensurePreviewDevServer, stopPreviewDevServer } from "./preview-dev-server";
 
 function hostWindow(event: Electron.IpcMainInvokeEvent): BrowserWindow | null {
   return BrowserWindow.fromWebContents(event.sender);
@@ -62,6 +65,13 @@ export function registerPreviewIpc(): void {
   ipcMain.handle(IpcChannels.previewDetach, (_event, raw: unknown) => {
     const payload = previewDetachPayload.parse(raw);
     detachPreview(payload);
+    stopPreviewDevServer(payload);
+  });
+
+  ipcMain.handle(IpcChannels.previewEnsureDevServer, async (_event, raw: unknown) => {
+    const payload = previewEnsureDevServerPayload.parse(raw);
+    const result = await ensurePreviewDevServer(payload);
+    return previewEnsureDevServerResult.parse(result);
   });
 
   ipcMain.handle(IpcChannels.previewNavigate, (_event, raw: unknown) => {
