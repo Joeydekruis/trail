@@ -287,6 +287,10 @@ export type TrailApi = {
     openViewCount?: number;
   }) => Promise<{ ok: true }>;
   mcpConnection: () => Promise<import("@trail/ipc").McpConnectionResult>;
+  mcpSettingsGet: (workspaceId?: string) => Promise<import("@trail/ipc").McpSettingsGetResult>;
+  mcpSettingsSet: (
+    input: import("@trail/ipc").McpSettingsSetPayload,
+  ) => Promise<import("@trail/ipc").McpSettingsSetResult>;
 };
 
 const trailApi: TrailApi = {
@@ -572,6 +576,14 @@ const trailApi: TrailApi = {
   mcpConnection: () =>
     ipcRenderer.invoke(PreloadIpcChannels.mcpConnection) as Promise<
       import("@trail/ipc").McpConnectionResult
+    >,
+  mcpSettingsGet: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.mcpSettingsGet, { workspaceId }) as Promise<
+      import("@trail/ipc").McpSettingsGetResult
+    >,
+  mcpSettingsSet: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.mcpSettingsSet, input) as Promise<
+      import("@trail/ipc").McpSettingsSetResult
     >,
 };
 

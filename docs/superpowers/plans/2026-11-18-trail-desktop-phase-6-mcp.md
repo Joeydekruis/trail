@@ -13,4 +13,4 @@
 - [x] MCP write: `update_task_status` (board column via GitHub Projects when linked)
 - [x] MCP write: `resolve_pin` (delete pin from SQLite)
 - [x] MCP write: `add_task_comment` (GitHub issue comment)
-- [ ] Per-workspace MCP toggles persisted in SQLite
+- [x] Per-workspace MCP toggles persisted in SQLite (Settings → MCP)

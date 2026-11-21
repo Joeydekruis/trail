@@ -9,6 +9,7 @@ import {
   mcpListWorkspaces,
   mcpResolvePin,
   mcpSearchDocs,
+  assertMcpToolAllowed,
   resolveMcpAddTaskComment,
   resolveMcpUpdateTaskStatus,
 } from "@trail/core";
@@ -40,6 +41,12 @@ export async function executeTrailMcpTool(
   args: TrailMcpToolArgs,
 ): Promise<unknown> {
   const { stores } = context;
+  const workspaceArg =
+    typeof args.workspaceId === "string" ? args.workspaceId : undefined;
+  const gate = assertMcpToolAllowed(stores.workspaces, tool, workspaceArg);
+  if (!gate.ok) {
+    return gate;
+  }
   switch (tool) {
     case "list_workspaces":
       return mcpListWorkspaces(stores);

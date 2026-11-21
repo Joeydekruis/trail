@@ -56,6 +56,8 @@ export const IpcChannels = {
   diagnosticsMarkRendererReady: "diagnostics.markRendererReady",
   diagnosticsReportWorkspaceSwitch: "diagnostics.reportWorkspaceSwitch",
   mcpConnection: "mcp.connection",
+  mcpSettingsGet: "mcp.settings.get",
+  mcpSettingsSet: "mcp.settings.set",
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -947,3 +949,43 @@ export const mcpConnectionResult = z.object({
 });
 
 export type McpConnectionResult = z.infer<typeof mcpConnectionResult>;
+
+export const mcpWorkspaceSettingsDto = z.object({
+  workspaceId: z.string().min(1),
+  enabled: z.boolean(),
+  readEnabled: z.boolean(),
+  writeEnabled: z.boolean(),
+  sourceDocs: z.boolean(),
+  sourceDecisions: z.boolean(),
+  sourceDesigns: z.boolean(),
+  allowAgentRuns: z.boolean(),
+});
+
+export type McpWorkspaceSettingsDto = z.infer<typeof mcpWorkspaceSettingsDto>;
+
+export const mcpSettingsGetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type McpSettingsGetPayload = z.infer<typeof mcpSettingsGetPayload>;
+
+export const mcpSettingsGetResult = mcpWorkspaceSettingsDto;
+
+export type McpSettingsGetResult = z.infer<typeof mcpSettingsGetResult>;
+
+export const mcpSettingsSetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  enabled: z.boolean().optional(),
+  readEnabled: z.boolean().optional(),
+  writeEnabled: z.boolean().optional(),
+  sourceDocs: z.boolean().optional(),
+  sourceDecisions: z.boolean().optional(),
+  sourceDesigns: z.boolean().optional(),
+  allowAgentRuns: z.boolean().optional(),
+});
+
+export type McpSettingsSetPayload = z.infer<typeof mcpSettingsSetPayload>;
+
+export const mcpSettingsSetResult = mcpWorkspaceSettingsDto;
+
+export type McpSettingsSetResult = z.infer<typeof mcpSettingsSetResult>;

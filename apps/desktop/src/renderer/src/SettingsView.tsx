@@ -102,6 +102,10 @@ export function SettingsView({
   const [agentBackends, setAgentBackends] = useState<AgentBackendStatusDto[]>([]);
   const [mcpInfo, setMcpInfo] = useState<import("@trail/ipc").McpConnectionResult | null>(null);
   const [mcpLoading, setMcpLoading] = useState(false);
+  const [mcpSettings, setMcpSettings] = useState<import("@trail/ipc").McpWorkspaceSettingsDto | null>(
+    null,
+  );
+  const [mcpSettingsBusy, setMcpSettingsBusy] = useState(false);
   const [autopilotMaxParallel, setAutopilotMaxParallel] = useState(DEFAULT_AUTOPILOT_MAX_PARALLEL);
   const [autopilotBusy, setAutopilotBusy] = useState(false);
   const [autopilotGlobalPause, setAutopilotGlobalPause] = useState(false);
@@ -124,6 +128,38 @@ export function SettingsView({
       setSyncIntervalSec(result.syncIntervalSec);
     });
   }, [section, workspace?.id]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (section !== "mcp" || !workspace?.id || !api?.mcpSettingsGet) {
+      return;
+    }
+    void api.mcpSettingsGet(workspace.id).then(setMcpSettings);
+    if (api.mcpConnection) {
+      setMcpLoading(true);
+      void api.mcpConnection().then(setMcpInfo).finally(() => setMcpLoading(false));
+    }
+  }, [section, workspace?.id]);
+
+  const patchMcpSetting = (
+    patch: Partial<Omit<import("@trail/ipc").McpWorkspaceSettingsDto, "workspaceId">>,
+  ) => {
+    if (!workspace?.id || !mcpSettings) {
+      return;
+    }
+    const api = window.trail;
+    if (!api?.mcpSettingsSet) {
+      setMcpSettings({ ...mcpSettings, ...patch });
+      return;
+    }
+    const optimistic = { ...mcpSettings, ...patch };
+    setMcpSettings(optimistic);
+    setMcpSettingsBusy(true);
+    void api
+      .mcpSettingsSet({ workspaceId: workspace.id, ...patch })
+      .then(setMcpSettings)
+      .finally(() => setMcpSettingsBusy(false));
+  };
 
   useEffect(() => {
     const api = window.trail;
@@ -639,6 +675,40 @@ export function SettingsView({
                   </p>
                 </SettingsBlock>
               ) : null}
+              <SettingsBlock
+                title="Workspace access"
+                lead={`Controls what agents may read or write for ${name}. Applies to every MCP tool call scoped to this workspace.`}
+              >
+                {!mcpSettings ? (
+                  <p className="tr-small">Loading…</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {(
+                      [
+                        ["enabled", "MCP enabled for this workspace"],
+                        ["readEnabled", "Read tools (tasks, decisions, docs, pins)"],
+                        ["writeEnabled", "Write tools (decisions, board, pins, comments)"],
+                        ["sourceDocs", "Knowledge / search_docs"],
+                        ["sourceDecisions", "Decisions (list, get, create)"],
+                        ["sourceDesigns", "Designs (reserved for future MCP tools)"],
+                        ["allowAgentRuns", "Allow agents to start runs via MCP (not wired yet)"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <input
+                          type="checkbox"
+                          checked={mcpSettings[key]}
+                          disabled={mcpSettingsBusy || !workspace}
+                          onChange={(event) => {
+                            patchMcpSetting({ [key]: event.target.checked });
+                          }}
+                        />
+                        <span className="tr-small">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </SettingsBlock>
             </div>
           ) : section === "agents" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

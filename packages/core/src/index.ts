@@ -132,6 +132,15 @@ export { mcpResolvePin } from "./mcp/pins.js";
 export type { McpResolvePinInput, McpResolvePinResult } from "./mcp/pins.js";
 export { resolveMcpAddTaskComment } from "./mcp/task-comment.js";
 export type { McpAddTaskCommentInput, McpAddTaskCommentResult } from "./mcp/task-comment.js";
+export {
+  assertMcpToolAllowed,
+  MCP_WRITE_TOOLS,
+  readMcpWorkspaceSettings,
+  resolveMcpFlag,
+  writeMcpWorkspaceSettings,
+  workspaceMcpSettingsKey,
+} from "./mcp/settings.js";
+export type { McpToolGateResult, McpWorkspaceSettings } from "./mcp/settings.js";
 export { resolveMcpUpdateTaskStatus } from "./mcp/task-status.js";
 export type {
   McpUpdateTaskStatusInput,

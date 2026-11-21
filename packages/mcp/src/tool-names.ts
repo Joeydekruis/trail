@@ -8,12 +8,9 @@ export const TRAIL_MCP_READ_TOOLS = [
   "list_open_pins",
 ] as const;
 
-export const TRAIL_MCP_WRITE_TOOLS = [
-  "create_decision",
-  "update_task_status",
-  "resolve_pin",
-  "add_task_comment",
-] as const;
+import { MCP_WRITE_TOOLS } from "@trail/core";
+
+export const TRAIL_MCP_WRITE_TOOLS = MCP_WRITE_TOOLS;
 
 export const TRAIL_MCP_TOOLS = [
   ...TRAIL_MCP_READ_TOOLS,

@@ -252,6 +252,10 @@ declare global {
         openViewCount?: number;
       }) => Promise<{ ok: true }>;
       mcpConnection?: () => Promise<import("@trail/ipc").McpConnectionResult>;
+      mcpSettingsGet?: (workspaceId?: string) => Promise<import("@trail/ipc").McpSettingsGetResult>;
+      mcpSettingsSet?: (
+        input: import("@trail/ipc").McpSettingsSetPayload,
+      ) => Promise<import("@trail/ipc").McpSettingsSetResult>;
     };
   }
 }
