@@ -495,6 +495,8 @@ export const autopilotGetPayload = z.object({
 export const autopilotGetResult = z.object({
   workspaceId: z.string().min(1),
   enabled: z.boolean(),
+  globallyPaused: z.boolean(),
+  queueBlocked: z.boolean(),
   maxParallel: z.number().int().min(1).max(5),
   pickupLabels: z.array(z.string().min(1)),
 });
@@ -504,6 +506,7 @@ export type AutopilotGetResult = z.infer<typeof autopilotGetResult>;
 export const autopilotSetPayload = z.object({
   workspaceId: z.string().min(1).optional(),
   enabled: z.boolean().optional(),
+  globallyPaused: z.boolean().optional(),
   maxParallel: z.number().int().min(1).max(5).optional(),
   pickupLabels: z.array(z.string().min(1)).optional(),
 });

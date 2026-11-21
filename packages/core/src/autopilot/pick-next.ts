@@ -17,6 +17,13 @@ export function issueHasPickupLabel(
   return issue.labels.some((label) => wanted.has(label.trim().toLowerCase()));
 }
 
+/** Autopilot must not dequeue new Todo issues while a run waits on a decision. */
+export function autopilotQueueBlockedByDecisions(
+  worktrees: readonly WorktreeRecord[],
+): boolean {
+  return worktrees.some((wt) => wt.status === "waiting");
+}
+
 export function occupiedIssueNumbers(
   worktrees: readonly WorktreeRecord[],
 ): Set<number> {

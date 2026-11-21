@@ -10,5 +10,5 @@
 - [x] Board autopilot toggle persisted
 - [x] Settings → Agents: parallel run limit
 - [x] Move issue to In progress on GitHub when autopilot picks
-- [ ] Global pause autopilot / waiting-for-decision gate
+- [x] Global pause autopilot / waiting-for-decision gate (worktree `waiting` blocks new picks)
 - [ ] Draft PR on successful run

@@ -108,9 +108,11 @@ export {
   mcpSearchDocs,
 } from "./mcp/read-api.js";
 export {
+  APP_SETTING_AUTOPILOT_GLOBAL_PAUSE,
   DEFAULT_AUTOPILOT_MAX_PARALLEL,
   DEFAULT_AUTOPILOT_PICKUP_LABELS,
   resolveAutopilotEnabled,
+  resolveAutopilotGlobalPause,
   resolveAutopilotMaxParallel,
   resolveAutopilotPickupLabels,
   serializeAutopilotPickupLabels,
@@ -118,4 +120,8 @@ export {
   workspaceAutopilotMaxParallelKey,
   workspaceAutopilotPickupLabelsKey,
 } from "./autopilot/settings.js";
-export { pickAutopilotIssue, issueHasPickupLabel } from "./autopilot/pick-next.js";
+export {
+  autopilotQueueBlockedByDecisions,
+  issueHasPickupLabel,
+  pickAutopilotIssue,
+} from "./autopilot/pick-next.js";

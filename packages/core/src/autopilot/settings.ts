@@ -1,3 +1,5 @@
+export const APP_SETTING_AUTOPILOT_GLOBAL_PAUSE = "autopilot_global_pause" as const;
+
 export const DEFAULT_AUTOPILOT_PICKUP_LABELS = ["agent-ready", "fix"] as const;
 export const DEFAULT_AUTOPILOT_MAX_PARALLEL = 2;
 export const MAX_AUTOPILOT_PARALLEL = 5;
@@ -12,6 +14,13 @@ export function workspaceAutopilotMaxParallelKey(workspaceId: string): string {
 
 export function workspaceAutopilotPickupLabelsKey(workspaceId: string): string {
   return `workspace:${workspaceId}:autopilot_pickup_labels`;
+}
+
+export function resolveAutopilotGlobalPause(stored: string | null | undefined): boolean {
+  if (!stored?.trim()) {
+    return false;
+  }
+  return stored === "1" || stored.toLowerCase() === "true";
 }
 
 export function resolveAutopilotEnabled(stored: string | null | undefined): boolean {

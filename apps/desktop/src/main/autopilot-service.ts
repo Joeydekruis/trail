@@ -1,6 +1,9 @@
 import {
+  APP_SETTING_AUTOPILOT_GLOBAL_PAUSE,
+  autopilotQueueBlockedByDecisions,
   pickAutopilotIssue,
   resolveAutopilotEnabled,
+  resolveAutopilotGlobalPause,
   resolveAutopilotMaxParallel,
   resolveAutopilotPickupLabels,
   workspaceAutopilotEnabledKey,
@@ -24,14 +27,21 @@ let ticking = false;
 
 export function readAutopilotSettings(workspaceId: string): {
   enabled: boolean;
+  globallyPaused: boolean;
+  queueBlocked: boolean;
   maxParallel: number;
   pickupLabels: string[];
 } {
   const store = getWorkspaceStore();
+  const worktrees = getWorktreeStore().listByWorkspace(workspaceId);
   return {
     enabled: resolveAutopilotEnabled(
       store.getAppSetting(workspaceAutopilotEnabledKey(workspaceId)),
     ),
+    globallyPaused: resolveAutopilotGlobalPause(
+      store.getAppSetting(APP_SETTING_AUTOPILOT_GLOBAL_PAUSE),
+    ),
+    queueBlocked: autopilotQueueBlockedByDecisions(worktrees),
     maxParallel: resolveAutopilotMaxParallel(
       store.getAppSetting(workspaceAutopilotMaxParallelKey(workspaceId)),
     ),
@@ -43,13 +53,26 @@ export function readAutopilotSettings(workspaceId: string): {
 
 export function writeAutopilotSettings(
   workspaceId: string,
-  patch: Partial<{ enabled: boolean; maxParallel: number; pickupLabels: string[] }>,
+  patch: Partial<{
+    enabled: boolean;
+    globallyPaused: boolean;
+    maxParallel: number;
+    pickupLabels: string[];
+  }>,
 ): {
   enabled: boolean;
+  globallyPaused: boolean;
+  queueBlocked: boolean;
   maxParallel: number;
   pickupLabels: string[];
 } {
   const store = getWorkspaceStore();
+  if (patch.globallyPaused !== undefined) {
+    store.setAppSetting(
+      APP_SETTING_AUTOPILOT_GLOBAL_PAUSE,
+      patch.globallyPaused ? "1" : "0",
+    );
+  }
   if (patch.enabled !== undefined) {
     store.setAppSetting(
       workspaceAutopilotEnabledKey(workspaceId),
@@ -79,8 +102,14 @@ export async function runAutopilotTick(workspaceId?: string): Promise<void> {
   try {
     const workspaceStore = getWorkspaceStore();
     const id = workspaceId ?? workspaceStore.getActiveId();
+    const issueStore = getIssueCacheStore();
+    const worktreeStore = getWorktreeStore();
+    const worktrees = worktreeStore.listByWorkspace(id);
     const settings = readAutopilotSettings(id);
-    if (!settings.enabled) {
+    if (!settings.enabled || settings.globallyPaused) {
+      return;
+    }
+    if (settings.queueBlocked || autopilotQueueBlockedByDecisions(worktrees)) {
       return;
     }
     if (!readWorkspaceRepoRoot(workspaceStore, id)) {
@@ -93,10 +122,7 @@ export async function runAutopilotTick(workspaceId?: string): Promise<void> {
       return;
     }
 
-    const issueStore = getIssueCacheStore();
-    const worktreeStore = getWorktreeStore();
     const issues = issueStore.listByWorkspace(id);
-    const worktrees = worktreeStore.listByWorkspace(id);
 
     for (let slot = 0; slot < slots; slot += 1) {
       const next = pickAutopilotIssue(issues, worktrees, settings.pickupLabels);

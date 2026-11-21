@@ -104,6 +104,7 @@ export function SettingsView({
   const [mcpLoading, setMcpLoading] = useState(false);
   const [autopilotMaxParallel, setAutopilotMaxParallel] = useState(DEFAULT_AUTOPILOT_MAX_PARALLEL);
   const [autopilotBusy, setAutopilotBusy] = useState(false);
+  const [autopilotGlobalPause, setAutopilotGlobalPause] = useState(false);
   const [agentsLoading, setAgentsLoading] = useState(false);
   const name = workspace?.name ?? "Trail";
   const repoLine = workspace
@@ -137,6 +138,7 @@ export function SettingsView({
     if (workspace?.id && api.autopilotGet) {
       void api.autopilotGet(workspace.id).then((result) => {
         setAutopilotMaxParallel(result.maxParallel);
+        setAutopilotGlobalPause(result.globallyPaused);
       });
     }
   }, [section, workspace?.id]);
@@ -669,6 +671,30 @@ export function SettingsView({
                   <span className="tr-small">
                     Toggle autopilot on the board. Requires a linked repo path and agent CLI on PATH.
                   </span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <input
+                    type="checkbox"
+                    checked={autopilotGlobalPause}
+                    disabled={autopilotBusy || !workspace}
+                    onChange={(event) => {
+                      const globallyPaused = event.target.checked;
+                      if (!workspace?.id) {
+                        return;
+                      }
+                      const api = window.trail;
+                      if (!api?.autopilotSet) {
+                        setAutopilotGlobalPause(globallyPaused);
+                        return;
+                      }
+                      setAutopilotGlobalPause(globallyPaused);
+                      setAutopilotBusy(true);
+                      void api
+                        .autopilotSet({ workspaceId: workspace.id, globallyPaused })
+                        .finally(() => setAutopilotBusy(false));
+                    }}
+                  />
+                  <span className="tr-small">Pause all autopilot (kill switch)</span>
                 </label>
               </SettingsBlock>
               <SettingsBlock

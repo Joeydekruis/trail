@@ -41,6 +41,8 @@ export function BoardView({
   const fixture = getBoardFixture(workspace);
   const [boardMode, setBoardMode] = useState(true);
   const [autopilot, setAutopilot] = useState(false);
+  const [autopilotPaused, setAutopilotPaused] = useState(false);
+  const [autopilotQueueBlocked, setAutopilotQueueBlocked] = useState(false);
   const [issueDetail, setIssueDetail] = useState<IssueDetail | null>(null);
   const [liveBoard, setLiveBoard] = useState<BoardSnapshotResult | null>(null);
   const [kanbanColumns, setKanbanColumns] = useState<BoardColumn[] | null>(null);
@@ -63,8 +65,23 @@ export function BoardView({
     if (!api?.autopilotGet || !workspace?.id) {
       return;
     }
-    void api.autopilotGet(workspace.id).then((result) => setAutopilot(result.enabled));
+    void api.autopilotGet(workspace.id).then((result) => {
+      setAutopilot(result.enabled);
+      setAutopilotPaused(result.globallyPaused);
+      setAutopilotQueueBlocked(result.queueBlocked);
+    });
   }, [workspace?.id]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.autopilotGet || !workspace?.id) {
+      return;
+    }
+    void api.autopilotGet(workspace.id).then((result) => {
+      setAutopilotQueueBlocked(result.queueBlocked);
+      setAutopilotPaused(result.globallyPaused);
+    });
+  }, [workspace?.id, worktrees]);
 
   const toggleAutopilot = () => {
     const api = window.trail;
@@ -343,7 +360,15 @@ export function BoardView({
               />
             </button>
             <span style={{ fontSize: 12, fontWeight: 500 }}>Autopilot</span>
-            <span className="tr-small">{autopilot ? "Cursor CLI · on" : "off"}</span>
+            <span className="tr-small">
+              {!autopilot
+                ? "off"
+                : autopilotPaused
+                  ? "paused"
+                  : autopilotQueueBlocked
+                    ? "waiting on decision"
+                    : "Cursor CLI · on"}
+            </span>
           </span>
         </span>
         <span style={{ marginLeft: "auto" }}>

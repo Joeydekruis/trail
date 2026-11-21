@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickAutopilotIssue } from "./pick-next.js";
+import { autopilotQueueBlockedByDecisions, pickAutopilotIssue } from "./pick-next.js";
 import type { IssueCacheRecord } from "../issues/types.js";
 import type { WorktreeRecord } from "../worktree/types.js";
 
@@ -45,5 +45,24 @@ describe("pickAutopilotIssue", () => {
     ];
     const picked = pickAutopilotIssue(issues, worktrees, ["agent-ready"]);
     expect(picked?.number).toBe(6);
+  });
+});
+
+describe("autopilotQueueBlockedByDecisions", () => {
+  it("is true when any worktree waits on a decision", () => {
+    const blocked = autopilotQueueBlockedByDecisions([
+      {
+        id: "trail:3",
+        workspaceId: "trail",
+        issueNumber: 3,
+        title: "ADR",
+        branch: "agent/3-adr",
+        path: "/tmp",
+        status: "waiting",
+        isRemote: false,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    expect(blocked).toBe(true);
   });
 });

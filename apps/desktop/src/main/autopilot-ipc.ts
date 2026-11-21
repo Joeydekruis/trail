@@ -30,6 +30,7 @@ export function registerAutopilotIpc(): void {
     const workspaceId = resolveWorkspaceId(payload.workspaceId);
     const settings = writeAutopilotSettings(workspaceId, {
       enabled: payload.enabled,
+      globallyPaused: payload.globallyPaused,
       maxParallel: payload.maxParallel,
       pickupLabels: payload.pickupLabels,
     });
