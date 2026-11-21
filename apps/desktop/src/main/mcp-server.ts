@@ -19,6 +19,7 @@ import {
   getWorkspaceStore,
 } from "./database";
 import { runAutopilotTick } from "./autopilot-service";
+import { startAgentRun } from "./agent-run";
 
 const MCP_TOKEN_KEY = "mcp_http_token";
 
@@ -60,6 +61,13 @@ function mcpExecutorContext(): TrailMcpExecutorContext {
     },
     addTaskComment: async ({ workspaceId, issueNumber, body }) => {
       return mcpAddTaskComment({ workspaceId, issueNumber, body });
+    },
+    startAgentRun: async ({ workspaceId, issueNumber, prompt }) => {
+      const result = await startAgentRun({ workspaceId, issueNumber, prompt });
+      if (!result.ok) {
+        return { ok: false as const, message: result.message };
+      }
+      return { ok: true as const, workspaceId, issueNumber, state: "running" as const };
     },
   };
 }

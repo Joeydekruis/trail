@@ -28,4 +28,15 @@ describe("MCP workspace settings", () => {
     const read = assertMcpToolAllowed(store, "list_tasks", ws.id);
     expect(read.ok).toBe(true);
   });
+
+  it("blocks start_agent_run until allowAgentRuns is on", () => {
+    const db = new MemorySqlite();
+    const store = openWorkspaceStore(db);
+    const ws = store.getActive();
+    const blocked = assertMcpToolAllowed(store, "start_agent_run", ws.id);
+    expect(blocked.ok).toBe(false);
+    writeMcpWorkspaceSettings(store, ws.id, { allowAgentRuns: true });
+    const allowed = assertMcpToolAllowed(store, "start_agent_run", ws.id);
+    expect(allowed.ok).toBe(true);
+  });
 });

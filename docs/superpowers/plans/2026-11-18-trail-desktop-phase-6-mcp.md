@@ -14,3 +14,4 @@
 - [x] MCP write: `resolve_pin` (delete pin from SQLite)
 - [x] MCP write: `add_task_comment` (GitHub issue comment)
 - [x] Per-workspace MCP toggles persisted in SQLite (Settings → MCP)
+- [x] MCP write: `start_agent_run` (existing worktree + `allowAgentRuns`)

@@ -237,6 +237,27 @@ export function registerTrailWriteTools(
       }
     },
   );
+
+  server.registerTool(
+    "start_agent_run",
+    {
+      description:
+        "Start an agent CLI run on an existing local worktree (requires allowAgentRuns in Settings).",
+      inputSchema: z.object({
+        workspaceId,
+        number: z.number().int().positive().optional(),
+        id: z.string().optional(),
+        prompt: z.string().min(1).max(20_000).optional(),
+      }),
+    },
+    async (args) => {
+      try {
+        return ok(await Promise.resolve(invoke("start_agent_run", args)));
+      } catch (e) {
+        return err(e instanceof Error ? e.message : String(e));
+      }
+    },
+  );
 }
 
 export function registerTrailMcpTools(
