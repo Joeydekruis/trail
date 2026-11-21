@@ -20,6 +20,7 @@ describe("WorktreeStore", () => {
       isRemote: false,
       createdAt: now,
       pullRequestUrl: null,
+      agentSessionId: null,
     });
     expect(store.listByWorkspace("trail")).toHaveLength(1);
     expect(store.listByWorkspace("loupe")).toHaveLength(0);
@@ -41,6 +42,7 @@ describe("WorktreeStore", () => {
       isRemote: false,
       createdAt: now,
       pullRequestUrl: null,
+      agentSessionId: null,
     });
     const updated = store.updateStatus("trail", 7, "running");
     expect(updated?.status).toBe("running");

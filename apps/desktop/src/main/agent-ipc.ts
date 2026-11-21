@@ -28,6 +28,8 @@ export function registerAgentIpc(): void {
       workspaceId,
       issueNumber: payload.issueNumber,
       prompt: payload.prompt,
+      followUp: payload.followUp,
+      resetSession: payload.resetSession,
     });
     if (!start.ok) {
       return agentRunStartResult.parse({ ok: false, message: start.message });

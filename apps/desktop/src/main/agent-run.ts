@@ -1,3 +1,4 @@
+import { planAgentSessionRun } from "@trail/core";
 import { getWorktreeStore } from "./database";
 import {
   startAgentRunViaUtility,
@@ -16,8 +17,11 @@ export async function startAgentRun(input: {
   workspaceId: string;
   issueNumber: number;
   prompt?: string;
+  followUp?: boolean;
+  resetSession?: boolean;
 }): Promise<StartAgentRunResult> {
-  const record = getWorktreeStore().get(input.workspaceId, input.issueNumber);
+  const worktreeStore = getWorktreeStore();
+  const record = worktreeStore.get(input.workspaceId, input.issueNumber);
   if (!record) {
     return { ok: false, message: "Worktree not found" };
   }
@@ -26,19 +30,25 @@ export async function startAgentRun(input: {
     input.prompt?.trim() ||
     `Implement GitHub issue #${input.issueNumber}: ${record.title}`;
 
+  const session = planAgentSessionRun(record.agentSessionId, {
+    followUp: input.followUp ?? false,
+    resetSession: input.resetSession ?? false,
+  });
+
   const result = await startAgentRunViaUtility({
     workspaceId: input.workspaceId,
     issueNumber: input.issueNumber,
     cwd: record.path,
     prompt,
+    resumeSessionId: session.resumeSessionId,
   });
 
   if (result.ok) {
-    getWorktreeStore().updateStatus(
-      input.workspaceId,
-      input.issueNumber,
-      "running",
-    );
+    worktreeStore.upsert({
+      ...record,
+      status: "running",
+      agentSessionId: session.agentSessionId,
+    });
   }
 
   return result;

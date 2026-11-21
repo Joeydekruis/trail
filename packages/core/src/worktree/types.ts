@@ -21,4 +21,5 @@ export type WorktreeRecord = {
   isRemote: boolean;
   createdAt: string;
   pullRequestUrl: string | null;
+  agentSessionId: string | null;
 };

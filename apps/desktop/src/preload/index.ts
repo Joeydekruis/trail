@@ -148,6 +148,8 @@ export type TrailApi = {
     workspaceId?: string;
     issueNumber: number;
     prompt?: string;
+    followUp?: boolean;
+    resetSession?: boolean;
   }) => Promise<{ ok: true } | { ok: false; message: string }>;
   stopAgentRun: (input: {
     workspaceId?: string;

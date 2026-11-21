@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import type { MessagePortMain } from "electron";
+import { buildClaudeAgentArgs } from "@trail/core";
 
 type StartMessage = {
   type: "start";
@@ -10,6 +11,7 @@ type StartMessage = {
   backend: "cursor" | "claude" | null;
   binary: string | null;
   prompt: string;
+  resumeSessionId?: string | null;
 };
 
 type StopMessage = {
@@ -68,13 +70,16 @@ function postDone(message: DoneMessage): void {
   postToParent(message);
 }
 
-function previewScript(prompt: string, binary: string | null): string {
+function previewScript(prompt: string, binary: string | null, resumeSessionId: string | null): string {
   const lines = binary
     ? [
         `console.log('[trail] ${binary} on PATH — full agent args land in a later batch');`,
+        resumeSessionId
+          ? `console.log('[trail] Resume session: ${resumeSessionId.replace(/'/g, "\\'")}');`
+          : null,
         `console.log('[trail] Prompt: ${prompt.replace(/'/g, "\\'").slice(0, 200)}');`,
         "console.log('[trail] Run finished (preview).');",
-      ]
+      ].filter((line): line is string => Boolean(line))
     : [
         "console.log('[trail] No agent CLI found on PATH.');",
         "console.log('[trail] Install cursor-agent or claude, then retry.');",
@@ -83,10 +88,10 @@ function previewScript(prompt: string, binary: string | null): string {
 }
 
 function spawnForRun(message: StartMessage): ChildProcess {
-  const { backend, binary, prompt, cwd } = message;
+  const { backend, binary, prompt, cwd, resumeSessionId = null } = message;
 
   if (backend === "claude" && binary) {
-    return spawn(binary, ["-p", prompt], {
+    return spawn(binary, buildClaudeAgentArgs({ prompt, resumeSessionId }), {
       cwd,
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
@@ -95,8 +100,8 @@ function spawnForRun(message: StartMessage): ChildProcess {
 
   const script =
     backend === "cursor" && binary
-      ? previewScript(prompt, binary)
-      : previewScript(prompt, binary);
+      ? previewScript(prompt, binary, resumeSessionId)
+      : previewScript(prompt, binary, resumeSessionId);
   return spawn(process.execPath, ["-e", script], {
     cwd,
     env: process.env,

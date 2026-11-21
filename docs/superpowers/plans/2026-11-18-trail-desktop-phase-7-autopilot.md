@@ -17,3 +17,4 @@
 - [x] Shell banner on failed agent run (exit code) with Retry + Open worktree
 - [x] Failed run banner: red state, mono test output tail, duration, Ask Claude why → worktree composer
 - [x] Worktree composer Send starts agent run with typed prompt; Stop ends run
+- [x] Composer follow-ups use stored session + Claude `--resume` (fresh session on Start run)

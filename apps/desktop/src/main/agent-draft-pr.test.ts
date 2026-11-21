@@ -38,6 +38,7 @@ describe("finalizeAgentRun", () => {
         isRemote: false,
         createdAt: new Date().toISOString(),
         pullRequestUrl: null,
+        agentSessionId: null,
       });
 
       await finalizeAgentRun(

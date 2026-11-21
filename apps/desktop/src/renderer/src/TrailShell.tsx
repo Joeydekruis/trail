@@ -288,6 +288,7 @@ export function TrailShell({
 
   const startAgentRunWithPrompt = async (
     prompt: string,
+    options: { followUp?: boolean; resetSession?: boolean } = {},
   ): Promise<{ ok: true } | { ok: false; message: string }> => {
     if (!activeWorkspace?.id || selectedWorktreeIssue === null) {
       return { ok: false, message: "No worktree selected" };
@@ -312,6 +313,8 @@ export function TrailShell({
         workspaceId: activeWorkspace.id,
         issueNumber: selectedWorktreeIssue,
         prompt,
+        followUp: options.followUp,
+        resetSession: options.resetSession,
       });
       if (!result.ok) {
         setRunError(result.message);
@@ -330,7 +333,9 @@ export function TrailShell({
     if (issueNumber === null) {
       return;
     }
-    await startAgentRunWithPrompt(`Implement GitHub issue #${issueNumber}: ${title}`);
+    await startAgentRunWithPrompt(`Implement GitHub issue #${issueNumber}: ${title}`, {
+      resetSession: true,
+    });
   };
 
   const handleSendAgentMessage = async (
@@ -340,7 +345,7 @@ export function TrailShell({
     if (!trimmed) {
       return { ok: false, message: "Enter a message for the agent" };
     }
-    return startAgentRunWithPrompt(trimmed);
+    return startAgentRunWithPrompt(trimmed, { followUp: true });
   };
 
   const handleStopAgentRun = async () => {
@@ -942,6 +947,7 @@ export function TrailShell({
             onStopAgentRun={() => void handleStopAgentRun()}
             onSendAgentMessage={handleSendAgentMessage}
             startRunBusy={startRunBusy}
+            agentSessionActive={Boolean(activeWorktree?.agentSessionId)}
             worktreeComposerDraft={worktreeComposerDraft}
             onConsumeWorktreeComposerDraft={() => setWorktreeComposerDraft(null)}
             settingsFocusSection={settingsFocusSection}
@@ -1234,6 +1240,7 @@ function ShellMain({
   onStopAgentRun,
   onSendAgentMessage,
   startRunBusy,
+  agentSessionActive,
   worktreeComposerDraft,
   onConsumeWorktreeComposerDraft,
   settingsFocusSection,
@@ -1265,6 +1272,7 @@ function ShellMain({
     message: string,
   ) => Promise<{ ok: true } | { ok: false; message: string }>;
   startRunBusy?: boolean;
+  agentSessionActive?: boolean;
   worktreeComposerDraft?: { issueNumber: number; text: string } | null;
   onConsumeWorktreeComposerDraft?: () => void;
   settingsFocusSection?: SettingsSectionId | null;
@@ -1282,6 +1290,7 @@ function ShellMain({
           onStopAgentRun={onStopAgentRun}
           onSendAgentMessage={onSendAgentMessage}
           startRunBusy={startRunBusy}
+          agentSessionActive={agentSessionActive}
           composerDraft={worktreeComposerDraft}
           onComposerDraftApplied={onConsumeWorktreeComposerDraft}
         />

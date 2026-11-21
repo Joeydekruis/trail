@@ -78,6 +78,7 @@ describe("mcpCreateDecision", () => {
       isRemote: false,
       createdAt: new Date().toISOString(),
       pullRequestUrl: null,
+      agentSessionId: null,
     });
     const created = mcpCreateDecision(stores, {
       workspaceId: ws.id,

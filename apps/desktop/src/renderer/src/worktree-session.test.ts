@@ -20,6 +20,7 @@ describe("worktree-session helpers", () => {
         isRemote: false,
         createdAt: new Date().toISOString(),
         pullRequestUrl: null,
+        agentSessionId: null,
       },
     ];
     expect(worktreeCtaForIssue(worktrees, 42)).toBe("Open worktree");

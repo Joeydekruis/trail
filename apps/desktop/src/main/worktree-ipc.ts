@@ -39,6 +39,7 @@ function toDto(record: WorktreeRecord): WorktreeDto {
     isRemote: record.isRemote,
     createdAt: record.createdAt,
     pullRequestUrl: record.pullRequestUrl,
+    agentSessionId: record.agentSessionId,
   };
 }
 

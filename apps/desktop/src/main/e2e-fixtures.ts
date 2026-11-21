@@ -66,5 +66,6 @@ export function seedE2eFixtures(
     isRemote: false,
     createdAt: now,
     pullRequestUrl: null,
+    agentSessionId: null,
   });
 }

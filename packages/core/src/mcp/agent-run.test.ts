@@ -58,6 +58,7 @@ describe("resolveMcpStartAgentRun", () => {
       isRemote: false,
       createdAt: new Date().toISOString(),
       pullRequestUrl: null,
+      agentSessionId: null,
     });
     const ready = resolveMcpStartAgentRun(stores, { number: 7 });
     expect(ready.ok).toBe(true);
@@ -98,6 +99,7 @@ describe("resolveMcpStartAgentRun", () => {
       isRemote: false,
       createdAt: new Date().toISOString(),
       pullRequestUrl: null,
+      agentSessionId: null,
     });
     const idle = resolveMcpStopAgentRun(stores, { number: 8 });
     expect(idle.ok).toBe(false);

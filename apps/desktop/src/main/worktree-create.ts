@@ -90,6 +90,7 @@ export function createLocalWorktree(input: {
     isRemote: false,
     createdAt,
     pullRequestUrl: null,
+    agentSessionId: null,
   };
   input.worktreeStore.upsert(record);
   return { ok: true, record };

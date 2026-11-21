@@ -472,6 +472,7 @@ export const worktreeDto = z.object({
   isRemote: z.boolean(),
   createdAt: z.string().min(1),
   pullRequestUrl: z.string().url().nullable(),
+  agentSessionId: z.string().min(1).nullable(),
 });
 
 export type WorktreeDto = z.infer<typeof worktreeDto>;
@@ -565,6 +566,8 @@ export const agentRunStartPayload = z.object({
   workspaceId: z.string().min(1).optional(),
   issueNumber: z.number().int().positive(),
   prompt: z.string().max(4000).optional(),
+  followUp: z.boolean().optional(),
+  resetSession: z.boolean().optional(),
 });
 
 export type AgentRunStartPayload = z.infer<typeof agentRunStartPayload>;

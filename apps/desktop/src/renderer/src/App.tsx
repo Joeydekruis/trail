@@ -126,6 +126,8 @@ declare global {
         workspaceId?: string;
         issueNumber: number;
         prompt?: string;
+        followUp?: boolean;
+        resetSession?: boolean;
       }) => Promise<{ ok: true } | { ok: false; message: string }>;
       stopAgentRun?: (input: {
         workspaceId?: string;
@@ -542,6 +544,7 @@ export function App() {
         prompt: worktree?.title
           ? `Implement GitHub issue #${issueNumber}: ${worktree.title}`
           : undefined,
+        followUp: Boolean(worktree?.agentSessionId),
       });
       if (!result.ok) {
         return;

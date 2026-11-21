@@ -162,6 +162,7 @@ function startOnUtility(
       backend: preferred.id,
       binary: preferred.binary,
       prompt: input.prompt,
+      resumeSessionId: input.resumeSessionId ?? null,
     },
     [streamChannel.port1],
   );

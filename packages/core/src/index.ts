@@ -120,6 +120,7 @@ export {
   anyAgentBackendAvailable,
   pickPreferredAgentBackend,
 } from "./agent/pick-backend.js";
+export { buildClaudeAgentArgs, planAgentSessionRun } from "./agent/claude-args.js";
 export {
   buildAskAgentWhyPrompt,
   formatAgentRunDuration,

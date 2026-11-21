@@ -8,6 +8,7 @@ export type StartAgentRunInput = {
   issueNumber: number;
   cwd: string;
   prompt: string;
+  resumeSessionId?: string | null;
 };
 
 export type StartAgentRunResult =

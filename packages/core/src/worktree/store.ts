@@ -12,6 +12,7 @@ type WorktreeRow = {
   is_remote: number;
   created_at: string;
   pull_request_url: string | null;
+  agent_session_id: string | null;
 };
 
 function mapRow(row: WorktreeRow): WorktreeRecord {
@@ -26,6 +27,7 @@ function mapRow(row: WorktreeRow): WorktreeRecord {
     isRemote: row.is_remote === 1,
     createdAt: row.created_at,
     pullRequestUrl: row.pull_request_url ?? null,
+    agentSessionId: row.agent_session_id ?? null,
   };
 }
 
@@ -73,9 +75,9 @@ export class WorktreeStore {
       .prepare(
         `
       INSERT INTO worktrees (
-        id, workspace_id, issue_number, title, branch, path, status, is_remote, created_at, pull_request_url
+        id, workspace_id, issue_number, title, branch, path, status, is_remote, created_at, pull_request_url, agent_session_id
       ) VALUES (
-        @id, @workspaceId, @issueNumber, @title, @branch, @path, @status, @isRemote, @createdAt, @pullRequestUrl
+        @id, @workspaceId, @issueNumber, @title, @branch, @path, @status, @isRemote, @createdAt, @pullRequestUrl, @agentSessionId
       )
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
@@ -83,7 +85,8 @@ export class WorktreeStore {
         path = excluded.path,
         status = excluded.status,
         is_remote = excluded.is_remote,
-        pull_request_url = COALESCE(excluded.pull_request_url, worktrees.pull_request_url)
+        pull_request_url = COALESCE(excluded.pull_request_url, worktrees.pull_request_url),
+        agent_session_id = COALESCE(excluded.agent_session_id, worktrees.agent_session_id)
     `,
       )
       .run({
@@ -97,6 +100,7 @@ export class WorktreeStore {
         isRemote: record.isRemote ? 1 : 0,
         createdAt: record.createdAt,
         pullRequestUrl: record.pullRequestUrl,
+        agentSessionId: record.agentSessionId,
       });
   }
 }

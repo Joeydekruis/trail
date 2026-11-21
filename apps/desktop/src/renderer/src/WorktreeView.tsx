@@ -20,6 +20,7 @@ type WorktreeViewProps = {
     message: string,
   ) => Promise<{ ok: true } | { ok: false; message: string }>;
   startRunBusy?: boolean;
+  agentSessionActive?: boolean;
   composerDraft?: { issueNumber: number; text: string } | null;
   onComposerDraftApplied?: () => void;
 };
@@ -33,6 +34,7 @@ export function WorktreeView({
   onStopAgentRun,
   onSendAgentMessage,
   startRunBusy = false,
+  agentSessionActive = false,
   composerDraft = null,
   onComposerDraftApplied,
 }: WorktreeViewProps) {
@@ -64,6 +66,7 @@ export function WorktreeView({
       onStopAgentRun={onStopAgentRun}
       onSendAgentMessage={onSendAgentMessage}
       startRunBusy={startRunBusy}
+      agentSessionActive={agentSessionActive}
       composerDraft={composerDraft}
       onComposerDraftApplied={onComposerDraftApplied}
     />
@@ -79,6 +82,7 @@ function WorktreeViewBody({
   onStopAgentRun,
   onSendAgentMessage,
   startRunBusy,
+  agentSessionActive,
   composerDraft,
   onComposerDraftApplied,
 }: {
@@ -92,6 +96,7 @@ function WorktreeViewBody({
     message: string,
   ) => Promise<{ ok: true } | { ok: false; message: string }>;
   startRunBusy?: boolean;
+  agentSessionActive?: boolean;
   composerDraft?: { issueNumber: number; text: string } | null;
   onComposerDraftApplied?: () => void;
 }) {
@@ -357,6 +362,7 @@ function WorktreeViewBody({
             sendBusy={startRunBusy}
             onSend={(text) => sendAgentMessage(text)}
             onStop={onStopAgentRun}
+            agentSessionActive={agentSessionActive}
           />
         ) : (
           <PreviewSplit
@@ -396,6 +402,7 @@ function WorktreeViewBody({
               composerDraft?.issueNumber === context.issueNumber ? composerDraft.text : null
             }
             onComposerDraftApplied={onComposerDraftApplied}
+            agentSessionActive={agentSessionActive}
           />
         )}
         {detailsOpen && mode === "chat" ? (
@@ -490,6 +497,7 @@ function ChatColumn({
   sendBusy,
   onSend,
   onStop,
+  agentSessionActive,
 }: {
   messages: ChatLine[];
   composerDraft?: string | null;
@@ -498,6 +506,7 @@ function ChatColumn({
   sendBusy?: boolean;
   onSend: (text: string) => Promise<{ ok: true } | { ok: false; message: string } | undefined>;
   onStop?: () => void;
+  agentSessionActive?: boolean;
 }) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
@@ -509,6 +518,7 @@ function ChatColumn({
         sendBusy={sendBusy}
         onSend={onSend}
         onStop={onStop}
+        agentSessionActive={agentSessionActive}
       />
     </div>
   );
@@ -522,6 +532,7 @@ function WorktreeComposerBar({
   sendBusy = false,
   onSend,
   onStop,
+  agentSessionActive = false,
 }: {
   compact?: boolean;
   draft?: string | null;
@@ -530,6 +541,7 @@ function WorktreeComposerBar({
   sendBusy?: boolean;
   onSend?: (text: string) => Promise<{ ok: true } | { ok: false; message: string } | undefined>;
   onStop?: () => void;
+  agentSessionActive?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputId = compact ? "wtchat-compact" : "wtchat";
@@ -607,7 +619,9 @@ function WorktreeComposerBar({
           placeholder={
             isRunning
               ? "Wait for the run to finish, or stop it to send another prompt"
-              : "Message Cursor in this worktree"
+              : agentSessionActive
+                ? "Continue this agent session"
+                : "Message Cursor in this worktree"
           }
           style={{
             width: "100%",
@@ -659,6 +673,7 @@ function PreviewSplit({
   onStop,
   composerDraft,
   onComposerDraftApplied,
+  agentSessionActive,
 }: {
   workspaceId: string;
   issueNumber: number;
@@ -677,6 +692,7 @@ function PreviewSplit({
   onStop?: () => void;
   composerDraft?: string | null;
   onComposerDraftApplied?: () => void;
+  agentSessionActive?: boolean;
 }) {
   return (
     <>
@@ -780,6 +796,7 @@ function PreviewSplit({
           sendBusy={sendBusy}
           onSend={onSend}
           onStop={onStop}
+          agentSessionActive={agentSessionActive}
         />
       </div>
     </>
