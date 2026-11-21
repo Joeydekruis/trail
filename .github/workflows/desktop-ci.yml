@@ -24,6 +24,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm run bootstrap:desktop
+      - run: npm run build --workspace=@trail/ipc
+      - run: npm run build --workspace=@trail/core
+      - run: npm run build --workspace=@trail/desktop
+      - run: npm run size-limit --workspace=@trail/desktop
       - run: npm test
       - run: npm run typecheck
 
