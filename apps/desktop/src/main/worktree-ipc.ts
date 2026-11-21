@@ -8,6 +8,8 @@ import {
   worktreeListResult,
   worktreeSetStatusPayload,
   worktreeSetStatusResult,
+  worktreeResolvePullRequestPayload,
+  worktreeResolvePullRequestResult,
   workspaceRepoRootGetPayload,
   workspaceRepoRootGetResult,
   workspaceRepoRootPickResult,
@@ -18,6 +20,7 @@ import type { WorktreeRecord } from "@trail/core";
 import { getIssueCacheStore, getWorktreeStore, getWorkspaceStore } from "./database";
 import { isGitRepository } from "./git-exec";
 import { createLocalWorktree } from "./worktree-create";
+import { resolveWorktreePullRequestUrl } from "./worktree-resolve-pull-request";
 import {
   readWorkspaceRepoRoot,
   readWorkspaceWorktreeRoot,
@@ -35,6 +38,7 @@ function toDto(record: WorktreeRecord): WorktreeDto {
     status: record.status,
     isRemote: record.isRemote,
     createdAt: record.createdAt,
+    pullRequestUrl: record.pullRequestUrl,
   };
 }
 
@@ -56,6 +60,13 @@ export function registerWorktreeIpc(): void {
       repoRoot: readWorkspaceRepoRoot(workspaceStore, workspaceId),
       worktreeRoot: readWorkspaceWorktreeRoot(workspaceStore, workspaceId),
     });
+  });
+
+  ipcMain.handle(IpcChannels.worktreeResolvePullRequest, async (_event, raw: unknown) => {
+    const payload = worktreeResolvePullRequestPayload.parse(raw);
+    const workspaceId = resolveWorkspaceId(payload.workspaceId);
+    const result = await resolveWorktreePullRequestUrl(workspaceId, payload.issueNumber);
+    return worktreeResolvePullRequestResult.parse(result);
   });
 
   ipcMain.handle(IpcChannels.worktreeSetStatus, (_event, raw: unknown) => {

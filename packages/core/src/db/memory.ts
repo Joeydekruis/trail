@@ -270,6 +270,7 @@ export class MemorySqlite implements SqliteDatabase {
             status: row.status,
             is_remote: row.isRemote,
             created_at: row.createdAt,
+            pull_request_url: row.pullRequestUrl ?? null,
           };
           const next = rows.filter((r) => r.id !== mapped.id);
           next.push(mapped);

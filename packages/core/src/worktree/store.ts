@@ -11,6 +11,7 @@ type WorktreeRow = {
   status: string;
   is_remote: number;
   created_at: string;
+  pull_request_url: string | null;
 };
 
 function mapRow(row: WorktreeRow): WorktreeRecord {
@@ -24,6 +25,7 @@ function mapRow(row: WorktreeRow): WorktreeRecord {
     status: row.status as WorktreeStatus,
     isRemote: row.is_remote === 1,
     createdAt: row.created_at,
+    pullRequestUrl: row.pull_request_url ?? null,
   };
 }
 
@@ -71,16 +73,17 @@ export class WorktreeStore {
       .prepare(
         `
       INSERT INTO worktrees (
-        id, workspace_id, issue_number, title, branch, path, status, is_remote, created_at
+        id, workspace_id, issue_number, title, branch, path, status, is_remote, created_at, pull_request_url
       ) VALUES (
-        @id, @workspaceId, @issueNumber, @title, @branch, @path, @status, @isRemote, @createdAt
+        @id, @workspaceId, @issueNumber, @title, @branch, @path, @status, @isRemote, @createdAt, @pullRequestUrl
       )
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         branch = excluded.branch,
         path = excluded.path,
         status = excluded.status,
-        is_remote = excluded.is_remote
+        is_remote = excluded.is_remote,
+        pull_request_url = COALESCE(excluded.pull_request_url, worktrees.pull_request_url)
     `,
       )
       .run({
@@ -93,6 +96,7 @@ export class WorktreeStore {
         status: record.status,
         isRemote: record.isRemote ? 1 : 0,
         createdAt: record.createdAt,
+        pullRequestUrl: record.pullRequestUrl,
       });
   }
 }

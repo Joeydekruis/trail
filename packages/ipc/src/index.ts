@@ -19,6 +19,7 @@ export const IpcChannels = {
   worktreeList: "worktree.list",
   worktreeCreate: "worktree.create",
   worktreeSetStatus: "worktree.setStatus",
+  worktreeResolvePullRequest: "worktree.resolvePullRequest",
   agentStatus: "agent.status",
   agentRunStart: "agent.runStart",
   agentRunStop: "agent.runStop",
@@ -470,6 +471,7 @@ export const worktreeDto = z.object({
   status: worktreeStatusDto,
   isRemote: z.boolean(),
   createdAt: z.string().min(1),
+  pullRequestUrl: z.string().url().nullable(),
 });
 
 export type WorktreeDto = z.infer<typeof worktreeDto>;
@@ -523,6 +525,24 @@ export const worktreeSetStatusResult = z.union([
 ]);
 
 export type WorktreeSetStatusResult = z.infer<typeof worktreeSetStatusResult>;
+
+export const worktreeResolvePullRequestPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  issueNumber: z.number().int().positive(),
+});
+
+export type WorktreeResolvePullRequestPayload = z.infer<
+  typeof worktreeResolvePullRequestPayload
+>;
+
+export const worktreeResolvePullRequestResult = z.union([
+  z.object({ ok: z.literal(true), htmlUrl: z.string().url() }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type WorktreeResolvePullRequestResult = z.infer<
+  typeof worktreeResolvePullRequestResult
+>;
 
 const agentBackendId = z.enum(["cursor", "claude"]);
 

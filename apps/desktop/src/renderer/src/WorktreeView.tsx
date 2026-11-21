@@ -106,6 +106,7 @@ function WorktreeViewBody({
   const [previewDevBusy, setPreviewDevBusy] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
   const [cursorOpenError, setCursorOpenError] = useState<string | null>(null);
+  const [prOpenError, setPrOpenError] = useState<string | null>(null);
 
   useBatchedAgentLines(workspaceId, context.issueNumber, setExtraMessages);
 
@@ -252,9 +253,9 @@ function WorktreeViewBody({
           >
             Open folder
           </TrailButton>
-          {runError || composerError || cursorOpenError ? (
+          {runError || composerError || cursorOpenError || prOpenError ? (
             <span className="tr-small" style={{ color: "var(--warning)" }}>
-              {runError ?? composerError ?? cursorOpenError}
+              {runError ?? composerError ?? cursorOpenError ?? prOpenError}
             </span>
           ) : null}
           {onStartAgentRun && context.status !== "running" ? (
@@ -288,7 +289,40 @@ function WorktreeViewBody({
           >
             Open in Cursor
           </TrailButton>
-          <TrailButton variant="secondary">Open pull request</TrailButton>
+          <TrailButton
+            variant="secondary"
+            data-tip="Open the draft pull request for this branch on GitHub"
+            data-tip-pos="below"
+            onClick={() => {
+              void (async () => {
+                setPrOpenError(null);
+                const cached = context.pullRequestUrl;
+                if (cached) {
+                  await window.trail?.openExternal?.(cached);
+                  return;
+                }
+                if (!workspaceId) {
+                  setPrOpenError("No active workspace");
+                  return;
+                }
+                const result = await window.trail?.resolveWorktreePullRequest?.({
+                  workspaceId,
+                  issueNumber: context.issueNumber,
+                });
+                if (!result) {
+                  setPrOpenError("Pull request lookup unavailable");
+                  return;
+                }
+                if (!result.ok) {
+                  setPrOpenError(result.message);
+                  return;
+                }
+                await window.trail?.openExternal?.(result.htmlUrl);
+              })();
+            }}
+          >
+            Open pull request
+          </TrailButton>
           <button
             type="button"
             aria-label="Task details"

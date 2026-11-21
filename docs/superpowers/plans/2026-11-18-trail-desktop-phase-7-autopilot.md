@@ -12,6 +12,7 @@
 - [x] Move issue to In progress on GitHub when autopilot picks
 - [x] Global pause autopilot / waiting-for-decision gate (worktree `waiting` blocks new picks)
 - [x] Draft PR on successful run (push branch + GitHub draft PR + In review)
+- [x] Store draft PR URL on worktree; **Open pull request** resolves via cache or GitHub head lookup
 - [x] Block agent runs when no CLI; pause autopilot + shell banner (Settings → Agents)
 - [x] Shell banner on failed agent run (exit code) with Retry + Open worktree
 - [x] Failed run banner: red state, mono test output tail, duration, Ask Claude why → worktree composer

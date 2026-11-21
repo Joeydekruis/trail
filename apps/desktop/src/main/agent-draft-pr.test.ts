@@ -37,6 +37,7 @@ describe("finalizeAgentRun", () => {
         status: "running",
         isRemote: false,
         createdAt: new Date().toISOString(),
+        pullRequestUrl: null,
       });
 
       await finalizeAgentRun(

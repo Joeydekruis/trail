@@ -250,6 +250,10 @@ declare global {
         | { ok: true; worktree: WorktreeDto }
         | { ok: false; message: string }
       >;
+      resolveWorktreePullRequest?: (input: {
+        workspaceId?: string;
+        issueNumber: number;
+      }) => Promise<import("@trail/ipc").WorktreeResolvePullRequestResult>;
       getRepoRoot?: (workspaceId?: string) => Promise<{
         repoRoot: string | null;
         worktreeRoot: string | null;

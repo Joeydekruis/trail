@@ -209,6 +209,26 @@ export async function createDraftPullRequest(
   return { ok: true, number: row.number, htmlUrl: row.html_url };
 }
 
+export async function findOpenPullRequestByHead(
+  token: string,
+  owner: string,
+  repo: string,
+  headBranch: string,
+): Promise<{ ok: true; htmlUrl: string } | { ok: false; message: string }> {
+  const head = `${owner}:${headBranch}`;
+  const url = `${GITHUB_API}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=open&head=${encodeURIComponent(head)}&per_page=5`;
+  const response = await fetch(url, { headers: authHeaders(token) });
+  if (!response.ok) {
+    return { ok: false, message: await parseError(response) };
+  }
+  const rows = (await response.json()) as Array<{ html_url?: string }>;
+  const match = rows.find((row) => row.html_url);
+  if (!match?.html_url) {
+    return { ok: false, message: "No open pull request found for this worktree branch" };
+  }
+  return { ok: true, htmlUrl: match.html_url };
+}
+
 export async function setGitHubIssueAssignees(
   token: string,
   owner: string,

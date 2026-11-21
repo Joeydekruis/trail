@@ -75,11 +75,13 @@ function markWorktree(
   record: WorktreeRecord,
   status: WorktreeRecord["status"],
   isRemote: boolean,
+  pullRequestUrl?: string | null,
 ): void {
   worktreeStore.upsert({
     ...record,
     status,
     isRemote,
+    pullRequestUrl: pullRequestUrl ?? record.pullRequestUrl,
   });
 }
 
@@ -169,7 +171,7 @@ export async function finalizeAgentRun(
     return;
   }
 
-  markWorktree(worktreeStore, record, "review", true);
+  markWorktree(worktreeStore, record, "review", true, pr.htmlUrl);
   const moved = await moveBoardIssue({
     workspaces: deps.workspaces,
     issues: deps.issues,

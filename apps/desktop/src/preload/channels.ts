@@ -17,6 +17,7 @@ export const PreloadIpcChannels = {
   worktreeList: "worktree.list",
   worktreeCreate: "worktree.create",
   worktreeSetStatus: "worktree.setStatus",
+  worktreeResolvePullRequest: "worktree.resolvePullRequest",
   agentStatus: "agent.status",
   agentRunStart: "agent.runStart",
   agentRunStop: "agent.runStop",

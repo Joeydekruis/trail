@@ -4,6 +4,7 @@ import {
   createGitHubIssue,
   fetchGitHubBranches,
   fetchGitHubIssueComments,
+  findOpenPullRequestByHead,
   setGitHubIssueState,
 } from "./github-api";
 
@@ -71,6 +72,24 @@ describe("fetchGitHubBranches", () => {
       ok: true,
       number: 12,
       htmlUrl: "https://github.com/acme/widget/pull/12",
+    });
+  });
+
+  it("finds an open pull request by head branch", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        expect(url).toContain("head=acme%3Aagent%2F42-fix");
+        return new Response(
+          JSON.stringify([{ html_url: "https://github.com/acme/widget/pull/7" }]),
+          { status: 200 },
+        );
+      }),
+    );
+    const result = await findOpenPullRequestByHead("token", "acme", "widget", "agent/42-fix");
+    expect(result).toEqual({
+      ok: true,
+      htmlUrl: "https://github.com/acme/widget/pull/7",
     });
   });
 

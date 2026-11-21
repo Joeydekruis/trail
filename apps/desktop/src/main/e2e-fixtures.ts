@@ -65,5 +65,6 @@ export function seedE2eFixtures(
     status: "stopped",
     isRemote: false,
     createdAt: now,
+    pullRequestUrl: null,
   });
 }

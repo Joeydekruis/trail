@@ -89,6 +89,7 @@ export function createLocalWorktree(input: {
     status: "queued",
     isRemote: false,
     createdAt,
+    pullRequestUrl: null,
   };
   input.worktreeStore.upsert(record);
   return { ok: true, record };

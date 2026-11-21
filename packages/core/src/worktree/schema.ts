@@ -22,6 +22,10 @@ export function migrateWorktrees(db: SqliteDatabase, schemaVersion: number): num
     db.exec(WORKTREE_SQL);
     version = 5;
   }
+  if (version < 12) {
+    db.exec("ALTER TABLE worktrees ADD COLUMN pull_request_url TEXT");
+    version = 12;
+  }
   if (version > schemaVersion) {
     db.prepare("DELETE FROM schema_version").run();
     db.prepare("INSERT INTO schema_version (version) VALUES (?)").run(version);

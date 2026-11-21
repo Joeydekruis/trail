@@ -20,4 +20,5 @@ export type WorktreeRecord = {
   status: WorktreeStatus;
   isRemote: boolean;
   createdAt: string;
+  pullRequestUrl: string | null;
 };

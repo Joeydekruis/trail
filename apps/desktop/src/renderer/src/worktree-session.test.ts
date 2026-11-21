@@ -19,6 +19,7 @@ describe("worktree-session helpers", () => {
         status: "queued",
         isRemote: false,
         createdAt: new Date().toISOString(),
+        pullRequestUrl: null,
       },
     ];
     expect(worktreeCtaForIssue(worktrees, 42)).toBe("Open worktree");

@@ -8,6 +8,7 @@ export type WorktreeSessionContext = {
   path: string;
   status: WorktreeDto["status"];
   statusLabel: string;
+  pullRequestUrl: string | null;
 };
 
 const STATUS_LABELS: Record<WorktreeDto["status"], string> = {
@@ -33,6 +34,7 @@ export function worktreeToSession(worktree: WorktreeDto): WorktreeSessionContext
     path: worktree.path,
     status: worktree.status,
     statusLabel: worktreeStatusLabel(worktree.status),
+    pullRequestUrl: worktree.pullRequestUrl,
   };
 }
 

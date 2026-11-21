@@ -42,6 +42,7 @@ describe("pickAutopilotIssue", () => {
         status: "running",
         isRemote: false,
         createdAt: new Date().toISOString(),
+        pullRequestUrl: null,
       },
     ];
     const picked = pickAutopilotIssue(issues, worktrees, ["agent-ready"]);
@@ -62,6 +63,7 @@ describe("autopilotQueueBlockedByDecisions", () => {
         status: "waiting",
         isRemote: false,
         createdAt: new Date().toISOString(),
+        pullRequestUrl: null,
       },
     ]);
     expect(blocked).toBe(true);

@@ -57,6 +57,7 @@ describe("resolveMcpStartAgentRun", () => {
       status: "queued",
       isRemote: false,
       createdAt: new Date().toISOString(),
+      pullRequestUrl: null,
     });
     const ready = resolveMcpStartAgentRun(stores, { number: 7 });
     expect(ready.ok).toBe(true);
@@ -96,6 +97,7 @@ describe("resolveMcpStartAgentRun", () => {
       status: "queued",
       isRemote: false,
       createdAt: new Date().toISOString(),
+      pullRequestUrl: null,
     });
     const idle = resolveMcpStopAgentRun(stores, { number: 8 });
     expect(idle.ok).toBe(false);

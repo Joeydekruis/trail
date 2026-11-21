@@ -77,6 +77,7 @@ describe("mcpCreateDecision", () => {
       status: "queued",
       isRemote: false,
       createdAt: new Date().toISOString(),
+      pullRequestUrl: null,
     });
     const created = mcpCreateDecision(stores, {
       workspaceId: ws.id,
