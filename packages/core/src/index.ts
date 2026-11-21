@@ -7,6 +7,15 @@ export type { WorkspaceAccent, WorkspaceRecord } from "./workspace/types.js";
 export { WorkspaceStore, openWorkspaceStore } from "./workspace/store.js";
 export { MemorySqlite, openInMemoryWorkspaceStore } from "./db/memory.js";
 export { formatWorkspaceRepoLine } from "./workspace/format.js";
+export {
+  formatGitHubSyncErrorMessage,
+  GITHUB_NOT_REACHABLE_MESSAGE,
+  isGitHubUnreachableError,
+} from "./github/sync-error.js";
+export {
+  resolveBackgroundSyncIntervalSec,
+  UNFOCUSED_BACKGROUND_SYNC_SEC,
+} from "./background-sync-interval.js";
 export type { WorkspaceCreateInput } from "./workspace/store.js";
 export {
   workspaceIdFromRepository,

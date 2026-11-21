@@ -8,6 +8,10 @@ export {
   DEFAULT_SYNC_INTERVAL_SEC,
 } from "./workspace/settings.js";
 export {
+  GITHUB_NOT_REACHABLE_MESSAGE,
+  isGitHubUnreachableError,
+} from "./github/sync-error.js";
+export {
   DEFAULT_AUTOPILOT_MAX_PARALLEL,
   DEFAULT_AUTOPILOT_PICKUP_LABELS,
 } from "./autopilot/settings.js";

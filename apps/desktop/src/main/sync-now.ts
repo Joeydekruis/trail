@@ -1,5 +1,5 @@
 import type { IssueCacheStore, IssueSyncConflictStore, WorkspaceStore } from "@trail/core";
-import { mergeWorkspaceIssuesFromGitHub } from "@trail/core";
+import { formatGitHubSyncErrorMessage, mergeWorkspaceIssuesFromGitHub } from "@trail/core";
 import { fetchGitHubUser } from "./github-api";
 import { fetchWorkspaceIssues } from "./github-issues";
 import { fetchIssueBoardColumns } from "./github-project-status";
@@ -29,6 +29,23 @@ export async function syncWorkspaceNow(
   | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
   | { ok: false; message: string }
 > {
+  try {
+    return await syncWorkspaceNowInner(store, issueStore, conflictStore, workspaceId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Sync failed";
+    return { ok: false, message: formatGitHubSyncErrorMessage(message) };
+  }
+}
+
+async function syncWorkspaceNowInner(
+  store: WorkspaceStore,
+  issueStore: IssueCacheStore,
+  conflictStore: IssueSyncConflictStore,
+  workspaceId?: string,
+): Promise<
+  | { ok: true; syncedAt: string; issueCount: number; conflictCount: number }
+  | { ok: false; message: string }
+> {
   const token = readGitHubToken();
   if (!token) {
     return { ok: false, message: "GitHub is not connected" };
@@ -36,7 +53,7 @@ export async function syncWorkspaceNow(
 
   const user = await fetchGitHubUser(token);
   if (!user.ok) {
-    return { ok: false, message: user.message };
+    return { ok: false, message: formatGitHubSyncErrorMessage(user.message) };
   }
 
   const id = workspaceId ?? store.getActiveId();
@@ -65,12 +82,12 @@ export async function syncWorkspaceNow(
     } catch {
       // ignore
     }
-    return { ok: false, message };
+    return { ok: false, message: formatGitHubSyncErrorMessage(message) };
   }
 
   const fetched = await fetchWorkspaceIssues(token, id, owner, repo);
   if (!fetched.ok) {
-    return { ok: false, message: fetched.message };
+    return { ok: false, message: formatGitHubSyncErrorMessage(fetched.message) };
   }
 
   const statusField = readWorkspaceProjectStatusField(store, id);

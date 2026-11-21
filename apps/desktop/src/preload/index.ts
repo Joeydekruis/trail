@@ -65,6 +65,9 @@ export type TrailApi = {
   onBackgroundSync: (
     listener: (payload: { workspaceId: string; syncedAt: string; issueCount: number }) => void,
   ) => () => void;
+  onBackgroundSyncError: (
+    listener: (payload: { workspaceId: string; message: string }) => void,
+  ) => () => void;
   createIssue: (input: {
     workspaceId?: string;
     title: string;
@@ -358,6 +361,17 @@ const trailApi: TrailApi = {
     const handler = (
       _event: Electron.IpcRendererEvent,
       payload: { workspaceId: string; syncedAt: string; issueCount: number },
+    ) => {
+      listener(payload);
+    };
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
+  onBackgroundSyncError: (listener) => {
+    const channel = "trail.backgroundSyncError";
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      payload: { workspaceId: string; message: string },
     ) => {
       listener(payload);
     };

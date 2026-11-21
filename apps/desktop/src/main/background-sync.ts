@@ -1,4 +1,5 @@
-import { BrowserWindow } from "electron";
+import { app, BrowserWindow, powerMonitor } from "electron";
+import { resolveBackgroundSyncIntervalSec } from "@trail/core";
 import { getIssueCacheStore, getIssueSyncConflictStore, getWorkspaceStore } from "./database";
 import { readGitHubToken } from "./github-token-store";
 import { syncWorkspaceNow } from "./sync-now";
@@ -6,9 +7,33 @@ import { runAutopilotTick } from "./autopilot-service";
 import { readWorkspaceSyncIntervalSec } from "./workspace-github-settings";
 
 const BACKGROUND_SYNC_CHANNEL = "trail.backgroundSync";
+const BACKGROUND_SYNC_ERROR_CHANNEL = "trail.backgroundSyncError";
 
 let pollTimer: NodeJS.Timeout | null = null;
 let syncInFlight = false;
+let powerSuspended = false;
+let lifecycleHooksInstalled = false;
+
+function appHasFocusedWindow(): boolean {
+  return BrowserWindow.getFocusedWindow() !== null;
+}
+
+function backgroundSyncDelayMs(workspaceId: string, overrideMs?: number): number | null {
+  if (overrideMs !== undefined) {
+    return overrideMs;
+  }
+  const store = getWorkspaceStore();
+  const configured = readWorkspaceSyncIntervalSec(store, workspaceId);
+  const intervalSec = resolveBackgroundSyncIntervalSec(
+    configured,
+    appHasFocusedWindow(),
+    powerSuspended,
+  );
+  if (intervalSec === null) {
+    return null;
+  }
+  return intervalSec * 1_000;
+}
 
 export function restartBackgroundSync(): void {
   if (pollTimer) {
@@ -28,15 +53,20 @@ function scheduleNextWake(delayMs?: number): void {
     return;
   }
 
-  const intervalSec = readWorkspaceSyncIntervalSec(store, workspaceId);
-  const waitMs = delayMs ?? (intervalSec > 0 ? intervalSec * 1_000 : 60_000);
+  const waitMs = backgroundSyncDelayMs(workspaceId, delayMs);
+  if (waitMs === null) {
+    return;
+  }
 
   pollTimer = setTimeout(() => {
     void runBackgroundSync().finally(() => {
-      const activeId = getWorkspaceStore().getActiveId();
-      if (readWorkspaceSyncIntervalSec(getWorkspaceStore(), activeId) > 0) {
+      try {
+        const activeId = getWorkspaceStore().getActiveId();
+        if (backgroundSyncDelayMs(activeId) === null) {
+          return;
+        }
         scheduleNextWake();
-      } else {
+      } catch {
         scheduleNextWake(60_000);
       }
     });
@@ -50,7 +80,7 @@ async function runBackgroundSync(): Promise<void> {
   } catch {
     return;
   }
-  if (syncInFlight) {
+  if (syncInFlight || powerSuspended) {
     return;
   }
   const token = readGitHubToken();
@@ -78,7 +108,12 @@ async function runBackgroundSync(): Promise<void> {
         issueCount: result.issueCount,
       });
       void runAutopilotTick(workspaceId);
+      return;
     }
+    notifyBackgroundSyncError({
+      workspaceId,
+      message: result.message,
+    });
   } finally {
     syncInFlight = false;
   }
@@ -94,6 +129,37 @@ function notifyBackgroundSync(payload: {
   }
 }
 
+function notifyBackgroundSyncError(payload: { workspaceId: string; message: string }): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send(BACKGROUND_SYNC_ERROR_CHANNEL, payload);
+  }
+}
+
+function installLifecycleHooks(): void {
+  if (lifecycleHooksInstalled) {
+    return;
+  }
+  lifecycleHooksInstalled = true;
+
+  powerMonitor.on("suspend", () => {
+    powerSuspended = true;
+    restartBackgroundSync();
+  });
+  powerMonitor.on("resume", () => {
+    powerSuspended = false;
+    restartBackgroundSync();
+    void runBackgroundSync();
+  });
+
+  app.on("browser-window-focus", () => {
+    restartBackgroundSync();
+  });
+  app.on("browser-window-blur", () => {
+    restartBackgroundSync();
+  });
+}
+
 export function startBackgroundSync(): void {
+  installLifecycleHooks();
   restartBackgroundSync();
 }

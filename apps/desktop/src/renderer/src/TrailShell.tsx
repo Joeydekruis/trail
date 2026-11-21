@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { isGitHubUnreachableError } from "@trail/core/client";
 import type { SyncConflictDto, WorkspaceDto, WorkspaceGithubSnapshot } from "@trail/ipc";
 import { formatSyncLabel } from "./sync-label";
 import { CommandPalette } from "./CommandPalette";
@@ -732,6 +733,13 @@ export function TrailShell({
               <TrailButton variant="secondary" onClick={() => setCenterView("settings")}>
                 Open Settings
               </TrailButton>
+            </div>
+          ) : null}
+          {syncError && isGitHubUnreachableError(syncError) ? (
+            <div style={{ padding: "8px 16px 0" }}>
+              <ConflictBanner action="Retry now" onAction={onSyncNow}>
+                {syncError}. Cached board data is still available; changes will sync when GitHub is back.
+              </ConflictBanner>
             </div>
           ) : null}
           {syncConflicts.length > 0 ? (

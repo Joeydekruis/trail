@@ -57,6 +57,9 @@ declare global {
       onBackgroundSync?: (
         listener: (payload: { workspaceId: string; syncedAt: string; issueCount: number }) => void,
       ) => () => void;
+      onBackgroundSyncError?: (
+        listener: (payload: { workspaceId: string; message: string }) => void,
+      ) => () => void;
       getBoardSnapshot?: (workspaceId?: string) => Promise<import("@trail/ipc").BoardSnapshotResult>;
       moveBoardIssue?: (input: {
         workspaceId?: string;
@@ -486,11 +489,24 @@ export function App() {
     return api.onBackgroundSync((payload) => {
       if (payload.workspaceId === activeWorkspaceId) {
         setActiveLastSyncedAt(payload.syncedAt);
+        setSyncError(null);
       }
       void refreshWorkspaces();
       setBoardRefreshKey((key) => key + 1);
     });
   }, [activeWorkspaceId, refreshWorkspaces]);
+
+  useEffect(() => {
+    const api = window.trail;
+    if (!api?.onBackgroundSyncError) {
+      return;
+    }
+    return api.onBackgroundSyncError((payload) => {
+      if (payload.workspaceId === activeWorkspaceId) {
+        setSyncError(payload.message);
+      }
+    });
+  }, [activeWorkspaceId]);
 
   const refreshSyncConflicts = useCallback(async () => {
     const api = window.trail;
