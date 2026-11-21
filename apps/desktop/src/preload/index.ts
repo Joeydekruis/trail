@@ -196,6 +196,11 @@ export type TrailApi = {
     issueNumber: number;
     enabled: boolean;
   }) => Promise<void>;
+  e2eSimulatePreviewPin: (input: {
+    workspaceId: string;
+    issueNumber: number;
+    comment: string;
+  }) => Promise<{ ok: true; pinNumber: number } | { ok: false; message: string }>;
   listDesigns: (workspaceId?: string) => Promise<import("@trail/ipc").DesignListResult>;
   getDesignPreviewUrl: (input: {
     workspaceId?: string;
@@ -394,6 +399,10 @@ const trailApi: TrailApi = {
     >,
   previewSetCommentMode: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.previewCommentMode, input) as Promise<void>,
+  e2eSimulatePreviewPin: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.previewE2eSimulatePin, input) as Promise<
+      { ok: true; pinNumber: number } | { ok: false; message: string }
+    >,
   listDesigns: (workspaceId) =>
     ipcRenderer.invoke(PreloadIpcChannels.designList, { workspaceId }) as Promise<
       import("@trail/ipc").DesignListResult

@@ -9,7 +9,7 @@
 - [x] Help → Diagnostics (CPU/geheugen per proces, SQLite-grootte, timings, open views)
 - [x] Playwright Electron smoke (`npm run test:e2e --workspace=@trail/desktop` na build)
 - [x] E2E-flows (board drag, agent run, preview mode) via `TRAIL_E2E` seed + Playwright
-- [ ] Preview pin plaatsen in E2E — WebContentsView + overlay (volgt)
+- [x] Preview pin in E2E — `preview.e2eSimulatePin` (pin-pijplijn + chat; geen embedded click)
 
 **Verificatie**
 

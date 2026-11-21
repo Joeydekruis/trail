@@ -27,6 +27,7 @@ export const PreloadIpcChannels = {
   previewNavigate: "preview.navigate",
   previewCommentMode: "preview.commentMode",
   previewPinSubmit: "preview.pinSubmit",
+  previewE2eSimulatePin: "preview.e2eSimulatePin",
   designList: "design.list",
   designPreviewUrl: "design.previewUrl",
   knowledgeDocList: "knowledge.doc.list",

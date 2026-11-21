@@ -9,11 +9,11 @@ import {
   previewEnsureDevServerResult,
   previewNavigatePayload,
   previewNavigateResult,
+  previewE2eSimulatePinPayload,
   previewPinSubmitPayload,
   previewPinSubmitResult,
   previewSetBoundsPayload,
 } from "@trail/ipc";
-import { getPreviewPinStore } from "./database";
 import {
   attachPreview,
   detachPreview,
@@ -23,8 +23,8 @@ import {
   setPreviewBounds,
   setPreviewCommentMode,
 } from "./preview-host";
-import { broadcastPreviewPin } from "./preview-pin-shared";
 import { ensurePreviewDevServer, stopPreviewDevServer } from "./preview-dev-server";
+import { submitPreviewPin } from "./preview-pin-submit";
 
 function hostWindow(event: Electron.IpcMainInvokeEvent): BrowserWindow | null {
   return BrowserWindow.fromWebContents(event.sender);
@@ -100,32 +100,40 @@ export function registerPreviewIpc(): void {
       });
     }
     const payload = previewPinSubmitPayload.parse(raw);
-    const stored = getPreviewPinStore().create({
-      workspaceId: ref.workspaceId,
-      issueNumber: ref.issueNumber,
+    return submitPreviewPin(ref, payload);
+  });
+
+  ipcMain.handle(IpcChannels.previewE2eSimulatePin, (event, raw: unknown) => {
+    if (process.env.TRAIL_E2E !== "1") {
+      return previewPinSubmitResult.parse({
+        ok: false,
+        message: "E2E pin simulation is disabled",
+      });
+    }
+    const win = hostWindow(event);
+    if (!win) {
+      return previewPinSubmitResult.parse({
+        ok: false,
+        message: "Main window not found",
+      });
+    }
+    const payload = previewE2eSimulatePinPayload.parse(raw);
+    const pinPayload = previewPinSubmitPayload.parse({
       comment: payload.comment,
       anchor: {
-        selector: payload.anchor.selector,
-        xpath: payload.anchor.xpath,
-        elementText: payload.anchor.elementText,
-        offsetX: payload.anchor.offsetX,
-        offsetY: payload.anchor.offsetY,
-        viewportWidth: payload.anchor.viewportWidth,
-        viewportHeight: payload.anchor.viewportHeight,
-        pageUrl: payload.anchor.pageUrl,
+        selector: payload.anchor?.selector ?? "[data-e2e-root]",
+        xpath: payload.anchor?.xpath ?? "/html/body",
+        elementText: payload.anchor?.elementText ?? "e2e",
+        offsetX: payload.anchor?.offsetX ?? 12,
+        offsetY: payload.anchor?.offsetY ?? 12,
+        viewportWidth: payload.anchor?.viewportWidth ?? 800,
+        viewportHeight: payload.anchor?.viewportHeight ?? 600,
+        pageUrl: payload.anchor?.pageUrl ?? "http://127.0.0.1:3000/",
       },
     });
-    broadcastPreviewPin({
-      workspaceId: ref.workspaceId,
-      issueNumber: ref.issueNumber,
-      pinNumber: stored.pinNumber,
-      comment: stored.comment,
-      pageUrl: stored.anchor.pageUrl,
-      selector: stored.anchor.selector,
-      elementText: stored.anchor.elementText,
-      offsetX: stored.anchor.offsetX,
-      offsetY: stored.anchor.offsetY,
-    });
-    return previewPinSubmitResult.parse({ ok: true, pinNumber: stored.pinNumber });
+    return submitPreviewPin(
+      { workspaceId: payload.workspaceId, issueNumber: payload.issueNumber },
+      pinPayload,
+    );
   });
 }

@@ -29,6 +29,7 @@ export const IpcChannels = {
   previewNavigate: "preview.navigate",
   previewCommentMode: "preview.commentMode",
   previewPinSubmit: "preview.pinSubmit",
+  previewE2eSimulatePin: "preview.e2eSimulatePin",
   designList: "design.list",
   designPreviewUrl: "design.previewUrl",
   knowledgeDocList: "knowledge.doc.list",
@@ -574,6 +575,13 @@ export const previewPinSubmitResult = z.union([
 ]);
 
 export type PreviewPinSubmitResult = z.infer<typeof previewPinSubmitResult>;
+
+export const previewE2eSimulatePinPayload = previewWorktreeRef.extend({
+  comment: z.string().min(1).max(4000),
+  anchor: previewPinAnchorDto.partial().optional(),
+});
+
+export type PreviewE2eSimulatePinPayload = z.infer<typeof previewE2eSimulatePinPayload>;
 
 export const previewPinEventDto = z.object({
   workspaceId: z.string().min(1),
