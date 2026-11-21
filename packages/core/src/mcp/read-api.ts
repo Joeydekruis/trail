@@ -1,4 +1,5 @@
 import type { IssueCacheStore } from "../issues/store.js";
+import type { DecisionStore } from "../decisions/store.js";
 import type { KnowledgeDocStore } from "../knowledge/store.js";
 import type { PreviewPinStore } from "../preview/pin-store.js";
 import type { WorkspaceStore } from "../workspace/store.js";
@@ -8,6 +9,7 @@ export type TrailMcpStores = {
   workspaces: WorkspaceStore;
   issues: IssueCacheStore;
   knowledge: KnowledgeDocStore;
+  decisions: DecisionStore;
   pins: PreviewPinStore;
 };
 
@@ -108,20 +110,45 @@ export function mcpGetTask(
   };
 }
 
+function decisionBodyMarkdown(input: {
+  contextMarkdown: string;
+  decisionMarkdown: string;
+  consequencesMarkdown: string;
+}): string {
+  const parts = [
+    `# Context\n${input.contextMarkdown}`,
+    `# Decision\n${input.decisionMarkdown}`,
+  ];
+  if (input.consequencesMarkdown.trim()) {
+    parts.push(`# Consequences\n${input.consequencesMarkdown}`);
+  }
+  return parts.join("\n\n");
+}
+
 export function mcpListDecisions(
   stores: TrailMcpStores,
   workspaceId?: string,
 ): McpDecisionRow[] {
   const id = resolveWorkspaceId(stores, workspaceId);
-  return stores.knowledge
+  const tableRows = stores.decisions.list(id);
+  const tableIds = new Set(tableRows.map((row) => row.adrId));
+  const fromTable = tableRows.map((row) => ({
+    id: row.adrId,
+    slug: row.adrId.toLowerCase(),
+    title: row.title,
+    updatedAt: row.updatedAt,
+  }));
+  const legacy = stores.knowledge
     .list(id)
     .filter((doc) => isDecisionDoc(doc.slug, doc.title))
+    .filter((doc) => !tableIds.has(decisionIdFromDoc(doc)))
     .map((doc) => ({
       id: decisionIdFromDoc(doc),
       slug: doc.slug,
       title: doc.title,
       updatedAt: doc.updatedAt,
     }));
+  return [...fromTable, ...legacy];
 }
 
 export function mcpGetDecision(
@@ -138,6 +165,16 @@ export function mcpGetDecision(
   | null {
   const workspaceId = resolveWorkspaceId(stores, input.workspaceId);
   const key = input.id.trim();
+  const fromTable = stores.decisions.get(workspaceId, key);
+  if (fromTable) {
+    return {
+      id: fromTable.adrId,
+      slug: fromTable.adrId.toLowerCase(),
+      title: fromTable.title,
+      bodyMarkdown: decisionBodyMarkdown(fromTable),
+      updatedAt: fromTable.updatedAt,
+    };
+  }
   const docs = stores.knowledge.list(workspaceId);
   for (const summary of docs) {
     if (!isDecisionDoc(summary.slug, summary.title)) {

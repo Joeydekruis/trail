@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MemorySqlite } from "../db/memory.js";
 import { openIssueCacheStore } from "../issues/store.js";
+import { openDecisionStore } from "../decisions/store.js";
 import { openKnowledgeDocStore } from "../knowledge/store.js";
 import { knowledgeDocId } from "../knowledge/slug.js";
 import { openPreviewPinStore } from "../preview/pin-store.js";
@@ -13,6 +14,7 @@ describe("mcp read-api", () => {
     const workspaces = openWorkspaceStore(db);
     const issues = openIssueCacheStore(db);
     const knowledge = openKnowledgeDocStore(db);
+    const decisions = openDecisionStore(db);
     const pins = openPreviewPinStore(db);
     const ws = workspaces.getActive();
     issues.replaceWorkspaceIssues(ws.id, [
@@ -29,16 +31,35 @@ describe("mcp read-api", () => {
         body: "Body",
       },
     ]);
-    const rows = mcpListTasks({ workspaces, issues, knowledge, pins });
+    const rows = mcpListTasks({ workspaces, issues, knowledge, decisions, pins });
     expect(rows).toHaveLength(1);
     expect(rows[0]?.id).toBe("#42");
   });
 
-  it("finds decisions when slug or title looks like ADR", () => {
+  it("lists seeded decisions from SQLite", () => {
     const db = new MemorySqlite();
     const workspaces = openWorkspaceStore(db);
     const issues = openIssueCacheStore(db);
     const knowledge = openKnowledgeDocStore(db);
+    const decisions = openDecisionStore(db);
+    const pins = openPreviewPinStore(db);
+    const ws = workspaces.getActive();
+    const listed = mcpListDecisions({ workspaces, issues, knowledge, decisions, pins }, ws.id);
+    const seeded = listed.find((row) => row.id === "ADR-012");
+    expect(seeded?.title).toContain("worktree");
+    const full = mcpGetDecision(
+      { workspaces, issues, knowledge, decisions, pins },
+      { workspaceId: ws.id, id: "ADR-012" },
+    );
+    expect(full?.title).toContain("worktree");
+  });
+
+  it("merges legacy ADR knowledge docs with SQLite decisions", () => {
+    const db = new MemorySqlite();
+    const workspaces = openWorkspaceStore(db);
+    const issues = openIssueCacheStore(db);
+    const knowledge = openKnowledgeDocStore(db);
+    const decisions = openDecisionStore(db);
     const pins = openPreviewPinStore(db);
     const ws = workspaces.getActive();
     knowledge.upsert({
@@ -49,11 +70,10 @@ describe("mcp read-api", () => {
       bodyMarkdown: "# Context\nPreview pins land in SQLite.",
       updatedAt: new Date().toISOString(),
     });
-    const listed = mcpListDecisions({ workspaces, issues, knowledge, pins }, ws.id);
-    expect(listed).toHaveLength(1);
-    expect(listed[0]?.id).toBe("ADR-001");
+    const listed = mcpListDecisions({ workspaces, issues, knowledge, decisions, pins }, ws.id);
+    expect(listed.some((row) => row.id === "ADR-001")).toBe(true);
     const full = mcpGetDecision(
-      { workspaces, issues, knowledge, pins },
+      { workspaces, issues, knowledge, decisions, pins },
       { workspaceId: ws.id, id: "ADR-001" },
     );
     expect(full?.slug).toBe("adr-001-preview");
@@ -64,6 +84,7 @@ describe("mcp read-api", () => {
     const workspaces = openWorkspaceStore(db);
     const issues = openIssueCacheStore(db);
     const knowledge = openKnowledgeDocStore(db);
+    const decisions = openDecisionStore(db);
     const pins = openPreviewPinStore(db);
     const ws = workspaces.getActive();
     knowledge.upsert({
@@ -75,7 +96,7 @@ describe("mcp read-api", () => {
       updatedAt: new Date().toISOString(),
     });
     const hits = mcpSearchDocs(
-      { workspaces, issues, knowledge, pins },
+      { workspaces, issues, knowledge, decisions, pins },
       { workspaceId: ws.id, query: "MCP search" },
     );
     expect(hits).toHaveLength(1);

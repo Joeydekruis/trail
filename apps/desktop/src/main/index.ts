@@ -18,6 +18,7 @@ import { registerWorktreeIpc } from "./worktree-ipc";
 import { registerAgentIpc } from "./agent-ipc";
 import { registerDesignIpc } from "./design-ipc";
 import { registerKnowledgeIpc } from "./knowledge-ipc";
+import { registerDecisionIpc } from "./decision-ipc";
 import { registerPreviewIpc } from "./preview-ipc";
 import { registerDiagnosticsIpc } from "./diagnostics-ipc";
 import { disposeAllPreviewDevServers } from "./preview-dev-server";
@@ -162,6 +163,7 @@ void app.whenReady().then(() => {
   registerPreviewIpc();
   registerDesignIpc();
   registerKnowledgeIpc();
+  registerDecisionIpc();
   registerMcpIpc();
   registerAutopilotIpc();
   createWindow();

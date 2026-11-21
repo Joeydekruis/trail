@@ -5,6 +5,7 @@ import { app } from "electron";
 import type { TrailMcpHttpServer } from "@trail/mcp";
 import { MCP_CONNECTION_FILENAME, startTrailMcpHttpServer } from "@trail/mcp";
 import {
+  getDecisionStore,
   getIssueCacheStore,
   getKnowledgeDocStore,
   getPreviewPinStore,
@@ -20,6 +21,7 @@ function stores() {
     workspaces: getWorkspaceStore(),
     issues: getIssueCacheStore(),
     knowledge: getKnowledgeDocStore(),
+    decisions: getDecisionStore(),
     pins: getPreviewPinStore(),
   };
 }

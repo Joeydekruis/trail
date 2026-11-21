@@ -194,6 +194,15 @@ declare global {
         title: string;
         bodyMarkdown: string;
       }) => Promise<{ doc: import("@trail/ipc").KnowledgeDocDto }>;
+      listDecisions?: (workspaceId?: string) => Promise<import("@trail/ipc").DecisionListResult>;
+      getDecision?: (input: {
+        workspaceId?: string;
+        adrId: string;
+      }) => Promise<import("@trail/ipc").DecisionGetResult>;
+      acceptDecision?: (input: {
+        workspaceId?: string;
+        adrId: string;
+      }) => Promise<import("@trail/ipc").DecisionAcceptResult>;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;

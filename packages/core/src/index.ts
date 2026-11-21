@@ -94,6 +94,19 @@ export {
 export { slugFromTitle, knowledgeDocId } from "./knowledge/slug.js";
 export type { KnowledgeDocRecord, KnowledgeDocSummary } from "./knowledge/types.js";
 export {
+  DecisionStore,
+  openDecisionStore,
+} from "./decisions/store.js";
+export {
+  releaseDecisionBlock,
+  syncProposedDecisionBlocks,
+} from "./decisions/sync-blocks.js";
+export type {
+  DecisionRecord,
+  DecisionStatus,
+  DecisionSummary,
+} from "./decisions/types.js";
+export {
   PERF_BUDGET_COLD_START_MS,
   PERF_BUDGET_WORKSPACE_SWITCH_MS,
   withinPerfBudget,

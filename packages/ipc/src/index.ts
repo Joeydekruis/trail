@@ -37,6 +37,9 @@ export const IpcChannels = {
   knowledgeDocList: "knowledge.doc.list",
   knowledgeDocGet: "knowledge.doc.get",
   knowledgeDocSave: "knowledge.doc.save",
+  decisionList: "decision.list",
+  decisionGet: "decision.get",
+  decisionAccept: "decision.accept",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -723,6 +726,75 @@ export const knowledgeDocSaveResult = z.object({
 });
 
 export type KnowledgeDocSaveResult = z.infer<typeof knowledgeDocSaveResult>;
+
+export const decisionStatusDto = z.enum([
+  "proposed",
+  "accepted",
+  "superseded",
+  "rejected",
+]);
+
+export type DecisionStatusDto = z.infer<typeof decisionStatusDto>;
+
+export const decisionSummaryDto = z.object({
+  adrId: z.string().min(1),
+  title: z.string().min(1),
+  status: decisionStatusDto,
+  author: z.string().min(1),
+  updatedAt: z.string().min(1),
+  blocksIssueNumber: z.number().int().positive().nullable(),
+});
+
+export type DecisionSummaryDto = z.infer<typeof decisionSummaryDto>;
+
+export const decisionDetailDto = decisionSummaryDto.extend({
+  contextMarkdown: z.string(),
+  decisionMarkdown: z.string(),
+  consequencesMarkdown: z.string(),
+  blockedIssueTitle: z.string().nullable(),
+});
+
+export type DecisionDetailDto = z.infer<typeof decisionDetailDto>;
+
+export const decisionListPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+});
+
+export type DecisionListPayload = z.infer<typeof decisionListPayload>;
+
+export const decisionListResult = z.object({
+  decisions: z.array(decisionSummaryDto),
+});
+
+export type DecisionListResult = z.infer<typeof decisionListResult>;
+
+export const decisionGetPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  adrId: z.string().min(1),
+});
+
+export type DecisionGetPayload = z.infer<typeof decisionGetPayload>;
+
+export const decisionGetResult = z.union([
+  z.object({ ok: z.literal(true), decision: decisionDetailDto }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type DecisionGetResult = z.infer<typeof decisionGetResult>;
+
+export const decisionAcceptPayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  adrId: z.string().min(1),
+});
+
+export type DecisionAcceptPayload = z.infer<typeof decisionAcceptPayload>;
+
+export const decisionAcceptResult = z.union([
+  z.object({ ok: z.literal(true), decision: decisionDetailDto }),
+  z.object({ ok: z.literal(false), message: z.string().min(1) }),
+]);
+
+export type DecisionAcceptResult = z.infer<typeof decisionAcceptResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

@@ -2,6 +2,7 @@ import {
   APP_SETTING_AUTOPILOT_GLOBAL_PAUSE,
   autopilotQueueBlockedByDecisions,
   pickAutopilotIssue,
+  syncProposedDecisionBlocks,
   resolveAutopilotEnabled,
   resolveAutopilotGlobalPause,
   resolveAutopilotMaxParallel,
@@ -13,6 +14,7 @@ import {
 import { countActiveAgentRuns } from "./agent-runner-bridge";
 import { startAgentRun } from "./agent-run";
 import {
+  getDecisionStore,
   getIssueCacheStore,
   getWorktreeStore,
   getWorkspaceStore,
@@ -104,6 +106,7 @@ export async function runAutopilotTick(workspaceId?: string): Promise<void> {
     const id = workspaceId ?? workspaceStore.getActiveId();
     const issueStore = getIssueCacheStore();
     const worktreeStore = getWorktreeStore();
+    syncProposedDecisionBlocks(id, getDecisionStore(), worktreeStore);
     const worktrees = worktreeStore.listByWorkspace(id);
     const settings = readAutopilotSettings(id);
     if (!settings.enabled || settings.globallyPaused) {

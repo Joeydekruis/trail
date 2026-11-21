@@ -5,11 +5,13 @@ import { seedE2eFixtures, shouldApplyE2eFixtures } from "./e2e-fixtures";
 import { setSqliteDatabasePath } from "./database-path";
 import {
   MemorySqlite,
+  openDecisionStore,
   openIssueCacheStore,
   openKnowledgeDocStore,
   openPreviewPinStore,
   openWorktreeStore,
   openWorkspaceStore,
+  type DecisionStore,
   type IssueCacheStore,
   type KnowledgeDocStore,
   type PreviewPinStore,
@@ -23,6 +25,7 @@ let issueStore: IssueCacheStore | null = null;
 let worktreeStore: WorktreeStore | null = null;
 let previewPinStore: PreviewPinStore | null = null;
 let knowledgeDocStore: KnowledgeDocStore | null = null;
+let decisionStore: DecisionStore | null = null;
 
 export function getWorkspaceStore(): WorkspaceStore {
   if (!store) {
@@ -59,12 +62,20 @@ export function getKnowledgeDocStore(): KnowledgeDocStore {
   return knowledgeDocStore;
 }
 
+export function getDecisionStore(): DecisionStore {
+  if (!decisionStore) {
+    throw new Error("Decision store not initialized");
+  }
+  return decisionStore;
+}
+
 function openStores(db: SqliteDatabase, label: string): void {
   store = openWorkspaceStore(db);
   issueStore = openIssueCacheStore(db);
   worktreeStore = openWorktreeStore(db);
   previewPinStore = openPreviewPinStore(db);
   knowledgeDocStore = openKnowledgeDocStore(db);
+  decisionStore = openDecisionStore(db);
   if (shouldApplyE2eFixtures()) {
     seedE2eFixtures(db, issueStore, worktreeStore);
     console.info("[trail] E2E fixtures seeded");

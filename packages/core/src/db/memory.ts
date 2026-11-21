@@ -15,6 +15,7 @@ export class MemorySqlite implements SqliteDatabase {
         "worktrees",
         "preview_pins",
         "knowledge_docs",
+        "decisions",
       ]) {
         if (sql.includes(name) && !this.tables.has(name)) {
           this.tables.set(name, []);
@@ -173,6 +174,27 @@ export class MemorySqlite implements SqliteDatabase {
           self.tables.set("knowledge_docs", next);
           return { changes: 1, lastInsertRowid: next.length };
         }
+        if (sql.includes("INSERT INTO decisions")) {
+          const row = params[0] as Record<string, unknown>;
+          const rows = self.tables.get("decisions") ?? [];
+          const mapped = {
+            id: row.id,
+            workspace_id: row.workspaceId,
+            adr_id: row.adrId,
+            title: row.title,
+            status: row.status,
+            context_markdown: row.contextMarkdown,
+            decision_markdown: row.decisionMarkdown,
+            consequences_markdown: row.consequencesMarkdown,
+            author: row.author,
+            blocks_issue_number: row.blocksIssueNumber,
+            updated_at: row.updatedAt,
+          };
+          const next = rows.filter((r) => r.id !== mapped.id);
+          next.push(mapped);
+          self.tables.set("decisions", next);
+          return { changes: 1, lastInsertRowid: next.length };
+        }
         if (sql.includes("INSERT INTO preview_pins")) {
           const row = params[0] as Record<string, unknown>;
           const rows = self.tables.get("preview_pins") ?? [];
@@ -212,6 +234,11 @@ export class MemorySqlite implements SqliteDatabase {
         if (sql.includes("COUNT(*)") && sql.includes("knowledge_docs")) {
           const rows =
             self.tables.get("knowledge_docs")?.filter((r) => r.workspace_id === params[0]) ?? [];
+          return { count: rows.length };
+        }
+        if (sql.includes("COUNT(*)") && sql.includes("decisions")) {
+          const rows =
+            self.tables.get("decisions")?.filter((r) => r.workspace_id === params[0]) ?? [];
           return { count: rows.length };
         }
         if (sql.includes("COUNT(*)") && sql.includes("repository IS NOT NULL")) {
@@ -275,6 +302,11 @@ export class MemorySqlite implements SqliteDatabase {
             .get("knowledge_docs")
             ?.find((r) => r.workspace_id === params[0] && r.slug === params[1]);
         }
+        if (sql.includes("FROM decisions WHERE workspace_id") && sql.includes("AND adr_id")) {
+          return self.tables
+            .get("decisions")
+            ?.find((r) => r.workspace_id === params[0] && r.adr_id === params[1]);
+        }
         return undefined;
       },
       all(...params: unknown[]) {
@@ -308,6 +340,18 @@ export class MemorySqlite implements SqliteDatabase {
           return [...(self.tables.get("knowledge_docs") ?? [])]
             .filter((r) => r.workspace_id === params[0])
             .sort((a, b) => String(a.title).localeCompare(String(b.title)));
+        }
+        if (sql.includes("FROM decisions WHERE workspace_id")) {
+          let rows = [...(self.tables.get("decisions") ?? [])].filter(
+            (r) => r.workspace_id === params[0],
+          );
+          if (sql.includes("status = 'proposed'")) {
+            rows = rows.filter(
+              (r) => r.status === "proposed" && r.blocks_issue_number != null,
+            );
+          }
+          rows.sort((a, b) => String(b.adr_id).localeCompare(String(a.adr_id)));
+          return rows;
         }
         if (sql.includes("FROM workspaces ORDER BY")) {
           const rows = [...(self.tables.get("workspaces") ?? [])];

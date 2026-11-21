@@ -224,6 +224,15 @@ export type TrailApi = {
     title: string;
     bodyMarkdown: string;
   }) => Promise<{ doc: import("@trail/ipc").KnowledgeDocDto }>;
+  listDecisions: (workspaceId?: string) => Promise<import("@trail/ipc").DecisionListResult>;
+  getDecision: (input: {
+    workspaceId?: string;
+    adrId: string;
+  }) => Promise<import("@trail/ipc").DecisionGetResult>;
+  acceptDecision: (input: {
+    workspaceId?: string;
+    adrId: string;
+  }) => Promise<import("@trail/ipc").DecisionAcceptResult>;
   onPreviewPin: (
     listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
   ) => () => void;
@@ -437,6 +446,18 @@ const trailApi: TrailApi = {
     ipcRenderer.invoke(PreloadIpcChannels.knowledgeDocSave, input) as Promise<{
       doc: import("@trail/ipc").KnowledgeDocDto;
     }>,
+  listDecisions: (workspaceId) =>
+    ipcRenderer.invoke(PreloadIpcChannels.decisionList, { workspaceId }) as Promise<
+      import("@trail/ipc").DecisionListResult
+    >,
+  getDecision: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.decisionGet, input) as Promise<
+      import("@trail/ipc").DecisionGetResult
+    >,
+  acceptDecision: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.decisionAccept, input) as Promise<
+      import("@trail/ipc").DecisionAcceptResult
+    >,
   onPreviewPin: (listener) => {
     const channel = "trail.previewPin";
     const handler = (
