@@ -1,9 +1,9 @@
 import { utilityProcess, type UtilityProcess } from "electron";
 import { detectAgentBackends } from "./agent-cli";
 import { resolveAgentRunnerUtilityPath } from "./agent-runner-path";
+import { createAgentStreamChannel, deliverAgentStreamPort } from "./agent-stream-port";
 import { getWorktreeStore } from "./database";
 import {
-  broadcastAgentOutput,
   broadcastAgentRunState,
   type StartAgentRunInput,
   type StartAgentRunResult,
@@ -85,13 +85,6 @@ function handleUtilityMessage(message: unknown): void {
       };
 
   if (typed.type === "output") {
-    broadcastAgentOutput({
-      workspaceId: typed.workspaceId,
-      issueNumber: typed.issueNumber,
-      stream: typed.stream,
-      line: typed.line,
-      backend: typed.backend,
-    });
     return;
   }
 
@@ -143,16 +136,22 @@ function startOnUtility(
     backend: preferred?.id ?? null,
   });
 
-  proc.postMessage({
-    type: "start",
-    runId,
-    workspaceId: input.workspaceId,
-    issueNumber: input.issueNumber,
-    cwd: input.cwd,
-    backend: preferred?.id ?? null,
-    binary: preferred?.binary ?? null,
-    prompt: input.prompt,
-  });
+  const streamChannel = createAgentStreamChannel();
+  deliverAgentStreamPort(input.workspaceId, input.issueNumber, runId, streamChannel.port2);
+
+  proc.postMessage(
+    {
+      type: "start",
+      runId,
+      workspaceId: input.workspaceId,
+      issueNumber: input.issueNumber,
+      cwd: input.cwd,
+      backend: preferred?.id ?? null,
+      binary: preferred?.binary ?? null,
+      prompt: input.prompt,
+    },
+    [streamChannel.port1],
+  );
 
   resolve({ ok: true });
 }

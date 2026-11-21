@@ -106,6 +106,15 @@ declare global {
         workspaceId?: string;
         issueNumber: number;
       }) => Promise<{ stopped: boolean }>;
+      onAgentStreamOutput?: (
+        listener: (payload: {
+          workspaceId: string;
+          issueNumber: number;
+          stream: "stdout" | "stderr";
+          line: string;
+          backend: "cursor" | "claude" | null;
+        }) => void,
+      ) => () => void;
       onAgentOutput?: (
         listener: (payload: {
           workspaceId: string;

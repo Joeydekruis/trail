@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import type { MessagePortMain } from "electron";
 
 type StartMessage = {
   type: "start";
@@ -38,13 +39,33 @@ type DoneMessage = {
 };
 
 const active = new Map<string, ChildProcess>();
+const streamPortByRun = new Map<string, MessagePortMain>();
 
-function post(message: OutputMessage | DoneMessage): void {
+function postToParent(message: OutputMessage | DoneMessage): void {
   const port = process.parentPort;
   if (!port) {
     return;
   }
   port.postMessage(message);
+}
+
+function postOutput(message: OutputMessage): void {
+  const streamPort = streamPortByRun.get(message.runId);
+  if (streamPort) {
+    streamPort.postMessage(message);
+    return;
+  }
+  postToParent(message);
+}
+
+function postDone(message: DoneMessage): void {
+  const streamPort = streamPortByRun.get(message.runId);
+  if (streamPort) {
+    streamPort.postMessage(message);
+    streamPort.close();
+    streamPortByRun.delete(message.runId);
+  }
+  postToParent(message);
 }
 
 function previewScript(prompt: string, binary: string | null): string {
@@ -97,7 +118,7 @@ function attach(runId: string, message: StartMessage, child: ChildProcess): void
       if (!trimmed) {
         continue;
       }
-      post({ type: "output", ...base, stream: "stdout", line: trimmed });
+      postOutput({ type: "output", ...base, stream: "stdout", line: trimmed });
     }
   });
 
@@ -107,17 +128,17 @@ function attach(runId: string, message: StartMessage, child: ChildProcess): void
       if (!trimmed) {
         continue;
       }
-      post({ type: "output", ...base, stream: "stderr", line: trimmed });
+      postOutput({ type: "output", ...base, stream: "stderr", line: trimmed });
     }
   });
 
   child.on("close", (code) => {
     active.delete(runId);
-    post({ type: "done", ...base, exitCode: code ?? 1 });
+    postDone({ type: "done", ...base, exitCode: code ?? 1 });
   });
 }
 
-process.parentPort?.on("message", (event: { data: ParentMessage }) => {
+process.parentPort?.on("message", (event: { data: ParentMessage; ports?: MessagePortMain[] }) => {
   const message = event.data;
   if (message.type === "stop") {
     const child = active.get(message.runId);
@@ -125,11 +146,20 @@ process.parentPort?.on("message", (event: { data: ParentMessage }) => {
       child.kill("SIGTERM");
       active.delete(message.runId);
     }
+    const streamPort = streamPortByRun.get(message.runId);
+    streamPort?.close();
+    streamPortByRun.delete(message.runId);
     return;
   }
 
   if (message.type !== "start") {
     return;
+  }
+
+  const streamPort = event.ports?.[0];
+  if (streamPort) {
+    streamPort.start();
+    streamPortByRun.set(message.runId, streamPort);
   }
 
   const child = spawnForRun(message);

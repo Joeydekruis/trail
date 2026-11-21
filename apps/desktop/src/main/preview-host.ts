@@ -17,9 +17,15 @@ type PreviewEntry = {
   url: string;
   window: BrowserWindow | null;
   ref: PreviewWorktreeRef;
+  lastVisibleAt: number;
+  suspended: boolean;
 };
 
+const PREVIEW_IDLE_MS = 10 * 60 * 1000;
+const PREVIEW_IDLE_TICK_MS = 60 * 1000;
+
 const entries = new Map<PreviewKey, PreviewEntry>();
+let idleTimer: ReturnType<typeof setInterval> | null = null;
 const refByWebContentsId = new Map<number, PreviewWorktreeRef>();
 
 function previewKey(ref: PreviewWorktreeRef): PreviewKey {
@@ -122,6 +128,36 @@ export function disposeAllPreviews(): void {
   }
 }
 
+function suspendEntry(entry: PreviewEntry): void {
+  if (entry.suspended) {
+    return;
+  }
+  detachFromWindow(entry);
+  entry.suspended = true;
+  if (!entry.view.webContents.isDestroyed()) {
+    void entry.view.webContents.loadURL("about:blank");
+  }
+}
+
+function sweepIdlePreviews(): void {
+  const now = Date.now();
+  for (const entry of entries.values()) {
+    if (!entry.window || entry.suspended) {
+      continue;
+    }
+    if (now - entry.lastVisibleAt >= PREVIEW_IDLE_MS) {
+      suspendEntry(entry);
+    }
+  }
+}
+
+export function startPreviewIdleSweep(): void {
+  if (idleTimer) {
+    return;
+  }
+  idleTimer = setInterval(sweepIdlePreviews, PREVIEW_IDLE_TICK_MS);
+}
+
 function resolveUrl(raw?: string): { ok: true; url: string } | { ok: false; message: string } {
   const normalized = normalizePreviewUrl(raw?.trim() || DEFAULT_PREVIEW_URL);
   if (!normalized.ok) {
@@ -157,16 +193,20 @@ export function attachPreview(
       url: "",
       window: null,
       ref,
+      lastVisibleAt: Date.now(),
+      suspended: false,
     };
     entries.set(key, entry);
   }
 
   hideOtherPreviews(win, key);
 
-  if (entry.url !== urlResult.url) {
+  if (entry.suspended || entry.url !== urlResult.url) {
     void entry.view.webContents.loadURL(urlResult.url);
     entry.url = urlResult.url;
+    entry.suspended = false;
   }
+  entry.lastVisibleAt = Date.now();
 
   if (entry.window !== win) {
     detachFromWindow(entry);
@@ -195,6 +235,11 @@ export function setPreviewBounds(
     entry.window = win;
   }
   entry.view.setBounds(bounds);
+  entry.lastVisibleAt = Date.now();
+  if (entry.suspended) {
+    void entry.view.webContents.loadURL(entry.url);
+    entry.suspended = false;
+  }
 }
 
 export function detachPreview(ref: PreviewWorktreeRef): void {

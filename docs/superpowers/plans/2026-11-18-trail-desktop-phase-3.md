@@ -10,7 +10,7 @@
 - [x] New task chat → local draft heuristics + approve + Create on GitHub
 - [x] Worktrees — `git worktree add`, SQLite registry, sidebar + tab; onboarding/Settings repo path
 - [x] Agent runner — utility process, `claude -p` wanneer beschikbaar; cursor-agent preview; output naar worktree chat
-- [ ] Agent stream via `MessagePort` (IPC broadcast blijft tot refactor)
+- [x] Agent stream via `MessagePort` (run state blijft op IPC)
 - [ ] OAuth i.p.v. PAT (later)
 
 **Notities:** Background sync draait in main na deferred startup; renderer krijgt `trail.backgroundSync` events voor statusbalk + board refresh. Interval-wijzigingen en workspace switch herstarten de timer; Settings → GitHub heeft **Sync now** + laatste sync-tijd.

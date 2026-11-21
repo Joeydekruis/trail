@@ -1,10 +1,23 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import type { ChatLine } from "./design/worktree-fixture";
-import { agentOutputToChatLine } from "./agent-chat-line";
+import { agentOutputToChatLine, type AgentOutputPayload } from "./agent-chat-line";
 
 const BATCH_MS = 100;
 
-/** Buffers agent IPC lines and flushes at most once per 100ms (performance briefing). */
+function subscribeAgentOutput(
+  api: Window["trail"],
+  handler: (payload: AgentOutputPayload) => void,
+): (() => void) | undefined {
+  if (api?.onAgentStreamOutput) {
+    return api.onAgentStreamOutput(handler);
+  }
+  if (api?.onAgentOutput) {
+    return api.onAgentOutput(handler);
+  }
+  return undefined;
+}
+
+/** Buffers agent lines (MessagePort or IPC fallback) and flushes at most once per 100ms. */
 export function useBatchedAgentLines(
   workspaceId: string | undefined,
   issueNumber: number,
@@ -24,10 +37,10 @@ export function useBatchedAgentLines(
 
   useEffect(() => {
     const api = window.trail;
-    if (!api?.onAgentOutput || !workspaceId) {
+    if (!workspaceId) {
       return;
     }
-    return api.onAgentOutput((payload) => {
+    return subscribeAgentOutput(api, (payload) => {
       if (payload.workspaceId !== workspaceId || payload.issueNumber !== issueNumber) {
         return;
       }

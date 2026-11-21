@@ -1,5 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { onAgentStreamOutput, registerAgentStreamBridge } from "./agent-stream-bridge";
 import { PreloadIpcChannels } from "./channels";
+
+registerAgentStreamBridge();
 
 export type WorkspaceListResult = {
   workspaces: Array<{
@@ -131,6 +134,15 @@ export type TrailApi = {
     workspaceId?: string;
     issueNumber: number;
   }) => Promise<{ stopped: boolean }>;
+  onAgentStreamOutput: (
+    listener: (payload: {
+      workspaceId: string;
+      issueNumber: number;
+      stream: "stdout" | "stderr";
+      line: string;
+      backend: "cursor" | "claude" | null;
+    }) => void,
+  ) => () => void;
   onAgentOutput: (
     listener: (payload: {
       workspaceId: string;
@@ -351,6 +363,7 @@ const trailApi: TrailApi = {
     ipcRenderer.on(channel, handler);
     return () => ipcRenderer.removeListener(channel, handler);
   },
+  onAgentStreamOutput: (listener) => onAgentStreamOutput(listener),
   onAgentOutput: (listener) => {
     const channel = "trail.agentOutput";
     const handler = (
