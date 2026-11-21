@@ -41,6 +41,7 @@ export const IpcChannels = {
   decisionGet: "decision.get",
   decisionAccept: "decision.accept",
   decisionReject: "decision.reject",
+  decisionCreate: "decision.create",
   workspaceRepoRootGet: "workspace.repoRoot.get",
   workspaceRepoRootSet: "workspace.repoRoot.set",
   workspaceRepoRootPick: "workspace.repoRoot.pick",
@@ -804,6 +805,30 @@ export type DecisionRejectPayload = z.infer<typeof decisionRejectPayload>;
 export const decisionRejectResult = decisionAcceptResult;
 
 export type DecisionRejectResult = z.infer<typeof decisionRejectResult>;
+
+export const decisionCreatePayload = z.object({
+  workspaceId: z.string().min(1).optional(),
+  title: z.string().min(1).max(200),
+  contextMarkdown: z.string().min(1).max(50_000),
+  decisionMarkdown: z.string().min(1).max(50_000),
+  consequencesMarkdown: z.string().max(50_000).optional(),
+  blocksIssueNumber: z.number().int().positive().optional(),
+  status: z.enum(["proposed", "accepted"]).optional(),
+});
+
+export type DecisionCreatePayload = z.infer<typeof decisionCreatePayload>;
+
+export const decisionCreateResult = z.union([
+  z.object({ ok: z.literal(true), decision: decisionDetailDto }),
+  z.object({
+    ok: z.literal(false),
+    message: z.string().min(1),
+    code: z.enum(["conflict", "validation"]).optional(),
+    existingAdrId: z.string().optional(),
+  }),
+]);
+
+export type DecisionCreateResult = z.infer<typeof decisionCreateResult>;
 
 export const workspaceRepoRootGetPayload = z.object({
   workspaceId: z.string().min(1).optional(),

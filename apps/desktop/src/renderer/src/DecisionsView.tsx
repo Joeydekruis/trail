@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DecisionDetailDto, DecisionSummaryDto, WorkspaceDto } from "@trail/ipc";
+import { NewDecisionModal } from "./NewDecisionModal";
 import { ViewPageHeader } from "./design/ViewPageHeader";
 import {
   DecisionRow,
@@ -49,6 +50,7 @@ export function DecisionsView({
   const [detail, setDetail] = useState<DecisionDetailDto | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
 
   const reloadList = useCallback(async () => {
     const api = window.trail;
@@ -141,7 +143,9 @@ export function DecisionsView({
         actions={
           <>
             <TrailButton variant="secondary">Export to Markdown</TrailButton>
-            <TrailButton variant="primary">New decision</TrailButton>
+            <TrailButton variant="primary" onClick={() => setNewOpen(true)}>
+              New decision
+            </TrailButton>
           </>
         }
       />
@@ -270,6 +274,15 @@ export function DecisionsView({
           </TrailPanel>
         )}
       </div>
+      <NewDecisionModal
+        open={newOpen}
+        workspace={workspace}
+        onClose={() => setNewOpen(false)}
+        onCreated={(adrId) => {
+          setSelectedId(adrId);
+          void reloadList();
+        }}
+      />
     </div>
   );
 }

@@ -207,6 +207,9 @@ declare global {
         workspaceId?: string;
         adrId: string;
       }) => Promise<import("@trail/ipc").DecisionRejectResult>;
+      createDecision?: (
+        input: import("@trail/ipc").DecisionCreatePayload,
+      ) => Promise<import("@trail/ipc").DecisionCreateResult>;
       setWorktreeStatus?: (input: {
         workspaceId?: string;
         issueNumber: number;

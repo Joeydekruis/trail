@@ -237,6 +237,9 @@ export type TrailApi = {
     workspaceId?: string;
     adrId: string;
   }) => Promise<import("@trail/ipc").DecisionRejectResult>;
+  createDecision: (
+    input: import("@trail/ipc").DecisionCreatePayload,
+  ) => Promise<import("@trail/ipc").DecisionCreateResult>;
   onPreviewPin: (
     listener: (payload: import("@trail/ipc").PreviewPinEventDto) => void,
   ) => () => void;
@@ -465,6 +468,10 @@ const trailApi: TrailApi = {
   rejectDecision: (input) =>
     ipcRenderer.invoke(PreloadIpcChannels.decisionReject, input) as Promise<
       import("@trail/ipc").DecisionRejectResult
+    >,
+  createDecision: (input) =>
+    ipcRenderer.invoke(PreloadIpcChannels.decisionCreate, input) as Promise<
+      import("@trail/ipc").DecisionCreateResult
     >,
   onPreviewPin: (listener) => {
     const channel = "trail.previewPin";

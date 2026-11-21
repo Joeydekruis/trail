@@ -3,6 +3,8 @@ import {
   IpcChannels,
   decisionAcceptPayload,
   decisionAcceptResult,
+  decisionCreatePayload,
+  decisionCreateResult,
   decisionRejectPayload,
   decisionRejectResult,
   decisionGetPayload,
@@ -11,6 +13,7 @@ import {
   decisionListResult,
 } from "@trail/ipc";
 import {
+  mcpCreateDecision,
   releaseDecisionBlock,
   stopDecisionBlockedWorktree,
   syncProposedDecisionBlocks,
@@ -19,9 +22,22 @@ import { runAutopilotTick } from "./autopilot-service";
 import {
   getDecisionStore,
   getIssueCacheStore,
+  getKnowledgeDocStore,
+  getPreviewPinStore,
   getWorktreeStore,
   getWorkspaceStore,
 } from "./database";
+
+function mcpStores() {
+  return {
+    workspaces: getWorkspaceStore(),
+    issues: getIssueCacheStore(),
+    knowledge: getKnowledgeDocStore(),
+    decisions: getDecisionStore(),
+    worktrees: getWorktreeStore(),
+    pins: getPreviewPinStore(),
+  };
+}
 
 function resolveWorkspaceId(explicit?: string): string {
   return explicit ?? getWorkspaceStore().getActiveId();
@@ -61,6 +77,41 @@ function toDetailDto(record: {
 }
 
 export function registerDecisionIpc(): void {
+  ipcMain.handle(IpcChannels.decisionCreate, (_event, raw: unknown) => {
+    const payload = decisionCreatePayload.parse(raw);
+    const workspaceId = resolveWorkspaceId(payload.workspaceId);
+    const created = mcpCreateDecision(mcpStores(), {
+      workspaceId,
+      title: payload.title,
+      contextMarkdown: payload.contextMarkdown,
+      decisionMarkdown: payload.decisionMarkdown,
+      consequencesMarkdown: payload.consequencesMarkdown,
+      blocksIssueNumber: payload.blocksIssueNumber,
+      status: payload.status ?? "proposed",
+      author: "You",
+    });
+    if (!created.ok) {
+      return decisionCreateResult.parse({
+        ok: false,
+        message: created.message,
+        code: created.code,
+        existingAdrId: created.existingAdrId,
+      });
+    }
+    const record = getDecisionStore().get(workspaceId, created.adrId);
+    if (!record) {
+      return decisionCreateResult.parse({
+        ok: false,
+        message: "Decision was created but could not be loaded",
+      });
+    }
+    void runAutopilotTick(workspaceId);
+    return decisionCreateResult.parse({
+      ok: true,
+      decision: toDetailDto(record, workspaceId),
+    });
+  });
+
   ipcMain.handle(IpcChannels.decisionList, (_event, raw: unknown) => {
     const payload = decisionListPayload.parse(raw ?? {});
     const workspaceId = resolveWorkspaceId(payload.workspaceId);
